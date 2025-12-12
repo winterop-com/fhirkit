@@ -1,0 +1,84 @@
+# FHIRPath Collection Operations
+# Resource: examples/fhir/patient.json
+
+# Get first name entry
+name.first()
+# Expected: {use: "official", family: "Smith", ...}
+
+# Get last name entry
+name.last()
+# Expected: {use: "nickname", given: ["Johnny"]}
+
+# Skip first name, get rest
+name.tail()
+# Expected: [{use: "nickname", given: ["Johnny"]}]
+
+# Take first 1 name
+name.take(1)
+# Expected: [{use: "official", family: "Smith", ...}]
+
+# Skip first 1 name
+name.skip(1)
+# Expected: [{use: "nickname", given: ["Johnny"]}]
+
+# Get distinct cities
+address.city.distinct()
+# Expected: ["Boston", "Cambridge"]
+
+# Get distinct states (both are MA)
+address.state.distinct()
+# Expected: ["MA"]
+
+# Union of given names from different name entries
+name.given
+# Expected: ["John", "William", "Johnny"]
+
+# Get all telecom values
+telecom.value
+# Expected: ["+1-555-123-4567", "john.smith@email.com", "+1-555-987-6543"]
+
+# Resource: examples/fhir/observation_bp.json
+
+# Get all component codes
+component.code.coding.code
+# Expected: [["8480-6"], ["8462-4"]]
+
+# Get all component values
+component.valueQuantity.value
+# Expected: [142, 88]
+
+# Resource: examples/fhir/bundle.json
+
+# Get all entries
+entry.count()
+# Expected: 5
+
+# Get all resource types in bundle
+entry.resource.resourceType
+# Expected: ["Patient", "Condition", "Observation", "Observation", "MedicationRequest"]
+
+# Get distinct resource types
+entry.resource.resourceType.distinct()
+# Expected: ["Patient", "Condition", "Observation", "MedicationRequest"]
+
+# Get all Patient resources
+entry.resource.where(resourceType = 'Patient')
+# Expected: [{resourceType: "Patient", id: "example-patient-1", ...}]
+
+# Get all Observation resources
+entry.resource.where(resourceType = 'Observation')
+# Expected: [{...}, {...}] (2 observations)
+
+# Count observations in bundle
+entry.resource.where(resourceType = 'Observation').count()
+# Expected: 2
+
+# Check membership
+'Boston' in address.city
+# Expected: true
+
+address.city contains 'Boston'
+# Expected: true
+
+'New York' in address.city
+# Expected: false

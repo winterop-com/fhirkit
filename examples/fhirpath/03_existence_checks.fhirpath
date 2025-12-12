@@ -1,0 +1,68 @@
+# FHIRPath Existence and Empty Checks
+# Resource: examples/fhir/patient.json
+
+# Check if patient has names
+name.exists()
+# Expected: true
+
+# Check if patient is deceased (deceasedBoolean exists)
+deceased.exists()
+# Expected: true
+
+# Check if multipleBirth exists
+multipleBirth.exists()
+# Expected: true
+
+# Check if extension exists (patient has none)
+extension.exists()
+# Expected: false
+
+# Check if names collection is empty
+name.empty()
+# Expected: false
+
+# Check if extension is empty
+extension.empty()
+# Expected: true
+
+# Count number of names
+name.count()
+# Expected: 2
+
+# Count number of addresses
+address.count()
+# Expected: 2
+
+# Count number of telecom entries
+telecom.count()
+# Expected: 3
+
+# Count number of identifiers
+identifier.count()
+# Expected: 2
+
+# Check if all names have 'use' field
+name.all(use.exists())
+# Expected: true
+
+# Check if any telecom is a phone
+telecom.where(system = 'phone').exists()
+# Expected: true
+
+# Check if patient has mobile phone
+telecom.where(system = 'phone' and use = 'mobile').exists()
+# Expected: true
+
+# Resource: examples/fhir/observation_bp.json
+
+# Check observation status
+status = 'final'
+# Expected: true
+
+# Count components
+component.count()
+# Expected: 2
+
+# Check if interpretation exists
+interpretation.exists()
+# Expected: true

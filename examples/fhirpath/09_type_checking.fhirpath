@@ -1,0 +1,66 @@
+# FHIRPath Type Checking
+# Resource: examples/fhir/patient.json
+
+# Check types of fields
+active is boolean
+# Expected: true
+
+birthDate is date
+# Expected: true  (Note: in FHIR JSON it's a string, but FHIRPath treats it as date)
+
+gender is string
+# Expected: true
+
+name is BackboneElement
+# Expected: true (each name entry)
+
+# Check deceased type (it's deceasedBoolean in this patient)
+deceasedBoolean is boolean
+# Expected: true
+
+# Resource: examples/fhir/observation_lab.json
+
+# Check if value is a Quantity
+valueQuantity is Quantity
+# Expected: true
+
+# Access quantity properties
+valueQuantity.value is decimal
+# Expected: true
+
+# Resource: examples/fhir/observation_bp.json
+
+# Component values are Quantities
+component.valueQuantity is Quantity
+# Expected: [true, true]
+
+# Check observation status type
+status is string
+# Expected: true
+
+# effectiveDateTime is a dateTime
+effectiveDateTime is dateTime
+# Expected: true
+
+# Resource: examples/fhir/condition.json
+
+# onsetDateTime is dateTime
+onsetDateTime is dateTime
+# Expected: true
+
+# code is CodeableConcept
+code is CodeableConcept
+# Expected: true
+
+# Type conversion examples
+'123'.toInteger()
+# Expected: 123
+
+'3.14'.toDecimal()
+# Expected: 3.14
+
+123.toString()
+# Expected: "123"
+
+true.toString()
+# Expected: "true"

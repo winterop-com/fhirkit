@@ -1,0 +1,92 @@
+# FHIRPath Coding and CodeableConcept Operations
+# Resource: examples/fhir/patient.json
+
+# Get marital status coding
+maritalStatus.coding
+# Expected: [{system: "http://terminology.hl7.org/...", code: "M", display: "Married"}]
+
+# Get marital status code
+maritalStatus.coding.code
+# Expected: ["M"]
+
+# Get marital status display
+maritalStatus.coding.display
+# Expected: ["Married"]
+
+# Get marital status text
+maritalStatus.text
+# Expected: "Married"
+
+# Check marital status by code
+maritalStatus.coding.where(code = 'M').exists()
+# Expected: true
+
+# Resource: examples/fhir/observation_bp.json
+
+# Get observation category
+category.coding.code
+# Expected: [["vital-signs"]]
+
+# Get observation code (LOINC)
+code.coding.where(system = 'http://loinc.org').code
+# Expected: ["85354-9"]
+
+# Get code display text
+code.coding.display
+# Expected: ["Blood pressure panel with all children optional"]
+
+# Get interpretation code
+interpretation.coding.code
+# Expected: [["H"]]
+
+# Get interpretation display
+interpretation.coding.display
+# Expected: [["High"]]
+
+# Get body site code
+bodySite.coding.code
+# Expected: ["368209003"]
+
+# Resource: examples/fhir/condition.json
+
+# Get condition code from SNOMED
+code.coding.where(system = 'http://snomed.info/sct').code
+# Expected: ["44054006"]
+
+# Get condition code from ICD-10
+code.coding.where(system = 'http://hl7.org/fhir/sid/icd-10-cm').code
+# Expected: ["E11.9"]
+
+# Get all condition codes
+code.coding.code
+# Expected: ["44054006", "E11.9"]
+
+# Get clinical status
+clinicalStatus.coding.code
+# Expected: ["active"]
+
+# Get verification status
+verificationStatus.coding.code
+# Expected: ["confirmed"]
+
+# Get severity
+severity.coding.display
+# Expected: ["Moderate"]
+
+# Resource: examples/fhir/medication_request.json
+
+# Get medication code (RxNorm)
+medicationCodeableConcept.coding.code
+# Expected: ["861007"]
+
+# Get medication display
+medicationCodeableConcept.coding.display
+# Expected: ["metformin hydrochloride 500 MG Oral Tablet"]
+
+# Get route of administration
+dosageInstruction.route.coding.display
+# Expected: [["Oral route"]]
+
+# Check if medication is from RxNorm system
+medicationCodeableConcept.coding.where(system = 'http://www.nlm.nih.gov/research/umls/rxnorm').exists()
+# Expected: true

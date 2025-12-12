@@ -1,0 +1,60 @@
+# FHIRPath String Functions
+# Resource: examples/fhir/patient.json
+
+# Get family name in uppercase
+name.where(use = 'official').family.upper()
+# Expected: ["SMITH"]
+
+# Get family name in lowercase
+name.where(use = 'official').family.lower()
+# Expected: ["smith"]
+
+# Get length of family name
+name.where(use = 'official').family.length()
+# Expected: [5]
+
+# Check if family name starts with 'Sm'
+name.family.startsWith('Sm')
+# Expected: [true]
+
+# Check if family name ends with 'th'
+name.family.endsWith('th')
+# Expected: [true]
+
+# Check if family name contains 'mit'
+name.family.contains('mit')
+# Expected: [true]
+
+# Get first letter of family name
+name.where(use = 'official').family.substring(0, 1)
+# Expected: ["S"]
+
+# Get first 3 letters
+name.where(use = 'official').family.substring(0, 3)
+# Expected: ["Smi"]
+
+# Check if city matches pattern
+address.city.matches('[A-Z][a-z]+')
+# Expected: [true, true]
+
+# Join given names with space
+name.where(use = 'official').given.join(' ')
+# Expected: "John William"
+
+# Join given names with comma
+name.where(use = 'official').given.join(', ')
+# Expected: "John, William"
+
+# Resource: examples/fhir/observation_lab.json
+
+# Get note text
+note.text
+# Expected: ["Patient has pre-diabetes..."]
+
+# Check if note contains 'diabetes'
+note.text.contains('diabetes')
+# Expected: [true]
+
+# Get reference range text
+referenceRange.text
+# Expected: ["Normal: 4.0-5.6%"]

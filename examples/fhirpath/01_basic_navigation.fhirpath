@@ -1,0 +1,56 @@
+# FHIRPath Basic Navigation Examples
+# Resource: examples/fhir/patient.json
+
+# Get patient's resource type
+resourceType
+# Expected: "Patient"
+
+# Get patient ID
+id
+# Expected: "example-patient-1"
+
+# Check if patient is active
+active
+# Expected: true
+
+# Get patient gender
+gender
+# Expected: "male"
+
+# Get patient birth date
+birthDate
+# Expected: "1985-06-15"
+
+# Get all names
+name
+# Expected: [{use: "official", family: "Smith", ...}, {use: "nickname", ...}]
+
+# Get family name from all names
+name.family
+# Expected: ["Smith"]
+
+# Get all given names (flattened)
+name.given
+# Expected: ["John", "William", "Johnny"]
+
+# Get first name entry
+name.first()
+# Expected: {use: "official", family: "Smith", given: ["John", "William"], ...}
+
+# Get first given name
+name.first().given.first()
+# Expected: "John"
+
+# Get last name entry
+name.last()
+# Expected: {use: "nickname", given: ["Johnny"]}
+
+# Access nested address fields
+address.city
+# Expected: ["Boston", "Cambridge"]
+
+address.state
+# Expected: ["MA", "MA"]
+
+address.postalCode
+# Expected: ["02101", "02139"]

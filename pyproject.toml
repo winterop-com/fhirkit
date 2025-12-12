@@ -1,0 +1,96 @@
+[project]
+name = "python-fhir-cql"
+version = "0.1.0"
+description = "FHIRPath and CQL parsers for Python using ANTLR4"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "antlr4-python3-runtime>=4.13.2",
+    "typer>=0.15.0",
+    "rich>=13.0",
+]
+
+[project.scripts]
+cql = "fhir_cql.cli:app"
+fhirpath = "fhir_cql.fhirpath_cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fhir_cql"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pyright>=1.1.390",
+    "pytest>=8.3.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+exclude = ["generated"]
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = ["E", "W", "F", "I"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_unused_ignores = true
+strict_equality = true
+mypy_path = ["src"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+    "antlr4.*",
+    "generated.*",
+    "fhirpathLexer",
+    "fhirpathParser",
+    "fhirpathVisitor",
+    "fhirpathListener",
+    "cqlLexer",
+    "cqlParser",
+    "cqlVisitor",
+    "cqlListener",
+]
+ignore_missing_imports = true
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
+reportPrivateUsage = false
+reportUnusedFunction = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+reportMissingTypeArgument = false
+reportMissingTypeStubs = false
+reportUnknownLambdaType = false
+reportMissingImports = false
+reportUntypedBaseClass = false
+reportUnusedVariable = false
+reportAttributeAccessIssue = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

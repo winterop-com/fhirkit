@@ -1,0 +1,62 @@
+# FHIRPath Date and Time Operations
+# Resource: examples/fhir/patient.json
+
+# Get patient birth date
+birthDate
+# Expected: "1985-06-15"
+
+# Resource: examples/fhir/observation_bp.json
+
+# Get observation effective date/time
+effectiveDateTime
+# Expected: "2024-03-10T09:15:00Z"
+
+# Get when observation was issued
+issued
+# Expected: "2024-03-10T09:20:00Z"
+
+# Get last updated timestamp
+meta.lastUpdated
+# Expected: "2024-03-10T14:30:00Z"
+
+# Resource: examples/fhir/condition.json
+
+# Get condition onset date
+onsetDateTime
+# Expected: "2023-06-15"
+
+# Get when condition was recorded
+recordedDate
+# Expected: "2023-06-20"
+
+# Resource: examples/fhir/medication_request.json
+
+# Get when medication was ordered
+authoredOn
+# Expected: "2024-01-10T09:30:00Z"
+
+# Get validity period start
+dispenseRequest.validityPeriod.start
+# Expected: "2024-01-10"
+
+# Get validity period end
+dispenseRequest.validityPeriod.end
+# Expected: "2025-01-10"
+
+# Date literals for comparison
+@2024-01-01
+# Expected: @2024-01-01
+
+@2024-06-15T10:30:00
+# Expected: @2024-06-15T10:30:00
+
+# Time literal
+@T09:30:00
+# Expected: @T09:30:00
+
+# Current date/time functions (results vary)
+today()
+# Expected: (current date)
+
+now()
+# Expected: (current datetime)

@@ -1,0 +1,48 @@
+# FHIRPath Filtering Examples
+# Resource: examples/fhir/patient.json
+
+# Get official name only
+name.where(use = 'official')
+# Expected: [{use: "official", family: "Smith", given: ["John", "William"], ...}]
+
+# Get official name's family
+name.where(use = 'official').family
+# Expected: ["Smith"]
+
+# Get home phone number
+telecom.where(system = 'phone' and use = 'home').value
+# Expected: ["+1-555-123-4567"]
+
+# Get all phone numbers
+telecom.where(system = 'phone').value
+# Expected: ["+1-555-123-4567", "+1-555-987-6543"]
+
+# Get email address
+telecom.where(system = 'email').value
+# Expected: ["john.smith@email.com"]
+
+# Get home address
+address.where(use = 'home')
+# Expected: [{use: "home", city: "Boston", ...}]
+
+# Get home address city
+address.where(use = 'home').city
+# Expected: ["Boston"]
+
+# Filter identifiers by system
+identifier.where(system = 'http://hospital.example.org/patients').value
+# Expected: ["12345"]
+
+# Resource: examples/fhir/observation_bp.json
+
+# Get systolic BP component
+component.where(code.coding.code = '8480-6')
+# Expected: [{code: {...}, valueQuantity: {value: 142, ...}}]
+
+# Get systolic BP value
+component.where(code.coding.code = '8480-6').valueQuantity.value
+# Expected: [142]
+
+# Get diastolic BP value
+component.where(code.coding.code = '8462-4').valueQuantity.value
+# Expected: [88]

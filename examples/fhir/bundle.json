@@ -1,0 +1,134 @@
+{
+  "resourceType": "Bundle",
+  "id": "patient-bundle-1",
+  "meta": {
+    "lastUpdated": "2024-03-15T12:00:00Z"
+  },
+  "type": "collection",
+  "total": 5,
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:patient-1",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "example-patient-1",
+        "active": true,
+        "name": [
+          {
+            "use": "official",
+            "family": "Smith",
+            "given": ["John", "William"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1985-06-15"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:condition-1",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "diabetes-1",
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "44054006",
+              "display": "Type 2 diabetes mellitus"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/example-patient-1"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:observation-1",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hba1c-1",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "4548-4",
+              "display": "HbA1c"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/example-patient-1"
+        },
+        "valueQuantity": {
+          "value": 6.8,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:observation-2",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "bp-1",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "85354-9",
+              "display": "Blood pressure"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/example-patient-1"
+        },
+        "component": [
+          {
+            "code": {
+              "coding": [{"system": "http://loinc.org", "code": "8480-6"}]
+            },
+            "valueQuantity": {"value": 142, "unit": "mmHg"}
+          },
+          {
+            "code": {
+              "coding": [{"system": "http://loinc.org", "code": "8462-4"}]
+            },
+            "valueQuantity": {"value": 88, "unit": "mmHg"}
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:medication-1",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "metformin-1",
+        "status": "active",
+        "intent": "order",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "861007",
+              "display": "metformin 500mg"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/example-patient-1"
+        }
+      }
+    }
+  ]
+}

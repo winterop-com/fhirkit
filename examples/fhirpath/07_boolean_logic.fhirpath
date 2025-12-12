@@ -1,0 +1,77 @@
+# FHIRPath Boolean Logic
+# Resource: examples/fhir/patient.json
+
+# Check if patient is active
+active
+# Expected: true
+
+# Check if patient is male
+gender = 'male'
+# Expected: true
+
+# Check if patient is female
+gender = 'female'
+# Expected: false
+
+# Combine conditions with AND
+active and (gender = 'male')
+# Expected: true
+
+# Combine conditions with OR
+(gender = 'female') or (gender = 'male')
+# Expected: true
+
+# NOT operator
+active.not()
+# Expected: false
+
+# Check if NOT female
+(gender = 'female').not()
+# Expected: true
+
+# XOR examples
+true xor false
+# Expected: true
+
+true xor true
+# Expected: false
+
+# Implies examples
+active implies (gender = 'male')
+# Expected: true
+
+# Check if patient has official name AND is active
+name.where(use = 'official').exists() and active
+# Expected: true
+
+# Null-safe equality with ~
+gender ~ 'male'
+# Expected: true
+
+# Resource: examples/fhir/observation_bp.json
+
+# Check if observation is final
+status = 'final'
+# Expected: true
+
+# Check if observation has high interpretation
+interpretation.coding.code = 'H'
+# Expected: [true]
+
+# Combine multiple conditions
+(status = 'final') and interpretation.exists()
+# Expected: true
+
+# Resource: examples/fhir/condition.json
+
+# Check if condition is active
+clinicalStatus.coding.code = 'active'
+# Expected: [true]
+
+# Check if condition is confirmed
+verificationStatus.coding.code = 'confirmed'
+# Expected: [true]
+
+# Active AND confirmed
+clinicalStatus.coding.where(code = 'active').exists() and verificationStatus.coding.where(code = 'confirmed').exists()
+# Expected: true
