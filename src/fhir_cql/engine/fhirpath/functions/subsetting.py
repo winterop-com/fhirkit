@@ -32,19 +32,17 @@ def fn_tail(ctx: EvaluationContext, collection: list[Any]) -> list[Any]:
 
 
 @FunctionRegistry.register("take")
-def fn_take(ctx: EvaluationContext, collection: list[Any], num: int) -> list[Any]:
+def fn_take(ctx: EvaluationContext, collection: list[Any], num: int | float | None) -> list[Any]:
     """Returns the first num elements of the collection."""
-    if not isinstance(num, int):
-        num = int(num) if num else 0
-    return collection[:num]
+    n = int(num) if num is not None else 0
+    return collection[:n]
 
 
 @FunctionRegistry.register("skip")
-def fn_skip(ctx: EvaluationContext, collection: list[Any], num: int) -> list[Any]:
+def fn_skip(ctx: EvaluationContext, collection: list[Any], num: int | float | None) -> list[Any]:
     """Returns all elements after skipping the first num."""
-    if not isinstance(num, int):
-        num = int(num) if num else 0
-    return collection[num:]
+    n = int(num) if num is not None else 0
+    return collection[n:]
 
 
 @FunctionRegistry.register("single")

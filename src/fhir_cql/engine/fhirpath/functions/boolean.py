@@ -116,8 +116,9 @@ def fn_to_integer(ctx: EvaluationContext, collection: list[Any]) -> list[int]:
         return [value]
 
     if isinstance(value, float):
-        if value == int(value):
-            return [int(value)]
+        int_val = int(value)
+        if value == float(int_val):
+            return [int_val]
         return []
 
     if isinstance(value, str):

@@ -197,16 +197,49 @@ class FHIRPathEvaluator:
 class FHIRPathErrorListener:
     """ANTLR error listener that raises FHIRPathError."""
 
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+    def syntaxError(
+        self,
+        recognizer: Any,
+        offendingSymbol: Any,
+        line: int,
+        column: int,
+        msg: str,
+        e: Any,
+    ) -> None:
         raise FHIRPathError(f"Syntax error at line {line}:{column}: {msg}")
 
-    def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
+    def reportAmbiguity(
+        self,
+        recognizer: Any,
+        dfa: Any,
+        startIndex: int,
+        stopIndex: int,
+        exact: bool,
+        ambigAlts: Any,
+        configs: Any,
+    ) -> None:
         pass
 
-    def reportAttemptingFullContext(self, recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs):
+    def reportAttemptingFullContext(
+        self,
+        recognizer: Any,
+        dfa: Any,
+        startIndex: int,
+        stopIndex: int,
+        conflictingAlts: Any,
+        configs: Any,
+    ) -> None:
         pass
 
-    def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
+    def reportContextSensitivity(
+        self,
+        recognizer: Any,
+        dfa: Any,
+        startIndex: int,
+        stopIndex: int,
+        prediction: int,
+        configs: Any,
+    ) -> None:
         pass
 
 

@@ -53,7 +53,7 @@ def fn_of_type(ctx: EvaluationContext, collection: list[Any], type_name: str) ->
     Args:
         type_name: The FHIR type name to filter by
     """
-    result = []
+    result: list[Any] = []
     for item in collection:
         if isinstance(item, dict):
             # Check resourceType for resources

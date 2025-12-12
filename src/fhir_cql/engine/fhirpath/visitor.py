@@ -104,22 +104,26 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         if not isinstance(left_val, (int, float, Decimal)) or not isinstance(right_val, (int, float, Decimal)):
             return []
 
+        # Convert to Decimal for consistent arithmetic
+        left_dec = Decimal(str(left_val))
+        right_dec = Decimal(str(right_val))
+
         op = ctx.getChild(1).getText()
         try:
             if op == "*":
-                return [left_val * right_val]
+                return [left_dec * right_dec]
             elif op == "/":
-                if right_val == 0:
+                if right_dec == 0:
                     return []
-                return [left_val / right_val]
+                return [left_dec / right_dec]
             elif op == "div":
-                if right_val == 0:
+                if right_dec == 0:
                     return []
-                return [int(left_val // right_val)]
+                return [int(left_dec // right_dec)]
             elif op == "mod":
-                if right_val == 0:
+                if right_dec == 0:
                     return []
-                return [left_val % right_val]
+                return [left_dec % right_dec]
         except (ZeroDivisionError, ArithmeticError):
             return []
 
@@ -161,10 +165,14 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         if not isinstance(left_val, (int, float, Decimal)) or not isinstance(right_val, (int, float, Decimal)):
             return []
 
+        # Convert to Decimal for consistent arithmetic
+        left_dec = Decimal(str(left_val))
+        right_dec = Decimal(str(right_val))
+
         if op == "+":
-            return [left_val + right_val]
+            return [left_dec + right_dec]
         elif op == "-":
-            return [left_val - right_val]
+            return [left_dec - right_dec]
 
         return []
 
@@ -421,14 +429,15 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         right_bool = self._to_boolean(right)
 
         # p implies q = not p or q
+        # Truth table: F->? = T, ?->T = T, T->F = F, else empty
         if left_bool is False:
             return [True]
         if right_bool is True:
             return [True]
-        if left_bool is None:
-            return [True] if right_bool is True else []
-        if right_bool is None:
+        # At this point: left is True or None, right is False or None
+        if left_bool is None or right_bool is None:
             return []
+        # left is True and right is False
         return [False]
 
     def visitTypeExpression(self, ctx: fhirpathParser.TypeExpressionContext) -> list[Any]:
@@ -640,7 +649,7 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         needs_collection = func_name in self._COLLECTION_ARG_FUNCTIONS
 
         # For regular functions, evaluate arguments first
-        evaluated_args = []
+        evaluated_args: list[Any] = []
         for arg in args:
             # Create a sub-visitor with the input collection
             result = self.visit(arg)
@@ -798,7 +807,7 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
             # For elements, check type info if available
             return True  # Relaxed check for elements
 
-        type_map = {
+        type_map: dict[str, type | tuple[type, ...]] = {
             "Boolean": bool,
             "String": str,
             "Integer": int,
@@ -806,11 +815,10 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
             "Quantity": Quantity,
         }
 
-        expected_type = type_map.get(type_name)
-        if expected_type:
+        if type_name in type_map:
             if type_name == "Integer":
                 return isinstance(value, int) and not isinstance(value, bool)
-            return isinstance(value, expected_type)
+            return isinstance(value, type_map[type_name])
 
         return False
 
