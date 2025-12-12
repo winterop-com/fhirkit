@@ -947,9 +947,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return None
 
-    def _apply_let_clause(
-        self, results: list[dict[str, Any]], ctx: cqlParser.LetClauseContext
-    ) -> list[dict[str, Any]]:
+    def _apply_let_clause(self, results: list[dict[str, Any]], ctx: cqlParser.LetClauseContext) -> list[dict[str, Any]]:
         """Apply let clause to bind additional variables."""
         for let_item in ctx.letClauseItem():
             identifier = self._get_identifier_text(let_item.identifier())
@@ -996,14 +994,10 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return filtered
 
-    def _apply_return_clause(
-        self, results: list[dict[str, Any]], ctx: cqlParser.ReturnClauseContext
-    ) -> list[Any]:
+    def _apply_return_clause(self, results: list[dict[str, Any]], ctx: cqlParser.ReturnClauseContext) -> list[Any]:
         """Apply return clause to shape output."""
         expr = ctx.expression()
-        distinct = ctx.getText().lower().startswith("return distinct") or ctx.getText().lower().startswith(
-            "return all"
-        )
+        distinct = ctx.getText().lower().startswith("return distinct") or ctx.getText().lower().startswith("return all")
         is_all = "all" in ctx.getText().lower()
 
         returned = []
@@ -1029,9 +1023,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return returned
 
-    def _apply_sort_clause(
-        self, results: list[Any], ctx: cqlParser.SortClauseContext
-    ) -> list[Any]:
+    def _apply_sort_clause(self, results: list[Any], ctx: cqlParser.SortClauseContext) -> list[Any]:
         """Apply sort clause to order results."""
         sort_items = ctx.sortByItem()
 
@@ -1808,9 +1800,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if name_lower == "now":
             now = self.context.now or datetime.now()
             return FHIRDateTime(
-                year=now.year, month=now.month, day=now.day,
-                hour=now.hour, minute=now.minute, second=now.second,
-                millisecond=now.microsecond // 1000
+                year=now.year,
+                month=now.month,
+                day=now.day,
+                hour=now.hour,
+                minute=now.minute,
+                second=now.second,
+                millisecond=now.microsecond // 1000,
             )
 
         if name_lower == "timeofday":
@@ -2090,7 +2086,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return self._add_duration(left, -int(right.value), right.unit)
 
         # Date/DateTime - Date/DateTime (calculate days between)
-        if isinstance(left, (FHIRDate, FHIRDateTime, date, datetime)) and isinstance(right, (FHIRDate, FHIRDateTime, date, datetime)):
+        if isinstance(left, (FHIRDate, FHIRDateTime, date, datetime)) and isinstance(
+            right, (FHIRDate, FHIRDateTime, date, datetime)
+        ):
             left_date = self._to_date(left)
             right_date = self._to_date(right)
             if left_date and right_date:
@@ -2384,9 +2382,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
             result = self._add_to_datetime(d, value, unit_lower)
             if result:
                 return FHIRDateTime(
-                    year=result.year, month=result.month, day=result.day,
-                    hour=result.hour, minute=result.minute, second=result.second,
-                    millisecond=result.microsecond // 1000
+                    year=result.year,
+                    month=result.month,
+                    day=result.day,
+                    hour=result.hour,
+                    minute=result.minute,
+                    second=result.second,
+                    millisecond=result.microsecond // 1000,
                 )
             return None
 
@@ -2415,6 +2417,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
             except ValueError:
                 # Handle day overflow (e.g., Jan 31 + 1 month)
                 import calendar
+
                 max_day = calendar.monthrange(year, month)[1]
                 return d.replace(year=year, month=month, day=min(d.day, max_day))
         elif unit == "week":
@@ -2446,10 +2449,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return []
 
         # Sort by low bound
-        sorted_intervals = sorted(
-            [i for i in intervals if i.low is not None],
-            key=lambda x: x.low
-        )
+        sorted_intervals = sorted([i for i in intervals if i.low is not None], key=lambda x: x.low)
 
         if not sorted_intervals:
             return []
@@ -2459,16 +2459,14 @@ class CQLEvaluatorVisitor(cqlVisitor):
             last = result[-1]
             # Check if intervals overlap or are adjacent
             if last.high is not None and current.low is not None:
-                if last.high >= current.low or (
-                    last.high == current.low and (last.high_closed or current.low_closed)
-                ):
+                if last.high >= current.low or (last.high == current.low and (last.high_closed or current.low_closed)):
                     # Merge intervals
                     new_high = max(last.high, current.high) if current.high is not None else current.high
                     result[-1] = CQLInterval(
                         low=last.low,
                         high=new_high,
                         low_closed=last.low_closed,
-                        high_closed=current.high_closed if new_high == current.high else last.high_closed
+                        high_closed=current.high_closed if new_high == current.high else last.high_closed,
                     )
                 else:
                     result.append(current)
