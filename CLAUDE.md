@@ -1,6 +1,18 @@
 # Claude Code Project Guidelines
 
-This project was created with assistance from [Claude Code](https://claude.com/claude-code).
+## Commit Rules
+
+- **Use conventional commits**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`
+- **NO attribution**: Do not add "Generated with Claude Code", "Co-Authored-By", or any AI attribution
+- **Keep messages concise**: Subject line under 72 chars, bullet points in body
+
+Example:
+```
+feat(fhirpath): add replaceMatches function
+
+- Add replaceMatches() for regex replacement
+- Fix replace() to use simple string replacement
+```
 
 ## Project Overview
 
