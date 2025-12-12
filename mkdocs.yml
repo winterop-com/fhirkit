@@ -36,4 +36,5 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - FHIRPath Guide: fhirpath-guide.md
   - CLI Reference: cli.md
