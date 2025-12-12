@@ -1,4 +1,4 @@
-.PHONY: help install generate lint check test coverage clean
+.PHONY: help install generate lint check test coverage docs docs-serve clean
 
 GRAMMAR_DIR := grammars
 GENERATED_DIR := generated
@@ -13,6 +13,8 @@ help:
 	@echo "  check      Check code without fixing"
 	@echo "  test       Run parser tests"
 	@echo "  coverage   Run tests with coverage report"
+	@echo "  docs       Build documentation"
+	@echo "  docs-serve Serve documentation locally"
 	@echo "  clean      Remove generated files and caches"
 
 install:
@@ -61,6 +63,14 @@ coverage:
 	@uv run pytest tests/ --cov=src/fhir_cql --cov-report=term-missing --cov-report=html
 	@echo ">>> HTML report generated in htmlcov/"
 
+docs:
+	@echo ">>> Building documentation"
+	@uv run --group docs mkdocs build
+
+docs-serve:
+	@echo ">>> Serving documentation at http://127.0.0.1:8000"
+	@uv run --group docs mkdocs serve
+
 clean:
 	@echo ">>> Cleaning"
 	@rm -rf $(GENERATED_DIR)
@@ -70,6 +80,7 @@ clean:
 	@rm -rf .coverage
 	@rm -rf htmlcov
 	@rm -rf coverage.xml
+	@rm -rf site
 	@rm -rf .venv
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 

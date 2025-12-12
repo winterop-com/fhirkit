@@ -3,8 +3,6 @@
 from datetime import datetime
 from typing import Any
 
-import pytest
-
 from fhir_cql.engine.context import EvaluationContext
 
 
@@ -213,7 +211,10 @@ class TestChildContext:
 
     def test_child_inherits_reference_resolver(self) -> None:
         """Test child context inherits reference resolver."""
-        resolver = lambda ref: {"id": "resolved"}
+
+        def resolver(ref: str) -> dict[str, str]:
+            return {"id": "resolved"}
+
         ctx = EvaluationContext(reference_resolver=resolver)
         child = ctx.child()
         assert child.reference_resolver is resolver

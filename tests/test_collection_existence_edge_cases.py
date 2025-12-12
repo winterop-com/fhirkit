@@ -1,12 +1,9 @@
 """Tests for collection and existence function edge cases."""
 
-from typing import Any
-
-import pytest
-
 from fhir_cql.engine.context import EvaluationContext
-
 from fhir_cql.engine.fhirpath.functions.collections import (
+    _deep_equals,
+    _ensure_list,
     fn_combine,
     fn_distinct,
     fn_exclude,
@@ -16,19 +13,13 @@ from fhir_cql.engine.fhirpath.functions.collections import (
     fn_subset_of,
     fn_superset_of,
     fn_union,
-    _deep_equals,
-    _ensure_list,
 )
-
 from fhir_cql.engine.fhirpath.functions.existence import (
     fn_all,
     fn_all_false,
     fn_all_true,
     fn_any_false,
     fn_any_true,
-    fn_count,
-    fn_empty,
-    fn_exists,
     fn_has_value,
 )
 

@@ -1,44 +1,8 @@
 """Tests for function edge cases to improve coverage."""
 
 from decimal import Decimal
-from typing import Any
-
-import pytest
 
 from fhir_cql.engine.context import EvaluationContext
-from fhir_cql.engine.types import Quantity
-
-# String functions
-from fhir_cql.engine.fhirpath.functions.strings import (
-    fn_contains,
-    fn_ends_with,
-    fn_index_of,
-    fn_join,
-    fn_length,
-    fn_lower,
-    fn_matches,
-    fn_replace,
-    fn_split,
-    fn_starts_with,
-    fn_substring,
-    fn_to_chars,
-    fn_trim,
-    fn_upper,
-)
-
-# Math functions
-from fhir_cql.engine.fhirpath.functions.math import (
-    fn_abs,
-    fn_ceiling,
-    fn_exp,
-    fn_floor,
-    fn_ln,
-    fn_log,
-    fn_power,
-    fn_round,
-    fn_sqrt,
-    fn_truncate,
-)
 
 # Boolean functions
 from fhir_cql.engine.fhirpath.functions.boolean import (
@@ -62,6 +26,39 @@ from fhir_cql.engine.fhirpath.functions.boolean import (
     fn_to_time,
     fn_trace,
 )
+
+# Math functions
+from fhir_cql.engine.fhirpath.functions.math import (
+    fn_abs,
+    fn_ceiling,
+    fn_exp,
+    fn_floor,
+    fn_ln,
+    fn_log,
+    fn_power,
+    fn_round,
+    fn_sqrt,
+    fn_truncate,
+)
+
+# String functions
+from fhir_cql.engine.fhirpath.functions.strings import (
+    fn_contains,
+    fn_ends_with,
+    fn_index_of,
+    fn_join,
+    fn_length,
+    fn_lower,
+    fn_matches,
+    fn_replace,
+    fn_split,
+    fn_starts_with,
+    fn_substring,
+    fn_to_chars,
+    fn_trim,
+    fn_upper,
+)
+from fhir_cql.engine.types import Quantity
 
 
 class TestStringFunctionsEdgeCases:

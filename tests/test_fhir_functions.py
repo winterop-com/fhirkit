@@ -2,8 +2,6 @@
 
 from typing import Any
 
-import pytest
-
 from fhir_cql.engine.context import EvaluationContext
 from fhir_cql.engine.fhirpath.functions.fhir import (
     fn_check_modifiers,
@@ -14,8 +12,8 @@ from fhir_cql.engine.fhirpath.functions.fhir import (
     fn_member_of,
     fn_resolve,
     fn_slice,
-    fn_subsumes,
     fn_subsumed_by,
+    fn_subsumes,
 )
 
 
@@ -76,6 +74,7 @@ class TestResolve:
 
     def test_resolve_unresolvable_returns_empty(self) -> None:
         """Test resolve with unresolvable reference."""
+
         def resolver(ref: str) -> dict[str, Any] | None:
             return None
 
@@ -86,6 +85,7 @@ class TestResolve:
 
     def test_resolve_non_dict_non_string_ignored(self) -> None:
         """Test resolve ignores non-dict, non-string items."""
+
         def resolver(ref: str) -> dict[str, Any] | None:
             return {"id": "test"}
 
@@ -113,9 +113,7 @@ class TestExtension:
 
     def test_extension_no_match(self) -> None:
         """Test extension returns empty when no match."""
-        resource = {
-            "extension": [{"url": "http://example.org/ext1", "valueString": "value1"}]
-        }
+        resource = {"extension": [{"url": "http://example.org/ext1", "valueString": "value1"}]}
         ctx = EvaluationContext()
         result = fn_extension(ctx, [resource], "http://example.org/other")
         assert result == []
@@ -156,9 +154,7 @@ class TestCheckModifiers:
 
     def test_check_modifiers_allowed(self) -> None:
         """Test checkModifiers with allowed modifier extensions."""
-        resource = {
-            "modifierExtension": [{"url": "http://example.org/allowed"}]
-        }
+        resource = {"modifierExtension": [{"url": "http://example.org/allowed"}]}
         ctx = EvaluationContext()
         result = fn_check_modifiers(ctx, [resource], "http://example.org/allowed")
         assert result == [resource]
@@ -178,9 +174,7 @@ class TestCheckModifiers:
 
     def test_check_modifiers_disallowed(self) -> None:
         """Test checkModifiers with disallowed modifier (returns collection for now)."""
-        resource = {
-            "modifierExtension": [{"url": "http://example.org/disallowed"}]
-        }
+        resource = {"modifierExtension": [{"url": "http://example.org/disallowed"}]}
         ctx = EvaluationContext()
         # Currently just passes through, doesn't raise error
         result = fn_check_modifiers(ctx, [resource], "http://example.org/other")

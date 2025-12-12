@@ -1,9 +1,7 @@
 """Tests for FHIR types module."""
 
-from datetime import date, datetime, time, timezone, timedelta
+from datetime import date, timedelta, timezone
 from decimal import Decimal
-
-import pytest
 
 from fhir_cql.engine.types import (
     FHIRDate,
@@ -185,9 +183,7 @@ class TestFHIRDateTime:
 
     def test_to_datetime_full_utc(self) -> None:
         """Test conversion to Python datetime with UTC timezone."""
-        dt = FHIRDateTime(
-            year=2024, month=3, day=15, hour=10, minute=30, second=45, millisecond=123, tz_offset="Z"
-        )
+        dt = FHIRDateTime(year=2024, month=3, day=15, hour=10, minute=30, second=45, millisecond=123, tz_offset="Z")
         result = dt.to_datetime()
         assert result is not None
         assert result.year == 2024
@@ -224,9 +220,7 @@ class TestFHIRDateTime:
 
     def test_str_full(self) -> None:
         """Test string representation of full datetime."""
-        dt = FHIRDateTime(
-            year=2024, month=3, day=15, hour=10, minute=30, second=45, millisecond=123, tz_offset="Z"
-        )
+        dt = FHIRDateTime(year=2024, month=3, day=15, hour=10, minute=30, second=45, millisecond=123, tz_offset="Z")
         assert str(dt) == "2024-03-15T10:30:45.123Z"
 
     def test_str_partial(self) -> None:
