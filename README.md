@@ -1,7 +1,7 @@
 # python-fhir-cql
 
-[![CI](https://github.com/morteoh/python-fhir-cql/actions/workflows/ci.yml/badge.svg)](https://github.com/morteoh/python-fhir-cql/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/morteoh/python-fhir-cql/branch/main/graph/badge.svg)](https://codecov.io/gh/morteoh/python-fhir-cql)
+[![CI](https://github.com/mortenoh/python-fhir-cql/actions/workflows/ci.yml/badge.svg)](https://github.com/mortenoh/python-fhir-cql/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/mortenoh/python-fhir-cql/branch/main/graph/badge.svg)](https://codecov.io/gh/mortenoh/python-fhir-cql)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
