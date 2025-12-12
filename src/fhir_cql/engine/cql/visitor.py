@@ -5,6 +5,7 @@ It walks the parse tree and evaluates expressions.
 """
 
 import sys
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -1238,6 +1239,142 @@ class CQLEvaluatorVisitor(cqlVisitor):
         return None
 
     # =========================================================================
+    # Duration and Difference Expressions
+    # =========================================================================
+
+    def visitDurationBetweenExpression(self, ctx: cqlParser.DurationBetweenExpressionContext) -> int | None:
+        """Visit duration between expression (years/months/days between X and Y)."""
+        # Get the precision (years, months, days, etc.)
+        precision_ctx = ctx.pluralDateTimePrecision()
+        precision = precision_ctx.getText().lower() if precision_ctx else "days"
+
+        # Get the two expression terms
+        terms = ctx.expressionTerm()
+        if len(terms) < 2:
+            return None
+
+        start = self.visit(terms[0])
+        end = self.visit(terms[1])
+
+        if start is None or end is None:
+            return None
+
+        return self._date_diff(start, end, precision)
+
+    def visitDifferenceBetweenExpression(self, ctx: cqlParser.DifferenceBetweenExpressionContext) -> int | None:
+        """Visit difference between expression (difference in years between X and Y)."""
+        # Get the precision (years, months, days, etc.)
+        precision_ctx = ctx.pluralDateTimePrecision()
+        precision = precision_ctx.getText().lower() if precision_ctx else "days"
+
+        # Get the two expression terms
+        terms = ctx.expressionTerm()
+        if len(terms) < 2:
+            return None
+
+        start = self.visit(terms[0])
+        end = self.visit(terms[1])
+
+        if start is None or end is None:
+            return None
+
+        return self._date_diff(start, end, precision)
+
+    def visitTimeUnitExpressionTerm(self, ctx: cqlParser.TimeUnitExpressionTermContext) -> int | None:
+        """Visit time unit expression (year from X, month from X, etc.)."""
+        expr = ctx.expressionTerm()
+        value = self.visit(expr)
+
+        if value is None:
+            return None
+
+        # Get the time unit (year, month, day, hour, minute, second)
+        unit_ctx = ctx.dateTimeComponent()
+        if unit_ctx is None:
+            return None
+
+        unit = unit_ctx.getText().lower()
+
+        # Extract the component
+        if unit in ("year", "years"):
+            return self._call_builtin_function("year", [value])
+        elif unit in ("month", "months"):
+            return self._call_builtin_function("month", [value])
+        elif unit in ("day", "days"):
+            return self._call_builtin_function("day", [value])
+        elif unit in ("hour", "hours"):
+            return self._call_builtin_function("hour", [value])
+        elif unit in ("minute", "minutes"):
+            return self._call_builtin_function("minute", [value])
+        elif unit in ("second", "seconds"):
+            return self._call_builtin_function("second", [value])
+        elif unit in ("millisecond", "milliseconds"):
+            # Handle millisecond extraction
+            if isinstance(value, FHIRDateTime):
+                return value.millisecond if hasattr(value, "millisecond") else 0
+            if isinstance(value, datetime):
+                return value.microsecond // 1000
+        elif unit in ("timezone", "timezoneoffset"):
+            return self._call_builtin_function("timezone", [value])
+
+        return None
+
+    def visitWidthExpressionTerm(self, ctx: cqlParser.WidthExpressionTermContext) -> Any:
+        """Visit width of expression (width of Interval)."""
+        expr = ctx.expressionTerm()
+        interval = self.visit(expr)
+
+        if isinstance(interval, CQLInterval):
+            return interval.width()
+        return None
+
+    def visitTimeBoundaryExpressionTerm(self, ctx: cqlParser.TimeBoundaryExpressionTermContext) -> Any:
+        """Visit time boundary expression (start of / end of Interval)."""
+        # Get the boundary type (first token: 'start' or 'end')
+        boundary = ctx.getChild(0).getText().lower()
+        # Get the expression (the interval)
+        expr = ctx.expressionTerm()
+        value = self.visit(expr)
+
+        if value is None:
+            return None
+
+        if isinstance(value, CQLInterval):
+            if boundary == "start":
+                return value.low
+            elif boundary == "end":
+                return value.high
+
+        return None
+
+    def visitSetAggregateExpressionTerm(self, ctx: cqlParser.SetAggregateExpressionTermContext) -> Any:
+        """Visit set aggregate expression (expand / collapse)."""
+        # Get the operation (first token: 'expand' or 'collapse')
+        op = ctx.getChild(0).getText().lower()
+        # Get the expressions
+        expressions = ctx.expression()
+
+        if op == "collapse":
+            if expressions:
+                value = self.visit(expressions[0])
+                if isinstance(value, list):
+                    intervals = [i for i in value if isinstance(i, CQLInterval)]
+                    return self._collapse_intervals(intervals)
+            return []
+
+        elif op == "expand":
+            if expressions:
+                value = self.visit(expressions[0])
+                if isinstance(value, CQLInterval):
+                    per = None
+                    if len(expressions) > 1:
+                        per = self.visit(expressions[1])
+                    return self._expand_interval(value, per)
+            return []
+
+        return None
+
+    # =========================================================================
     # Indexing
     # =========================================================================
 
@@ -1659,24 +1796,307 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     return Decimal(product) ** (Decimal(1) / Decimal(len(values)))
             return None
 
+        # =====================================================================
+        # Phase 3: Date/Time and Interval Functions
+        # =====================================================================
+
+        # Date/Time constructors
+        if name_lower == "today":
+            d = self.context.now.date() if self.context.now else datetime.now().date()
+            return FHIRDate(year=d.year, month=d.month, day=d.day)
+
+        if name_lower == "now":
+            now = self.context.now or datetime.now()
+            return FHIRDateTime(
+                year=now.year, month=now.month, day=now.day,
+                hour=now.hour, minute=now.minute, second=now.second,
+                millisecond=now.microsecond // 1000
+            )
+
+        if name_lower == "timeofday":
+            now = self.context.now or datetime.now()
+            t = now.time()
+            return FHIRTime(hour=t.hour, minute=t.minute, second=t.second, millisecond=t.microsecond // 1000)
+
+        if name_lower == "date":
+            # Date(year, month, day)
+            if len(args) >= 1:
+                year = args[0]
+                month = args[1] if len(args) > 1 else 1
+                day = args[2] if len(args) > 2 else 1
+                if year is not None:
+                    return FHIRDate(year=int(year), month=int(month or 1), day=int(day or 1))
+            return None
+
+        if name_lower == "datetime":
+            # DateTime(year, month, day, hour, minute, second, millisecond, timezone)
+            if len(args) >= 1 and args[0] is not None:
+                year = int(args[0])
+                month = int(args[1]) if len(args) > 1 and args[1] is not None else 1
+                day = int(args[2]) if len(args) > 2 and args[2] is not None else 1
+                hour = int(args[3]) if len(args) > 3 and args[3] is not None else 0
+                minute = int(args[4]) if len(args) > 4 and args[4] is not None else 0
+                second = int(args[5]) if len(args) > 5 and args[5] is not None else 0
+                return FHIRDateTime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
+            return None
+
+        if name_lower == "time":
+            # Time(hour, minute, second, millisecond)
+            if len(args) >= 1 and args[0] is not None:
+                hour = int(args[0])
+                minute = int(args[1]) if len(args) > 1 and args[1] is not None else 0
+                second = int(args[2]) if len(args) > 2 and args[2] is not None else 0
+                return FHIRTime(hour=hour, minute=minute, second=second)
+            return None
+
+        # Interval functions
+        if name_lower in ("start", "startof"):
+            if args and isinstance(args[0], CQLInterval):
+                return args[0].low
+            return None
+
+        if name_lower in ("end", "endof"):
+            if args and isinstance(args[0], CQLInterval):
+                return args[0].high
+            return None
+
+        if name_lower in ("width", "widthof"):
+            if args and isinstance(args[0], CQLInterval):
+                return args[0].width()
+            return None
+
+        if name_lower in ("size", "sizeof"):
+            if args and isinstance(args[0], CQLInterval):
+                interval = args[0]
+                if interval.low is None or interval.high is None:
+                    return None
+                # Size includes boundaries for closed intervals
+                width = interval.high - interval.low
+                if isinstance(width, int):
+                    width += 1 if interval.low_closed and interval.high_closed else 0
+                return width
+            return None
+
+        if name_lower == "pointfrom":
+            if args and isinstance(args[0], CQLInterval):
+                interval = args[0]
+                if interval.low == interval.high and interval.low_closed and interval.high_closed:
+                    return interval.low
+                raise CQLError("pointFrom requires a unit interval")
+            return args[0] if args else None
+
+        if name_lower == "collapse":
+            if args and isinstance(args[0], list):
+                intervals = [i for i in args[0] if isinstance(i, CQLInterval)]
+                return self._collapse_intervals(intervals)
+            return []
+
+        if name_lower == "expand":
+            if args and isinstance(args[0], CQLInterval):
+                interval = args[0]
+                per = args[1] if len(args) > 1 else None
+                return self._expand_interval(interval, per)
+            return []
+
+        # Component extraction
+        if name_lower in ("year", "yearfrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDate):
+                    return val.year
+                if isinstance(val, FHIRDateTime):
+                    return val.year
+                if isinstance(val, date):
+                    return val.year
+                if isinstance(val, datetime):
+                    return val.year
+            return None
+
+        if name_lower in ("month", "monthfrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDate):
+                    return val.month
+                if isinstance(val, FHIRDateTime):
+                    return val.month
+                if isinstance(val, date):
+                    return val.month
+                if isinstance(val, datetime):
+                    return val.month
+            return None
+
+        if name_lower in ("day", "dayfrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDate):
+                    return val.day
+                if isinstance(val, FHIRDateTime):
+                    return val.day
+                if isinstance(val, date):
+                    return val.day
+                if isinstance(val, datetime):
+                    return val.day
+            return None
+
+        if name_lower in ("hour", "hourfrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDateTime):
+                    return val.hour
+                if isinstance(val, FHIRTime):
+                    return val.hour
+                if isinstance(val, datetime):
+                    return val.hour
+                if isinstance(val, time):
+                    return val.hour
+            return None
+
+        if name_lower in ("minute", "minutefrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDateTime):
+                    return val.minute
+                if isinstance(val, FHIRTime):
+                    return val.minute
+                if isinstance(val, datetime):
+                    return val.minute
+                if isinstance(val, time):
+                    return val.minute
+            return None
+
+        if name_lower in ("second", "secondfrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDateTime):
+                    return val.second
+                if isinstance(val, FHIRTime):
+                    return val.second
+                if isinstance(val, datetime):
+                    return val.second
+                if isinstance(val, time):
+                    return val.second
+            return None
+
+        if name_lower in ("timezone", "timezonefrom", "timezoneoffsetfrom"):
+            if args and args[0] is not None:
+                val = args[0]
+                if isinstance(val, FHIRDateTime) and val.timezone_offset is not None:
+                    return val.timezone_offset
+                if isinstance(val, datetime) and val.tzinfo is not None:
+                    offset = val.utcoffset()
+                    if offset is not None:
+                        return offset.total_seconds() / 3600
+            return None
+
+        if name_lower == "datediff":
+            # Calculate difference in days
+            if len(args) >= 2:
+                return self._date_diff(args[0], args[1], "day")
+            return None
+
+        # Clinical age functions
+        if name_lower == "ageinyears":
+            birthdate = self._get_patient_birthdate()
+            if birthdate:
+                return self._calculate_age_in_years(birthdate, self.context.now or datetime.now())
+            return None
+
+        if name_lower == "ageinmonths":
+            birthdate = self._get_patient_birthdate()
+            if birthdate:
+                return self._calculate_age_in_months(birthdate, self.context.now or datetime.now())
+            return None
+
+        if name_lower == "ageinweeks":
+            birthdate = self._get_patient_birthdate()
+            if birthdate:
+                return self._calculate_age_in_weeks(birthdate, self.context.now or datetime.now())
+            return None
+
+        if name_lower == "ageindays":
+            birthdate = self._get_patient_birthdate()
+            if birthdate:
+                return self._calculate_age_in_days(birthdate, self.context.now or datetime.now())
+            return None
+
+        if name_lower == "ageinyearsat":
+            if args:
+                birthdate = self._get_patient_birthdate()
+                as_of = args[0]
+                if birthdate and as_of:
+                    return self._calculate_age_in_years(birthdate, as_of)
+            return None
+
+        if name_lower == "ageinmonthsat":
+            if args:
+                birthdate = self._get_patient_birthdate()
+                as_of = args[0]
+                if birthdate and as_of:
+                    return self._calculate_age_in_months(birthdate, as_of)
+            return None
+
+        if name_lower == "calculateageinyears":
+            if len(args) >= 2:
+                return self._calculate_age_in_years(args[0], args[1])
+            return None
+
+        if name_lower == "calculateageinmonths":
+            if len(args) >= 2:
+                return self._calculate_age_in_months(args[0], args[1])
+            return None
+
+        if name_lower == "calculateageinweeks":
+            if len(args) >= 2:
+                return self._calculate_age_in_weeks(args[0], args[1])
+            return None
+
+        if name_lower == "calculateageindays":
+            if len(args) >= 2:
+                return self._calculate_age_in_days(args[0], args[1])
+            return None
+
         # Function not found
         return None
 
     # Arithmetic helpers
     def _add(self, left: Any, right: Any) -> Any:
         """Add two values."""
+        # Quantity + Quantity
         if isinstance(left, Quantity) and isinstance(right, Quantity):
             if left.unit == right.unit:
                 return Quantity(value=left.value + right.value, unit=left.unit)
             return None
+
+        # Date/DateTime + Quantity (duration)
+        if isinstance(left, (FHIRDate, FHIRDateTime, date, datetime)) and isinstance(right, Quantity):
+            return self._add_duration(left, int(right.value), right.unit)
+
+        # Quantity + Date/DateTime
+        if isinstance(right, (FHIRDate, FHIRDateTime, date, datetime)) and isinstance(left, Quantity):
+            return self._add_duration(right, int(left.value), left.unit)
+
         return left + right
 
     def _subtract(self, left: Any, right: Any) -> Any:
         """Subtract two values."""
+        # Quantity - Quantity
         if isinstance(left, Quantity) and isinstance(right, Quantity):
             if left.unit == right.unit:
                 return Quantity(value=left.value - right.value, unit=left.unit)
             return None
+
+        # Date/DateTime - Quantity (duration)
+        if isinstance(left, (FHIRDate, FHIRDateTime, date, datetime)) and isinstance(right, Quantity):
+            return self._add_duration(left, -int(right.value), right.unit)
+
+        # Date/DateTime - Date/DateTime (calculate days between)
+        if isinstance(left, (FHIRDate, FHIRDateTime, date, datetime)) and isinstance(right, (FHIRDate, FHIRDateTime, date, datetime)):
+            left_date = self._to_date(left)
+            right_date = self._to_date(right)
+            if left_date and right_date:
+                delta = left_date - right_date
+                return delta.days
+
         return left - right
 
     def _multiply(self, left: Any, right: Any) -> Any:
@@ -1828,6 +2248,281 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return None
 
         return value
+
+    # =========================================================================
+    # Phase 3: Date/Time Helpers
+    # =========================================================================
+
+    def _to_date(self, value: Any) -> date | None:
+        """Convert a value to a Python date."""
+        if value is None:
+            return None
+        if isinstance(value, date) and not isinstance(value, datetime):
+            return value
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, FHIRDate):
+            return value.to_date()
+        if isinstance(value, FHIRDateTime):
+            dt = value.to_datetime()
+            return dt.date() if dt else None
+        return None
+
+    def _to_datetime(self, value: Any) -> datetime | None:
+        """Convert a value to a Python datetime."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, date):
+            return datetime.combine(value, time(0, 0, 0))
+        if isinstance(value, FHIRDateTime):
+            return value.to_datetime()
+        if isinstance(value, FHIRDate):
+            d = value.to_date()
+            return datetime.combine(d, time(0, 0, 0)) if d else None
+        return None
+
+    def _get_patient_birthdate(self) -> date | None:
+        """Get the patient's birthdate from context."""
+        resource = self.context.resource
+        if resource and isinstance(resource, dict):
+            birthdate = resource.get("birthDate")
+            if birthdate:
+                if isinstance(birthdate, str):
+                    try:
+                        return date.fromisoformat(birthdate[:10])
+                    except ValueError:
+                        return None
+                if isinstance(birthdate, date):
+                    return birthdate
+                if isinstance(birthdate, FHIRDate):
+                    return birthdate.to_date()
+        return None
+
+    def _calculate_age_in_years(self, birthdate: Any, as_of: Any) -> int | None:
+        """Calculate age in years."""
+        birth = self._to_date(birthdate)
+        ref = self._to_date(as_of) if not isinstance(as_of, datetime) else as_of.date()
+        if birth is None or ref is None:
+            return None
+
+        age = ref.year - birth.year
+        if (ref.month, ref.day) < (birth.month, birth.day):
+            age -= 1
+        return age
+
+    def _calculate_age_in_months(self, birthdate: Any, as_of: Any) -> int | None:
+        """Calculate age in months."""
+        birth = self._to_date(birthdate)
+        ref = self._to_date(as_of) if not isinstance(as_of, datetime) else as_of.date()
+        if birth is None or ref is None:
+            return None
+
+        months = (ref.year - birth.year) * 12 + (ref.month - birth.month)
+        if ref.day < birth.day:
+            months -= 1
+        return months
+
+    def _calculate_age_in_weeks(self, birthdate: Any, as_of: Any) -> int | None:
+        """Calculate age in weeks."""
+        birth = self._to_date(birthdate)
+        ref = self._to_date(as_of) if not isinstance(as_of, datetime) else as_of.date()
+        if birth is None or ref is None:
+            return None
+
+        delta = ref - birth
+        return delta.days // 7
+
+    def _calculate_age_in_days(self, birthdate: Any, as_of: Any) -> int | None:
+        """Calculate age in days."""
+        birth = self._to_date(birthdate)
+        ref = self._to_date(as_of) if not isinstance(as_of, datetime) else as_of.date()
+        if birth is None or ref is None:
+            return None
+
+        delta = ref - birth
+        return delta.days
+
+    def _date_diff(self, start: Any, end: Any, unit: str) -> int | None:
+        """Calculate difference between two dates in the given unit."""
+        start_date = self._to_date(start)
+        end_date = self._to_date(end)
+        if start_date is None or end_date is None:
+            return None
+
+        unit_lower = unit.lower()
+        if unit_lower in ("year", "years"):
+            return self._calculate_age_in_years(start_date, end_date)
+        elif unit_lower in ("month", "months"):
+            return self._calculate_age_in_months(start_date, end_date)
+        elif unit_lower in ("week", "weeks"):
+            delta = end_date - start_date
+            return delta.days // 7
+        elif unit_lower in ("day", "days"):
+            delta = end_date - start_date
+            return delta.days
+        return None
+
+    def _add_duration(self, dt: Any, value: int, unit: str) -> Any:
+        """Add a duration to a date or datetime."""
+        unit_lower = unit.lower().rstrip("s")  # Remove trailing 's' for plural
+
+        if isinstance(dt, FHIRDate):
+            d = dt.to_date()
+            if d is None:
+                return None
+            result = self._add_to_date(d, value, unit_lower)
+            if result:
+                return FHIRDate(year=result.year, month=result.month, day=result.day)
+            return None
+
+        if isinstance(dt, FHIRDateTime):
+            d = dt.to_datetime()
+            if d is None:
+                return None
+            result = self._add_to_datetime(d, value, unit_lower)
+            if result:
+                return FHIRDateTime(
+                    year=result.year, month=result.month, day=result.day,
+                    hour=result.hour, minute=result.minute, second=result.second,
+                    millisecond=result.microsecond // 1000
+                )
+            return None
+
+        if isinstance(dt, date) and not isinstance(dt, datetime):
+            return self._add_to_date(dt, value, unit_lower)
+
+        if isinstance(dt, datetime):
+            return self._add_to_datetime(dt, value, unit_lower)
+
+        return None
+
+    def _add_to_date(self, d: date, value: int, unit: str) -> date | None:
+        """Add duration to a date."""
+        if unit == "year":
+            try:
+                return d.replace(year=d.year + value)
+            except ValueError:
+                # Handle Feb 29 -> Feb 28 for non-leap years
+                return d.replace(year=d.year + value, day=28)
+        elif unit == "month":
+            month = d.month + value
+            year = d.year + (month - 1) // 12
+            month = ((month - 1) % 12) + 1
+            try:
+                return d.replace(year=year, month=month)
+            except ValueError:
+                # Handle day overflow (e.g., Jan 31 + 1 month)
+                import calendar
+                max_day = calendar.monthrange(year, month)[1]
+                return d.replace(year=year, month=month, day=min(d.day, max_day))
+        elif unit == "week":
+            return d + timedelta(weeks=value)
+        elif unit == "day":
+            return d + timedelta(days=value)
+        return None
+
+    def _add_to_datetime(self, dt: datetime, value: int, unit: str) -> datetime | None:
+        """Add duration to a datetime."""
+        if unit in ("year", "month", "week", "day"):
+            result_date = self._add_to_date(dt.date(), value, unit)
+            if result_date:
+                return datetime.combine(result_date, dt.time())
+            return None
+        elif unit == "hour":
+            return dt + timedelta(hours=value)
+        elif unit == "minute":
+            return dt + timedelta(minutes=value)
+        elif unit == "second":
+            return dt + timedelta(seconds=value)
+        elif unit == "millisecond":
+            return dt + timedelta(milliseconds=value)
+        return None
+
+    def _collapse_intervals(self, intervals: list[CQLInterval[Any]]) -> list[CQLInterval[Any]]:
+        """Collapse overlapping/adjacent intervals into merged intervals."""
+        if not intervals:
+            return []
+
+        # Sort by low bound
+        sorted_intervals = sorted(
+            [i for i in intervals if i.low is not None],
+            key=lambda x: x.low
+        )
+
+        if not sorted_intervals:
+            return []
+
+        result = [sorted_intervals[0]]
+        for current in sorted_intervals[1:]:
+            last = result[-1]
+            # Check if intervals overlap or are adjacent
+            if last.high is not None and current.low is not None:
+                if last.high >= current.low or (
+                    last.high == current.low and (last.high_closed or current.low_closed)
+                ):
+                    # Merge intervals
+                    new_high = max(last.high, current.high) if current.high is not None else current.high
+                    result[-1] = CQLInterval(
+                        low=last.low,
+                        high=new_high,
+                        low_closed=last.low_closed,
+                        high_closed=current.high_closed if new_high == current.high else last.high_closed
+                    )
+                else:
+                    result.append(current)
+            else:
+                result.append(current)
+
+        return result
+
+    def _expand_interval(self, interval: CQLInterval[Any], per: Any = None) -> list[Any]:
+        """Expand an interval into a list of points."""
+        if interval.low is None or interval.high is None:
+            return []
+
+        # For integer intervals, expand to individual values
+        if isinstance(interval.low, int) and isinstance(interval.high, int):
+            start = interval.low if interval.low_closed else interval.low + 1
+            end = interval.high if interval.high_closed else interval.high - 1
+            return list(range(start, end + 1))
+
+        # For date intervals with a per quantity
+        if isinstance(interval.low, (date, FHIRDate)) and per is not None:
+            return self._expand_date_interval(interval, per)
+
+        return []
+
+    def _expand_date_interval(self, interval: CQLInterval[Any], per: Any) -> list[Any]:
+        """Expand a date interval by a given period."""
+        low = self._to_date(interval.low)
+        high = self._to_date(interval.high)
+        if low is None or high is None:
+            return []
+
+        # Determine the unit from per (could be Quantity or string)
+        if isinstance(per, Quantity):
+            unit = per.unit
+            step = int(per.value)
+        elif isinstance(per, str):
+            unit = per
+            step = 1
+        else:
+            return []
+
+        result = []
+        current = low if interval.low_closed else self._add_to_date(low, 1, unit.rstrip("s"))
+
+        while current and current <= high:
+            if current < high or interval.high_closed:
+                result.append(FHIRDate(year=current.year, month=current.month, day=current.day))
+            next_date = self._add_to_date(current, step, unit.rstrip("s"))
+            if next_date is None or next_date <= current:
+                break
+            current = next_date
+
+        return result
 
 
 del ParseTreeVisitor  # Clean up namespace

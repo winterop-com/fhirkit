@@ -1942,3 +1942,500 @@ class TestAggregatesOnComputedLists:
     def test_count_of_filtered(self) -> None:
         # Using Distinct as a filter
         assert evaluate("Count(Distinct({1, 1, 2, 2, 3}))") == 3
+
+
+# =============================================================================
+# Phase 3: Date/Time Functions
+# =============================================================================
+
+
+class TestDateTimeConstructors:
+    """Test date/time constructor functions."""
+
+    def test_today_returns_date(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("Today()")
+        assert isinstance(result, FHIRDate)
+
+    def test_now_returns_datetime(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("Now()")
+        assert isinstance(result, FHIRDateTime)
+
+    def test_timeofday_returns_time(self) -> None:
+        from fhir_cql.engine.types import FHIRTime
+        result = evaluate("TimeOfDay()")
+        assert isinstance(result, FHIRTime)
+
+    def test_date_constructor_full(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("Date(2024, 3, 15)")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2024
+        assert result.month == 3
+        assert result.day == 15
+
+    def test_date_constructor_year_only(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("Date(2024)")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2024
+
+    def test_datetime_constructor_full(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("DateTime(2024, 6, 15, 14, 30, 45)")
+        assert isinstance(result, FHIRDateTime)
+        assert result.year == 2024
+        assert result.month == 6
+        assert result.day == 15
+        assert result.hour == 14
+        assert result.minute == 30
+        assert result.second == 45
+
+    def test_datetime_constructor_date_only(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("DateTime(2024, 12, 25)")
+        assert isinstance(result, FHIRDateTime)
+        assert result.year == 2024
+        assert result.month == 12
+        assert result.day == 25
+
+    def test_time_constructor(self) -> None:
+        from fhir_cql.engine.types import FHIRTime
+        result = evaluate("Time(14, 30, 0)")
+        assert isinstance(result, FHIRTime)
+        assert result.hour == 14
+        assert result.minute == 30
+        assert result.second == 0
+
+
+class TestDateComponentExtraction:
+    """Test date/time component extraction functions."""
+
+    def test_year_from_date(self) -> None:
+        assert evaluate("year from @2024-03-15") == 2024
+
+    def test_month_from_date(self) -> None:
+        assert evaluate("month from @2024-03-15") == 3
+
+    def test_day_from_date(self) -> None:
+        assert evaluate("day from @2024-03-15") == 15
+
+    def test_year_from_datetime(self) -> None:
+        assert evaluate("year from @2024-06-20T10:30:00") == 2024
+
+    def test_month_from_datetime(self) -> None:
+        assert evaluate("month from @2024-06-20T10:30:00") == 6
+
+    def test_day_from_datetime(self) -> None:
+        assert evaluate("day from @2024-06-20T10:30:00") == 20
+
+    def test_hour_from_datetime(self) -> None:
+        assert evaluate("hour from @2024-06-20T10:30:00") == 10
+
+    def test_minute_from_datetime(self) -> None:
+        assert evaluate("minute from @2024-06-20T10:30:45") == 30
+
+    def test_second_from_datetime(self) -> None:
+        assert evaluate("second from @2024-06-20T10:30:45") == 45
+
+    def test_year_function(self) -> None:
+        assert evaluate("Year(@2024-03-15)") == 2024
+
+    def test_month_function(self) -> None:
+        assert evaluate("Month(@2024-03-15)") == 3
+
+    def test_day_function(self) -> None:
+        assert evaluate("Day(@2024-03-15)") == 15
+
+    def test_hour_function(self) -> None:
+        assert evaluate("Hour(@2024-06-20T14:30:00)") == 14
+
+    def test_minute_function(self) -> None:
+        assert evaluate("Minute(@2024-06-20T14:30:00)") == 30
+
+    def test_second_function(self) -> None:
+        assert evaluate("Second(@2024-06-20T14:30:45)") == 45
+
+
+class TestIntervalFunctions:
+    """Test interval accessor functions."""
+
+    def test_start_of_integer_interval(self) -> None:
+        assert evaluate("start of Interval[1, 10]") == 1
+
+    def test_end_of_integer_interval(self) -> None:
+        assert evaluate("end of Interval[1, 10]") == 10
+
+    def test_start_of_date_interval(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("start of Interval[@2024-01-01, @2024-12-31]")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2024
+        assert result.month == 1
+        assert result.day == 1
+
+    def test_end_of_date_interval(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("end of Interval[@2024-01-01, @2024-12-31]")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2024
+        assert result.month == 12
+        assert result.day == 31
+
+    def test_width_of_integer_interval(self) -> None:
+        assert evaluate("width of Interval[1, 10]") == 9
+
+    def test_width_of_integer_interval_closed(self) -> None:
+        assert evaluate("width of Interval[5, 15]") == 10
+
+    def test_start_of_null_is_null(self) -> None:
+        assert evaluate("start of null") is None
+
+    def test_end_of_null_is_null(self) -> None:
+        assert evaluate("end of null") is None
+
+    def test_width_of_null_is_null(self) -> None:
+        assert evaluate("width of null") is None
+
+
+class TestDurationBetween:
+    """Test duration between expressions."""
+
+    def test_years_between_dates(self) -> None:
+        assert evaluate("years between @1990-01-01 and @2024-01-01") == 34
+
+    def test_months_between_dates(self) -> None:
+        assert evaluate("months between @2024-01-15 and @2024-06-15") == 5
+
+    def test_days_between_dates(self) -> None:
+        assert evaluate("days between @2024-01-01 and @2024-01-31") == 30
+
+    def test_weeks_between_dates(self) -> None:
+        assert evaluate("weeks between @2024-01-01 and @2024-01-15") == 2
+
+    def test_years_between_with_partial_year(self) -> None:
+        # Birthday hasn't occurred yet
+        assert evaluate("years between @1990-06-15 and @2024-01-01") == 33
+
+    def test_months_between_negative(self) -> None:
+        # When end is before start
+        result = evaluate("months between @2024-06-15 and @2024-01-15")
+        assert result == -5
+
+    def test_days_between_same_date(self) -> None:
+        assert evaluate("days between @2024-05-15 and @2024-05-15") == 0
+
+    def test_duration_between_null_start(self) -> None:
+        assert evaluate("days between null and @2024-01-01") is None
+
+    def test_duration_between_null_end(self) -> None:
+        assert evaluate("days between @2024-01-01 and null") is None
+
+
+class TestDateArithmetic:
+    """Test date arithmetic with durations."""
+
+    def test_date_plus_years(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-01 + 1 year")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2025
+        assert result.month == 1
+        assert result.day == 1
+
+    def test_date_plus_months(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-15 + 3 months")
+        assert isinstance(result, FHIRDate)
+        assert result.month == 4
+
+    def test_date_plus_days(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-01 + 30 days")
+        assert isinstance(result, FHIRDate)
+        assert result.month == 1
+        assert result.day == 31
+
+    def test_date_plus_weeks(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-01 + 2 weeks")
+        assert isinstance(result, FHIRDate)
+        assert result.day == 15
+
+    def test_date_minus_years(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-01 - 5 years")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2019
+
+    def test_date_minus_months(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-06-15 - 3 months")
+        assert isinstance(result, FHIRDate)
+        assert result.month == 3
+
+    def test_date_minus_days(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-31 - 15 days")
+        assert isinstance(result, FHIRDate)
+        assert result.day == 16
+
+    def test_datetime_plus_hours(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("@2024-01-01T10:00:00 + 5 hours")
+        assert isinstance(result, FHIRDateTime)
+        assert result.hour == 15
+
+    def test_datetime_plus_minutes(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("@2024-01-01T10:30:00 + 45 minutes")
+        assert isinstance(result, FHIRDateTime)
+        assert result.hour == 11
+        assert result.minute == 15
+
+    def test_datetime_minus_hours(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("@2024-01-01T10:00:00 - 3 hours")
+        assert isinstance(result, FHIRDateTime)
+        assert result.hour == 7
+
+    def test_date_difference_in_days(self) -> None:
+        result = evaluate("@2024-01-31 - @2024-01-01")
+        assert result == 30
+
+
+class TestCollapseAndExpand:
+    """Test collapse and expand interval functions."""
+
+    def test_collapse_non_overlapping(self) -> None:
+        result = evaluate("collapse { Interval[1, 3], Interval[5, 7] }")
+        assert len(result) == 2
+
+    def test_collapse_overlapping(self) -> None:
+        result = evaluate("collapse { Interval[1, 5], Interval[3, 7] }")
+        assert len(result) == 1
+        assert result[0].low == 1
+        assert result[0].high == 7
+
+    def test_collapse_adjacent(self) -> None:
+        result = evaluate("collapse { Interval[1, 3], Interval[3, 5] }")
+        assert len(result) == 1
+        assert result[0].low == 1
+        assert result[0].high == 5
+
+    def test_collapse_empty_list(self) -> None:
+        result = evaluate("collapse { }")
+        assert result == []
+
+    def test_expand_integer_interval(self) -> None:
+        result = evaluate("expand Interval[1, 5]")
+        assert result == [1, 2, 3, 4, 5]
+
+    def test_expand_integer_interval_open(self) -> None:
+        result = evaluate("expand Interval(1, 5)")
+        assert result == [2, 3, 4]
+
+    def test_expand_small_interval(self) -> None:
+        result = evaluate("expand Interval[3, 3]")
+        assert result == [3]
+
+
+class TestClinicalAgeFunctions:
+    """Test clinical age calculation functions."""
+
+    def test_calculate_age_in_years(self) -> None:
+        result = evaluate("CalculateAgeInYears(@1990-01-15, @2024-06-01)")
+        assert result == 34
+
+    def test_calculate_age_in_months(self) -> None:
+        result = evaluate("CalculateAgeInMonths(@2023-01-15, @2024-06-01)")
+        assert result == 16
+
+    def test_calculate_age_in_weeks(self) -> None:
+        result = evaluate("CalculateAgeInWeeks(@2024-01-01, @2024-01-22)")
+        assert result == 3
+
+    def test_calculate_age_in_days(self) -> None:
+        result = evaluate("CalculateAgeInDays(@2024-01-01, @2024-01-11)")
+        assert result == 10
+
+    def test_calculate_age_before_birthday(self) -> None:
+        # Birthday is June 15, checking on January 1
+        result = evaluate("CalculateAgeInYears(@1990-06-15, @2024-01-01)")
+        assert result == 33
+
+    def test_calculate_age_on_birthday(self) -> None:
+        result = evaluate("CalculateAgeInYears(@1990-06-15, @2024-06-15)")
+        assert result == 34
+
+    def test_calculate_age_after_birthday(self) -> None:
+        result = evaluate("CalculateAgeInYears(@1990-06-15, @2024-12-01)")
+        assert result == 34
+
+    def test_calculate_age_null_birthdate(self) -> None:
+        result = evaluate("CalculateAgeInYears(null, @2024-01-01)")
+        assert result is None
+
+    def test_calculate_age_null_asof(self) -> None:
+        result = evaluate("CalculateAgeInYears(@1990-01-01, null)")
+        assert result is None
+
+
+class TestIntervalOperations:
+    """Test advanced interval operations."""
+
+    def test_interval_contains_point(self) -> None:
+        assert evaluate("Interval[1, 10] contains 5") is True
+
+    def test_interval_not_contains_point(self) -> None:
+        assert evaluate("Interval[1, 10] contains 15") is False
+
+    def test_point_in_interval(self) -> None:
+        assert evaluate("5 in Interval[1, 10]") is True
+
+    def test_point_not_in_interval(self) -> None:
+        assert evaluate("15 in Interval[1, 10]") is False
+
+    def test_interval_overlaps(self) -> None:
+        assert evaluate("Interval[1, 5] overlaps Interval[3, 7]") is True
+
+    def test_interval_not_overlaps(self) -> None:
+        assert evaluate("Interval[1, 3] overlaps Interval[5, 7]") is False
+
+    def test_interval_meets(self) -> None:
+        assert evaluate("Interval[1, 3] meets Interval[3, 5]") is True
+
+    def test_interval_not_meets(self) -> None:
+        assert evaluate("Interval[1, 3] meets Interval[5, 7]") is False
+
+    def test_interval_before(self) -> None:
+        assert evaluate("Interval[1, 3] before Interval[5, 7]") is True
+
+    def test_interval_after(self) -> None:
+        assert evaluate("Interval[5, 7] after Interval[1, 3]") is True
+
+    def test_date_interval_contains(self) -> None:
+        assert evaluate("Interval[@2024-01-01, @2024-12-31] contains @2024-06-15") is True
+
+    def test_date_interval_not_contains(self) -> None:
+        assert evaluate("Interval[@2024-01-01, @2024-06-30] contains @2024-12-15") is False
+
+
+class TestTimingExpressions:
+    """Test timing expressions (before, after, during)."""
+
+    def test_date_before_date(self) -> None:
+        assert evaluate("@2024-01-01 before @2024-06-01") is True
+
+    def test_date_not_before_date(self) -> None:
+        assert evaluate("@2024-06-01 before @2024-01-01") is False
+
+    def test_date_after_date(self) -> None:
+        assert evaluate("@2024-06-01 after @2024-01-01") is True
+
+    def test_date_not_after_date(self) -> None:
+        assert evaluate("@2024-01-01 after @2024-06-01") is False
+
+    def test_date_during_interval(self) -> None:
+        assert evaluate("@2024-06-15 during Interval[@2024-01-01, @2024-12-31]") is True
+
+    def test_date_not_during_interval(self) -> None:
+        assert evaluate("@2023-06-15 during Interval[@2024-01-01, @2024-12-31]") is False
+
+
+class TestLibraryWithDateFunctions:
+    """Test date functions in library context."""
+
+    def test_library_with_date_calculation(self) -> None:
+        lib = compile_library("""
+            library DateTest
+            define BirthDate: @1990-06-15
+            define ReferenceDate: @2024-01-01
+            define AgeCalculation: years between BirthDate and ReferenceDate
+        """)
+        evaluator = CQLEvaluator()
+        evaluator._current_library = lib
+        result = evaluator.evaluate_definition("AgeCalculation")
+        assert result == 33
+
+    def test_library_with_date_arithmetic(self) -> None:
+        lib = compile_library("""
+            library DateArithTest
+            define StartDate: @2024-01-01
+            define EndDate: StartDate + 6 months
+        """)
+        evaluator = CQLEvaluator()
+        evaluator._current_library = lib
+        result = evaluator.evaluate_definition("EndDate")
+        assert result.month == 7
+
+    def test_library_with_interval_operations(self) -> None:
+        lib = compile_library("""
+            library IntervalTest
+            define Period: Interval[@2024-01-01, @2024-12-31]
+            define MidYear: @2024-06-15
+            define IsInPeriod: MidYear in Period
+        """)
+        evaluator = CQLEvaluator()
+        evaluator._current_library = lib
+        result = evaluator.evaluate_definition("IsInPeriod")
+        assert result is True
+
+    def test_library_with_component_extraction(self) -> None:
+        lib = compile_library("""
+            library ComponentTest
+            define TestDate: @2024-03-15
+            define ExtractedYear: year from TestDate
+            define ExtractedMonth: month from TestDate
+            define ExtractedDay: day from TestDate
+        """)
+        evaluator = CQLEvaluator()
+        evaluator._current_library = lib
+        assert evaluator.evaluate_definition("ExtractedYear") == 2024
+        assert evaluator.evaluate_definition("ExtractedMonth") == 3
+        assert evaluator.evaluate_definition("ExtractedDay") == 15
+
+
+class TestEdgeCases:
+    """Test edge cases for date/time operations."""
+
+    def test_leap_year_feb_29_plus_year(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-02-29 + 1 year")
+        assert isinstance(result, FHIRDate)
+        # Feb 29 + 1 year = Feb 28 (non-leap year)
+        assert result.year == 2025
+        assert result.month == 2
+        assert result.day == 28
+
+    def test_month_end_plus_month(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-31 + 1 month")
+        assert isinstance(result, FHIRDate)
+        # Jan 31 + 1 month = Feb 29 (leap year 2024)
+        assert result.month == 2
+
+    def test_year_boundary_crossing(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-12-15 + 1 month")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2025
+        assert result.month == 1
+
+    def test_midnight_boundary(self) -> None:
+        from fhir_cql.engine.types import FHIRDateTime
+        result = evaluate("@2024-01-01T23:00:00 + 2 hours")
+        assert isinstance(result, FHIRDateTime)
+        assert result.day == 2
+        assert result.hour == 1
+
+    def test_negative_duration(self) -> None:
+        from fhir_cql.engine.types import FHIRDate
+        result = evaluate("@2024-01-01 - 1 year")
+        assert isinstance(result, FHIRDate)
+        assert result.year == 2023
+
+    def test_large_duration(self) -> None:
+        result = evaluate("days between @2000-01-01 and @2024-12-31")
+        assert result > 9000  # About 25 years worth of days
