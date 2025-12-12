@@ -1,0 +1,893 @@
+# FHIRPath Test Expressions
+# This file documents all expressions used in the test suite
+# Resource: examples/fhir/patient.json (for Patient expressions)
+# Resource: examples/fhir/observation_bp.json (for Observation expressions)
+
+# ============================================
+# LITERALS AND BASIC VALUES
+# ============================================
+
+# Numbers
+42
+# Expected: 42
+
+3.14
+# Expected: 3.14
+
+-5
+# Expected: -5
+
+# Strings
+'hello world'
+# Expected: "hello world"
+
+# Booleans
+true
+# Expected: true
+
+false
+# Expected: false
+
+# Empty collection
+{}
+# Expected: []
+
+# Date/DateTime literals
+@2024
+# Expected: Date 2024
+
+@2024-06
+# Expected: Date 2024-06
+
+@2024-01-15
+# Expected: Date 2024-01-15
+
+@2024-01-15T10:30:00
+# Expected: DateTime 2024-01-15T10:30:00
+
+@T14:30:00
+# Expected: Time 14:30:00
+
+# Quantity literals
+10 'kg'
+# Expected: 10 kg
+
+# ============================================
+# ARITHMETIC OPERATIONS
+# ============================================
+
+1 + 2
+# Expected: 3
+
+5 - 3
+# Expected: 2
+
+4 * 3
+# Expected: 12
+
+10 / 4
+# Expected: 2.5
+
+10 div 3
+# Expected: 3
+
+10 mod 3
+# Expected: 1
+
+(2 + 3) * 4
+# Expected: 20
+
+2 + 3 * 4
+# Expected: 14
+
+# Division by zero
+1 / 0
+# Expected: empty
+
+5 div 0
+# Expected: empty
+
+5 mod 0
+# Expected: empty
+
+# Empty collection arithmetic
+{} + 1
+# Expected: empty
+
+# Quantity arithmetic
+10 'kg' + 5 'kg'
+# Expected: 15 kg
+
+10 'kg' - 3 'kg'
+# Expected: 7 kg
+
+10 'kg' + 5 'lb'
+# Expected: empty (incompatible units)
+
+# ============================================
+# COMPARISON OPERATIONS
+# ============================================
+
+1 < 2
+# Expected: true
+
+3 > 2
+# Expected: true
+
+2 <= 2
+# Expected: true
+
+2 >= 2
+# Expected: true
+
+{} = 1
+# Expected: empty
+
+# Equivalence
+'HELLO' ~ 'hello'
+# Expected: true
+
+'HELLO' !~ 'world'
+# Expected: true
+
+# ============================================
+# BOOLEAN OPERATIONS
+# ============================================
+
+true and true
+# Expected: true
+
+true and false
+# Expected: false
+
+false or false
+# Expected: false
+
+false or true
+# Expected: true
+
+true xor false
+# Expected: true
+
+true.not()
+# Expected: false
+
+false.not()
+# Expected: true
+
+true implies false
+# Expected: false
+
+false implies false
+# Expected: true
+
+# Boolean with empty
+true and {}
+# Expected: empty
+
+true or {}
+# Expected: true
+
+{}.not()
+# Expected: empty
+
+# ============================================
+# STRING OPERATIONS
+# ============================================
+
+'hello'.length()
+# Expected: 5
+
+'hello'.hasValue()
+# Expected: true
+
+'hello'.empty()
+# Expected: false
+
+''.empty()
+# Expected: true
+
+'Hello' & ' ' & 'World'
+# Expected: "Hello World"
+
+'Hello' & ''
+# Expected: "Hello"
+
+'hello world'.indexOf('world')
+# Expected: 6
+
+'hello'.indexOf('x')
+# Expected: -1
+
+'hello world'.substring(0, 5)
+# Expected: "hello"
+
+'hello world'.replace('world', 'there')
+# Expected: "hello there"
+
+'hello'.replace('l', 'x')
+# Expected: "hexxo"
+
+'a,b,c'.split(',')
+# Expected: ["a", "b", "c"]
+
+'abc'.toChars()
+# Expected: ["a", "b", "c"]
+
+'  hello  '.trim()
+# Expected: "hello"
+
+'  hello  '.trim().upper()
+# Expected: "HELLO"
+
+'test123'.matches('\\d+')
+# Expected: true
+
+'hello'.matches('^\\d+$')
+# Expected: false
+
+# ============================================
+# MATH FUNCTIONS
+# ============================================
+
+(5).abs()
+# Expected: 5
+
+(-5).abs()
+# Expected: 5
+
+(-3.14).abs()
+# Expected: 3.14
+
+(3.1).ceiling()
+# Expected: 4
+
+(4.2).ceiling()
+# Expected: 5
+
+(3.9).floor()
+# Expected: 3
+
+(4.8).floor()
+# Expected: 4
+
+(3.7).truncate()
+# Expected: 3
+
+(-3.7).truncate()
+# Expected: -3
+
+(3.14159).round(2)
+# Expected: 3.14
+
+(4.567).round(2)
+# Expected: 4.57
+
+(16).sqrt()
+# Expected: 4
+
+(9).sqrt()
+# Expected: 3
+
+(1).ln()
+# Expected: 0
+
+(100).log(10)
+# Expected: 2
+
+(2).power(3)
+# Expected: 8
+
+(0).exp()
+# Expected: 1
+
+# ============================================
+# TYPE CONVERSION - toBoolean()
+# ============================================
+
+'true'.toBoolean()
+# Expected: true
+
+'false'.toBoolean()
+# Expected: false
+
+'yes'.toBoolean()
+# Expected: true
+
+'no'.toBoolean()
+# Expected: false
+
+'1'.toBoolean()
+# Expected: true
+
+'0'.toBoolean()
+# Expected: false
+
+'invalid'.toBoolean()
+# Expected: empty
+
+(1).toBoolean()
+# Expected: true
+
+(0).toBoolean()
+# Expected: false
+
+(5).toBoolean()
+# Expected: empty (only 0/1 convert)
+
+(1.0).toBoolean()
+# Expected: true
+
+(0.0).toBoolean()
+# Expected: false
+
+'true'.convertsToBoolean()
+# Expected: true
+
+'invalid'.convertsToBoolean()
+# Expected: false
+
+# ============================================
+# TYPE CONVERSION - toInteger()
+# ============================================
+
+'42'.toInteger()
+# Expected: 42
+
+'5.0'.toInteger()
+# Expected: 5
+
+'5.5'.toInteger()
+# Expected: empty (not a whole number)
+
+'abc'.toInteger()
+# Expected: empty
+
+(5.0).toInteger()
+# Expected: 5
+
+(5.5).toInteger()
+# Expected: empty
+
+true.toInteger()
+# Expected: 1
+
+false.toInteger()
+# Expected: 0
+
+'42'.convertsToInteger()
+# Expected: true
+
+'abc'.convertsToInteger()
+# Expected: false
+
+# ============================================
+# TYPE CONVERSION - toDecimal()
+# ============================================
+
+'3.14'.toDecimal()
+# Expected: 3.14
+
+'abc'.toDecimal()
+# Expected: empty
+
+(42).toDecimal()
+# Expected: 42.0
+
+true.toDecimal()
+# Expected: 1.0
+
+false.toDecimal()
+# Expected: 0.0
+
+'3.14'.convertsToDecimal()
+# Expected: true
+
+'abc'.convertsToDecimal()
+# Expected: false
+
+# ============================================
+# TYPE CONVERSION - toString()
+# ============================================
+
+(42).toString()
+# Expected: "42"
+
+true.toString()
+# Expected: "true"
+
+false.toString()
+# Expected: "false"
+
+(42).convertsToString()
+# Expected: true
+
+# ============================================
+# TYPE CONVERSION - toDate/toDateTime/toTime
+# ============================================
+
+'2024-06-15'.toDate()
+# Expected: 2024-06-15
+
+'2024-06'.toDate()
+# Expected: 2024-06
+
+'2024'.toDate()
+# Expected: 2024
+
+'2024-06-15T10:30:00'.toDate()
+# Expected: 2024-06-15 (date part only)
+
+'invalid'.toDate()
+# Expected: empty
+
+'2024-06-15'.convertsToDate()
+# Expected: true
+
+'invalid'.convertsToDate()
+# Expected: false
+
+'2024-06-15T10:30:00'.toDateTime()
+# Expected: 2024-06-15T10:30:00
+
+'2024-06-15'.convertsToDateTime()
+# Expected: true
+
+'invalid'.convertsToDateTime()
+# Expected: false
+
+'10:30:00'.toTime()
+# Expected: 10:30:00
+
+'T10:30:00'.toTime()
+# Expected: 10:30:00
+
+'10'.toTime()
+# Expected: 10
+
+'invalid'.toTime()
+# Expected: empty
+
+'10:30:00'.convertsToTime()
+# Expected: true
+
+'invalid'.convertsToTime()
+# Expected: false
+
+# ============================================
+# TYPE CONVERSION - toQuantity
+# ============================================
+
+(42).toQuantity()
+# Expected: 42 '1'
+
+'10 kg'.toQuantity()
+# Expected: 10 kg
+
+'invalid'.toQuantity()
+# Expected: empty
+
+(42).convertsToQuantity()
+# Expected: true
+
+# ============================================
+# DATE ARITHMETIC
+# ============================================
+
+@2024-06-15 + 10 days
+# Expected: 2024-06-25
+
+@2024-06-15 + 2 weeks
+# Expected: 2024-06-29
+
+@2024-06-28 + 5 days
+# Expected: 2024-07-03 (month rollover)
+
+@2024-06-15 + 3 months
+# Expected: 2024-09-15
+
+@2024-11-15 + 3 months
+# Expected: 2025-02-15 (year rollover)
+
+@2024-06-15 + 2 years
+# Expected: 2026-06-15
+
+@2024-06-15 - 2 months
+# Expected: 2024-04-15
+
+@2024-06-15 - 1 year
+# Expected: 2023-06-15
+
+@2024-06-15T10:30:00 + 45 minutes
+# Expected: 2024-06-15T11:15:00
+
+@2024-06-15T10:00:00 + 5 hours
+# Expected: 2024-06-15T15:00:00
+
+@2024-06-15T22:00:00 + 5 hours
+# Expected: 2024-06-16T03:00:00 (day rollover)
+
+# Date comparison
+@2024-06-15 = @2024-06-15
+# Expected: true
+
+@2024-06-15 = @2024-06-16
+# Expected: false
+
+# ============================================
+# DATE/TIME FUNCTIONS
+# ============================================
+
+today()
+# Returns current date
+
+now()
+# Returns current datetime
+
+timeOfDay()
+# Returns current time
+
+# ============================================
+# COLLECTION OPERATIONS
+# ============================================
+
+(42).single()
+# Expected: 42
+
+{}.single()
+# Expected: empty
+
+{}.count()
+# Expected: 0
+
+{}.empty()
+# Expected: true
+
+{}.first()
+# Expected: empty
+
+{}.last()
+# Expected: empty
+
+{}.tail()
+# Expected: []
+
+{}.hasValue()
+# Expected: false
+
+(1 | 2 | 3).tail()
+# Expected: [2, 3]
+
+(1 | 2 | 3 | 4 | 5).take(2)
+# Expected: [1, 2]
+
+(1 | 2 | 3).take(0)
+# Expected: []
+
+(1 | 2 | 3 | 4 | 5).skip(2)
+# Expected: [3, 4, 5]
+
+(1 | 2 | 3).skip(10)
+# Expected: []
+
+# Union
+(1 | 2) | (2 | 3)
+# Expected: [1, 2, 3]
+
+# Distinct
+(1 | 2 | 2 | 3 | 3).distinct()
+# Expected: [1, 2, 3]
+
+(1 | 2 | 1 | 3 | 2).distinct()
+# Expected: [1, 2, 3]
+
+# isDistinct
+(1 | 2 | 3).isDistinct()
+# Expected: true
+
+(1 | 2 | 2).isDistinct()
+# Expected: false
+
+(1).combine(1).isDistinct()
+# Expected: false
+
+# Set operations
+(1 | 2 | 3).intersect(2 | 3 | 4)
+# Expected: [2, 3]
+
+(1 | 2 | 3).exclude(2)
+# Expected: [1, 3]
+
+(1 | 2).subsetOf(1 | 2 | 3)
+# Expected: true
+
+(1 | 2 | 3).supersetOf(1 | 2)
+# Expected: true
+
+# Membership
+2 in (1 | 2 | 3)
+# Expected: true
+
+5 in (1 | 2 | 3)
+# Expected: false
+
+(1 | 2 | 3) contains 2
+# Expected: true
+
+(1 | 2 | 3) contains 5
+# Expected: false
+
+# ============================================
+# EXISTENCE TESTS
+# ============================================
+
+(1 | 2 | 3).all($this > 0)
+# Expected: true
+
+(1 | 2 | 3).all($this > 1)
+# Expected: false
+
+(true | true | true).allTrue()
+# Expected: true
+
+(true | false | true).allTrue()
+# Expected: false
+
+(false | false | true).anyTrue()
+# Expected: true
+
+(false | false).anyTrue()
+# Expected: false
+
+(false | false).allFalse()
+# Expected: true
+
+(false | true).allFalse()
+# Expected: false
+
+(true | false).anyFalse()
+# Expected: true
+
+(true | true).anyFalse()
+# Expected: false
+
+# ============================================
+# UTILITY FUNCTIONS
+# ============================================
+
+iif(true, 'yes', 'no')
+# Expected: "yes"
+
+iif(false, 'yes', 'no')
+# Expected: "no"
+
+iif({}, 'yes', 'no')
+# Expected: "no"
+
+(1 | 2 | 3).trace('test')
+# Expected: [1, 2, 3] (logs for debugging)
+
+# ============================================
+# SELECT WITH INDEX
+# ============================================
+
+(10 | 20 | 30).select($this + $index)
+# Expected: [10, 21, 32] (value + 0-based index)
+
+# ============================================
+# PATIENT RESOURCE NAVIGATION
+# ============================================
+# Resource: examples/fhir/patient.json
+
+Patient
+# Returns the Patient resource
+
+Patient.gender
+# Expected: "male"
+
+Patient.name
+# Returns array of names
+
+Patient.name.family
+# Expected: ["Smith"]
+
+Patient.name.given
+# Expected: ["John", "William", "Johnny"]
+
+Patient.name.given.first()
+# Expected: "John"
+
+Patient.name.given.last()
+# Expected: "Johnny"
+
+Patient.name.given.join(' ')
+# Expected: "John William Johnny"
+
+Patient.name.count()
+# Expected: 2
+
+Patient.name.exists()
+# Expected: true
+
+Patient.name.empty()
+# Expected: false
+
+Patient.photo.exists()
+# Expected: false
+
+Patient.photo.empty()
+# Expected: true
+
+Patient.nonexistent
+# Expected: empty
+
+# ============================================
+# PATIENT FILTERING
+# ============================================
+
+Patient.name.where(use = 'official')
+# Returns official name
+
+Patient.name.where(use = 'temp')
+# Expected: empty
+
+Patient.name.where(use = 'official').exists()
+# Expected: true
+
+Patient.name.where(use='official').given.first()
+# Expected: "John"
+
+Patient.name.exists(use = 'official')
+# Expected: true
+
+Patient.address.where(use = 'home').city
+# Expected: ["Boston"]
+
+Patient.telecom.where(system = 'phone').value
+# Expected: ["+1-555-123-4567", "+1-555-987-6543"]
+
+Patient.telecom.where(system = 'phone').count()
+# Expected: 2
+
+Patient.telecom.count()
+# Expected: 3
+
+# ============================================
+# PATIENT STRING FUNCTIONS
+# ============================================
+
+Patient.name.family.upper()
+# Expected: ["SMITH"]
+
+Patient.name.family.lower()
+# Expected: ["smith"]
+
+Patient.name.family.startsWith('Sm')
+# Expected: [true]
+
+Patient.name.family.endsWith('th')
+# Expected: [true]
+
+Patient.name.family.contains('mit')
+# Expected: [true]
+
+# ============================================
+# PATIENT VALIDATION
+# ============================================
+
+Patient.name.single()
+# Expected: error (multiple names)
+
+Patient.telecom.all(system.exists())
+# Expected: true
+
+Patient.name.given.isDistinct()
+# Expected: true
+
+Patient.name.family.isDistinct()
+# Expected: true
+
+Patient.contact.name.family
+# Expected: ["Smith"]
+
+Patient.name.select(family)
+# Expected: ["Smith"]
+
+Patient.name.given.flatten()
+# Returns flattened given names
+
+# Boolean expressions
+Patient.gender = 'male'
+# Expected: true
+
+Patient.gender = 'female'
+# Expected: false
+
+Patient.gender != 'female'
+# Expected: true
+
+Patient.active = true and Patient.gender = 'male'
+# Expected: true
+
+# ============================================
+# PATIENT NAVIGATION
+# ============================================
+
+Patient.name.first().children()
+# Returns all children of first name
+
+Patient.name.first().descendants()
+# Returns all descendants of first name
+
+Patient.children()
+# Returns all direct children of Patient
+
+# ============================================
+# TYPE CHECKING
+# ============================================
+
+Patient is Patient
+# Expected: true
+
+Patient is Observation
+# Expected: false
+
+Patient as Patient
+# Returns Patient
+
+Patient as Observation
+# Expected: empty
+
+# ============================================
+# FHIR EXTENSION FUNCTION
+# ============================================
+
+Patient.extension('http://example.org/test')
+# Returns extension with that URL
+
+Patient.extension('http://example.org/nonexistent')
+# Expected: empty
+
+Patient.extension('http://example.org/ext1')
+# Returns extension with that URL
+
+# ============================================
+# REFERENCE RESOLUTION
+# ============================================
+
+Patient.managingOrganization.resolve()
+# Would resolve reference (requires resolver)
+
+# ============================================
+# OBSERVATION NAVIGATION
+# ============================================
+# Resource: examples/fhir/observation_bp.json
+
+Observation.status
+# Expected: "final"
+
+Observation.code.descendants()
+# Returns all descendants of code
+
+# ============================================
+# BUNDLE OPERATIONS
+# ============================================
+# Resource: examples/fhir/bundle.json
+
+Bundle.entry.resource.ofType(Patient)
+# Returns only Patient resources from bundle
+
+# ============================================
+# REPEAT FUNCTION
+# ============================================
+
+repeat(next)
+# Recursively applies expression (for linked lists, etc.)
+
+# ============================================
+# PARENTHESIZED EXPRESSIONS
+# ============================================
+
+# Complex navigation - get all names components
+Patient.name.family | Patient.name.given
+# Returns all family and given names combined

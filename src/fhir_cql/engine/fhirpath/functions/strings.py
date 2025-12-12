@@ -56,14 +56,25 @@ def fn_matches(ctx: EvaluationContext, collection: list[Any], pattern: str) -> l
 
 @FunctionRegistry.register("replace")
 def fn_replace(ctx: EvaluationContext, collection: list[Any], pattern: str, substitution: str) -> list[str]:
-    """Replaces all matches of pattern with substitution."""
+    """Replaces all occurrences of pattern with substitution (simple string replacement)."""
+    if not collection:
+        return []
+    value = collection[0]
+    if not isinstance(value, str):
+        return []
+    return [value.replace(pattern, substitution)]
+
+
+@FunctionRegistry.register("replaceMatches")
+def fn_replace_matches(ctx: EvaluationContext, collection: list[Any], regex: str, substitution: str) -> list[str]:
+    """Replaces all matches of regex pattern with substitution."""
     if not collection:
         return []
     value = collection[0]
     if not isinstance(value, str):
         return []
     try:
-        return [re.sub(pattern, substitution, value)]
+        return [re.sub(regex, substitution, value)]
     except re.error:
         return [value]
 

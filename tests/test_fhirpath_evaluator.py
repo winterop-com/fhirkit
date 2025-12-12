@@ -1016,6 +1016,14 @@ class TestExtendedStringFunctions:
         result = evaluator.evaluate("'hello world'.replace('world', 'there')", None)
         assert result == ["hello there"]
 
+    def test_replace_matches_regex(self, evaluator):
+        result = evaluator.evaluate("'test123abc456'.replaceMatches('\\\\d+', 'X')", None)
+        assert result == ["testXabcX"]
+
+    def test_replace_matches_with_groups(self, evaluator):
+        result = evaluator.evaluate("'hello-world'.replaceMatches('-(\\\\w+)', '_\\\\1')", None)
+        assert result == ["hello_world"]
+
     def test_to_chars(self, evaluator):
         result = evaluator.evaluate("'abc'.toChars()", None)
         assert result == ["a", "b", "c"]

@@ -1,0 +1,271 @@
+# FHIRPath Observation Examples
+# Resource: examples/fhir/observation_bp.json
+# Blood Pressure Observation with components
+
+# ============================================
+# BASIC OBSERVATION NAVIGATION
+# ============================================
+
+# Get resource type
+resourceType
+# Expected: "Observation"
+
+# Get observation ID
+id
+# Expected: "blood-pressure-1"
+
+# Get observation status
+status
+# Expected: "final"
+
+# ============================================
+# WORKING WITH CODES
+# ============================================
+
+# Get observation code text
+code.text
+# Expected: "Blood Pressure"
+
+# Get LOINC code
+code.coding.where(system = 'http://loinc.org').code
+# Expected: "85354-9"
+
+# Get code display
+code.coding.where(system = 'http://loinc.org').display
+# Expected: "Blood pressure panel with all children optional"
+
+# Check if observation has LOINC code
+code.coding.exists(system = 'http://loinc.org')
+# Expected: true
+
+# ============================================
+# WORKING WITH CATEGORIES
+# ============================================
+
+# Get category code
+category.coding.code.first()
+# Expected: "vital-signs"
+
+# Check if vital sign
+category.coding.exists(code = 'vital-signs')
+# Expected: true
+
+# Get category display
+category.coding.display.first()
+# Expected: "Vital Signs"
+
+# ============================================
+# SUBJECT AND CONTEXT
+# ============================================
+
+# Get subject reference
+subject.reference
+# Expected: "Patient/example-patient-1"
+
+# Get subject display
+subject.display
+# Expected: "John Smith"
+
+# Get encounter reference
+encounter.reference
+# Expected: "Encounter/example-encounter-1"
+
+# Get performer reference
+performer.reference.first()
+# Expected: "Practitioner/example-practitioner-1"
+
+# Get performer display
+performer.display.first()
+# Expected: "Dr. Sarah Johnson"
+
+# ============================================
+# DATES AND TIMES
+# ============================================
+
+# Get effective datetime
+effectiveDateTime
+# Expected: "2024-03-10T09:15:00Z"
+
+# Get issued time
+issued
+# Expected: "2024-03-10T09:20:00Z"
+
+# Get last updated
+meta.lastUpdated
+# Expected: "2024-03-10T14:30:00Z"
+
+# Check if observation is recent (date comparison)
+effectiveDateTime > @2024-01-01
+# Expected: true
+
+# ============================================
+# INTERPRETATION
+# ============================================
+
+# Get interpretation code
+interpretation.coding.code.first()
+# Expected: "H"
+
+# Get interpretation display
+interpretation.coding.display.first()
+# Expected: "High"
+
+# Get interpretation text
+interpretation.text.first()
+# Expected: "Above normal"
+
+# Check if high interpretation
+interpretation.coding.exists(code = 'H')
+# Expected: true
+
+# ============================================
+# BODY SITE
+# ============================================
+
+# Get body site SNOMED code
+bodySite.coding.where(system = 'http://snomed.info/sct').code
+# Expected: "368209003"
+
+# Get body site display
+bodySite.coding.display.first()
+# Expected: "Right arm"
+
+# ============================================
+# COMPONENTS (Blood Pressure)
+# ============================================
+
+# Count components
+component.count()
+# Expected: 2
+
+# Get all component values
+component.valueQuantity.value
+# Expected: [142, 88]
+
+# Get all component units
+component.valueQuantity.unit
+# Expected: ["mmHg", "mmHg"]
+
+# Get systolic (by LOINC code 8480-6)
+component.where(code.coding.code = '8480-6').valueQuantity.value
+# Expected: 142
+
+# Get diastolic (by LOINC code 8462-4)
+component.where(code.coding.code = '8462-4').valueQuantity.value
+# Expected: 88
+
+# Get systolic display name
+component.where(code.coding.code = '8480-6').code.text
+# Expected: "Systolic BP"
+
+# Get diastolic display name
+component.where(code.coding.code = '8462-4').code.text
+# Expected: "Diastolic BP"
+
+# ============================================
+# COMPONENT INTERPRETATIONS
+# ============================================
+
+# Get systolic interpretation
+component.where(code.coding.code = '8480-6').interpretation.coding.code
+# Expected: "H"
+
+# Get diastolic interpretation
+component.where(code.coding.code = '8462-4').interpretation.coding.code
+# Expected: "N"
+
+# Check if systolic is high
+component.where(code.coding.code = '8480-6').interpretation.coding.exists(code = 'H')
+# Expected: true
+
+# Check if diastolic is normal
+component.where(code.coding.code = '8462-4').interpretation.coding.exists(code = 'N')
+# Expected: true
+
+# ============================================
+# QUANTITY OPERATIONS
+# ============================================
+
+# Get systolic value
+component.where(code.coding.code = '8480-6').valueQuantity.value.first()
+# Expected: 142
+
+# Check if systolic > 140 (hypertension threshold)
+component.where(code.coding.code = '8480-6').valueQuantity.value > 140
+# Expected: true
+
+# Check if diastolic > 90 (hypertension threshold)
+component.where(code.coding.code = '8462-4').valueQuantity.value > 90
+# Expected: false
+
+# Check if either value is elevated
+component.valueQuantity.value.exists($this > 100)
+# Expected: true
+
+# ============================================
+# COMPLEX QUERIES
+# ============================================
+
+# Is blood pressure elevated? (systolic > 140 OR diastolic > 90)
+component.where(code.coding.code = '8480-6').valueQuantity.value > 140 or component.where(code.coding.code = '8462-4').valueQuantity.value > 90
+# Expected: true
+
+# Get formatted BP reading
+component.where(code.coding.code = '8480-6').valueQuantity.value.first().toString() & '/' & component.where(code.coding.code = '8462-4').valueQuantity.value.first().toString()
+# Expected: "142/88"
+
+# Get all component LOINC codes
+component.code.coding.where(system = 'http://loinc.org').code
+# Expected: ["8480-6", "8462-4"]
+
+# Get all interpretation codes
+component.interpretation.coding.code
+# Expected: ["H", "N"]
+
+# Count high interpretations
+component.interpretation.coding.where(code = 'H').count()
+# Expected: 1
+
+# ============================================
+# VALIDATION CHECKS
+# ============================================
+
+# Has required status
+status.exists()
+# Expected: true
+
+# Has required code
+code.exists()
+# Expected: true
+
+# Has subject
+subject.exists()
+# Expected: true
+
+# Complete observation validation
+status.exists() and code.exists() and subject.exists() and component.count() > 0
+# Expected: true
+
+# All components have values
+component.all(valueQuantity.exists())
+# Expected: true
+
+# All components have codes
+component.all(code.exists())
+# Expected: true
+
+# ============================================
+# UCUM UNITS
+# ============================================
+
+# Get UCUM code for systolic
+component.where(code.coding.code = '8480-6').valueQuantity.code
+# Expected: "mm[Hg]"
+
+# Get unit system
+component.valueQuantity.system.first()
+# Expected: "http://unitsofmeasure.org"
+
+# Verify all use same unit
+component.valueQuantity.unit.distinct().count() = 1
+# Expected: true (all mmHg)

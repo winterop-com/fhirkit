@@ -1,0 +1,813 @@
+# FHIRPath Comprehensive Function Examples
+# Resource: examples/fhir/patient.json
+# This file demonstrates EVERY FHIRPath function with real examples
+
+# ============================================
+# EXISTENCE FUNCTIONS
+# ============================================
+
+# exists() - returns true if collection has elements
+name.exists()
+# Expected: true
+
+telecom.exists()
+# Expected: true
+
+deceased.exists()
+# Expected: true (deceasedBoolean exists)
+
+# exists(criteria) - returns true if any element matches
+name.exists(use = 'official')
+# Expected: true
+
+telecom.exists(system = 'fax')
+# Expected: false
+
+# empty() - returns true if collection is empty
+name.empty()
+# Expected: false
+
+multipleBirthInteger.empty()
+# Expected: true
+
+# count() - number of elements
+name.count()
+# Expected: 2
+
+telecom.count()
+# Expected: 3
+
+address.count()
+# Expected: 2
+
+# hasValue() - single item with value
+gender.hasValue()
+# Expected: true
+
+birthDate.hasValue()
+# Expected: true
+
+# all(criteria) - true if all match
+name.all(family.exists())
+# Expected: true (all names have family... wait, nickname doesn't!)
+
+telecom.all(system.exists())
+# Expected: true
+
+# allTrue() - all items are true
+(1=1 | 2=2 | 3=3).allTrue()
+# Expected: true
+
+# anyTrue() - any item is true
+(1=2 | 2=2 | 3=4).anyTrue()
+# Expected: true
+
+# allFalse() - all items are false
+(1=2 | 2=3 | 3=4).allFalse()
+# Expected: true
+
+# anyFalse() - any item is false
+(1=1 | 2=3 | 3=3).anyFalse()
+# Expected: true
+
+# ============================================
+# SUBSETTING FUNCTIONS
+# ============================================
+
+# first() - first element
+name.first()
+# Returns first name object
+
+name.given.first()
+# Expected: "John"
+
+telecom.first().value
+# Expected: "+1-555-123-4567"
+
+# last() - last element
+name.last()
+# Returns nickname name object
+
+name.given.last()
+# Expected: "Johnny"
+
+address.last().city
+# Expected: "Cambridge"
+
+# tail() - all except first
+name.tail()
+# Returns just the nickname name
+
+name.given.tail()
+# Expected: ["William", "Johnny"]
+
+# take(n) - first n elements
+name.given.take(2)
+# Expected: ["John", "William"]
+
+telecom.take(1)
+# Returns first telecom
+
+address.take(1).city
+# Expected: ["Boston"]
+
+# skip(n) - skip first n elements
+name.given.skip(1)
+# Expected: ["William", "Johnny"]
+
+address.skip(1).city
+# Expected: ["Cambridge"]
+
+# single() - exactly one element
+gender.single()
+# Expected: "male"
+
+birthDate.single()
+# Expected: "1985-06-15"
+
+# Indexer [n] - element at position
+name[0]
+# First name
+
+name[1]
+# Second name (nickname)
+
+name[0].given[0]
+# Expected: "John"
+
+address[0].line[1]
+# Expected: "Apt 4B"
+
+# ============================================
+# FILTERING FUNCTIONS
+# ============================================
+
+# where(criteria) - filter by condition
+name.where(use = 'official')
+# Returns official name only
+
+name.where(use = 'nickname')
+# Returns nickname only
+
+telecom.where(system = 'phone')
+# Returns 2 phone entries
+
+telecom.where(system = 'phone').value
+# Expected: ["+1-555-123-4567", "+1-555-987-6543"]
+
+telecom.where(system = 'phone' and use = 'mobile')
+# Returns mobile phone only
+
+address.where(use = 'home')
+# Returns home address
+
+address.where(city = 'Boston' or city = 'Cambridge')
+# Returns both addresses
+
+# select(projection) - project expression
+name.select(family)
+# Expected: ["Smith"] (only from official, nickname has no family)
+
+telecom.select(value)
+# All telecom values
+
+address.select(city & ', ' & state)
+# Expected: ["Boston, MA", "Cambridge, MA"]
+
+# ofType(type) - filter by resource type
+# (Better demonstrated with Bundle)
+
+# ============================================
+# STRING FUNCTIONS
+# ============================================
+
+# upper() - uppercase
+name.first().family.upper()
+# Expected: "SMITH"
+
+gender.upper()
+# Expected: "MALE"
+
+# lower() - lowercase
+name.first().family.lower()
+# Expected: "smith"
+
+# length() - string length
+name.first().family.length()
+# Expected: 5
+
+birthDate.length()
+# Expected: 10
+
+# substring(start) - from position to end
+name.first().family.substring(2)
+# Expected: "ith"
+
+# substring(start, length) - specific length
+name.first().family.substring(0, 3)
+# Expected: "Smi"
+
+birthDate.substring(0, 4)
+# Expected: "1985"
+
+# startsWith(prefix)
+name.first().family.startsWith('Sm')
+# Expected: true
+
+name.first().family.startsWith('Jo')
+# Expected: false
+
+# endsWith(suffix)
+name.first().family.endsWith('ith')
+# Expected: true
+
+name.first().family.endsWith('son')
+# Expected: false
+
+# contains(substring)
+name.first().family.contains('mit')
+# Expected: true
+
+telecom.first().value.contains('555')
+# Expected: true
+
+# indexOf(substring)
+name.first().family.indexOf('i')
+# Expected: 2
+
+name.first().family.indexOf('z')
+# Expected: -1
+
+# matches(regex)
+name.first().family.matches('S.*h')
+# Expected: true
+
+telecom.first().value.matches('\\+1-\\d{3}-\\d{3}-\\d{4}')
+# Expected: true
+
+# replace(pattern, replacement)
+name.first().family.replace('Smith', 'Jones')
+# Expected: "Jones"
+
+telecom.first().value.replace('-', '.')
+# Expected: "+1.555.123.4567"
+
+# trim()
+'  hello world  '.trim()
+# Expected: "hello world"
+
+# split(separator)
+'a,b,c'.split(',')
+# Expected: ["a", "b", "c"]
+
+birthDate.split('-')
+# Expected: ["1985", "06", "15"]
+
+# join(separator)
+name.given.join(' ')
+# Expected: "John William Johnny"
+
+name.given.join(', ')
+# Expected: "John, William, Johnny"
+
+address.city.join(' and ')
+# Expected: "Boston and Cambridge"
+
+# toChars()
+'ABC'.toChars()
+# Expected: ["A", "B", "C"]
+
+# ============================================
+# MATH FUNCTIONS
+# ============================================
+
+# abs()
+(-5).abs()
+# Expected: 5
+
+(3.14).abs()
+# Expected: 3.14
+
+# ceiling()
+(3.2).ceiling()
+# Expected: 4
+
+(3.9).ceiling()
+# Expected: 4
+
+(-3.2).ceiling()
+# Expected: -3
+
+# floor()
+(3.2).floor()
+# Expected: 3
+
+(3.9).floor()
+# Expected: 3
+
+(-3.2).floor()
+# Expected: -4
+
+# truncate()
+(3.7).truncate()
+# Expected: 3
+
+(-3.7).truncate()
+# Expected: -3
+
+# round(precision)
+(3.567).round(2)
+# Expected: 3.57
+
+(3.564).round(2)
+# Expected: 3.56
+
+(3.5).round(0)
+# Expected: 4
+
+# sqrt()
+(16).sqrt()
+# Expected: 4
+
+(2).sqrt()
+# Expected: 1.414...
+
+# ln() - natural logarithm
+(2.718281828).ln()
+# Expected: ~1
+
+# log(base)
+(100).log(10)
+# Expected: 2
+
+(8).log(2)
+# Expected: 3
+
+# power(exponent)
+(2).power(8)
+# Expected: 256
+
+(3).power(3)
+# Expected: 27
+
+# exp() - e^x
+(1).exp()
+# Expected: ~2.718
+
+(0).exp()
+# Expected: 1
+
+# ============================================
+# ARITHMETIC OPERATORS
+# ============================================
+
+# Addition
+1 + 2
+# Expected: 3
+
+10 + 20 + 30
+# Expected: 60
+
+# Subtraction
+10 - 3
+# Expected: 7
+
+100 - 50 - 25
+# Expected: 25
+
+# Multiplication
+4 * 5
+# Expected: 20
+
+2 * 3 * 4
+# Expected: 24
+
+# Division
+10 / 4
+# Expected: 2.5
+
+100 / 3
+# Expected: 33.333...
+
+# Integer Division (div)
+10 div 3
+# Expected: 3
+
+100 div 7
+# Expected: 14
+
+# Modulo (mod)
+10 mod 3
+# Expected: 1
+
+100 mod 7
+# Expected: 2
+
+# String concatenation (&)
+'Hello' & ' ' & 'World'
+# Expected: "Hello World"
+
+name.first().family & ', ' & name.first().given.first()
+# Expected: "Smith, John"
+
+# Combined operations
+(10 + 5) * 2
+# Expected: 30
+
+100 / (5 + 5)
+# Expected: 10
+
+# ============================================
+# COMPARISON OPERATORS
+# ============================================
+
+# Equality (=)
+gender = 'male'
+# Expected: true
+
+1 = 1
+# Expected: true
+
+'hello' = 'hello'
+# Expected: true
+
+# Inequality (!=)
+gender != 'female'
+# Expected: true
+
+1 != 2
+# Expected: true
+
+# Less than (<)
+1 < 2
+# Expected: true
+
+10 < 5
+# Expected: false
+
+# Greater than (>)
+10 > 5
+# Expected: true
+
+1 > 2
+# Expected: false
+
+# Less than or equal (<=)
+5 <= 5
+# Expected: true
+
+5 <= 10
+# Expected: true
+
+# Greater than or equal (>=)
+5 >= 5
+# Expected: true
+
+10 >= 5
+# Expected: true
+
+# Equivalence (~) - case insensitive for strings
+gender ~ 'MALE'
+# Expected: true
+
+'Hello' ~ 'hello'
+# Expected: true
+
+# Not equivalent (!~)
+gender !~ 'female'
+# Expected: true
+
+# ============================================
+# BOOLEAN LOGIC
+# ============================================
+
+# and
+true and true
+# Expected: true
+
+true and false
+# Expected: false
+
+gender = 'male' and active = true
+# Expected: true
+
+# or
+true or false
+# Expected: true
+
+false or false
+# Expected: false
+
+gender = 'male' or gender = 'female'
+# Expected: true
+
+# not()
+true.not()
+# Expected: false
+
+false.not()
+# Expected: true
+
+(gender = 'female').not()
+# Expected: true
+
+# xor (exclusive or)
+true xor false
+# Expected: true
+
+true xor true
+# Expected: false
+
+false xor false
+# Expected: false
+
+# implies
+true implies true
+# Expected: true
+
+true implies false
+# Expected: false
+
+false implies true
+# Expected: true
+
+false implies false
+# Expected: true
+
+# Combined boolean logic
+(gender = 'male' and active) or deceased
+# Expression combining multiple boolean operations
+
+(name.exists() and birthDate.exists()).not().not()
+# Double negation = original value
+
+# ============================================
+# COLLECTION FUNCTIONS
+# ============================================
+
+# distinct() - remove duplicates
+address.state.distinct()
+# Expected: ["MA"] (both addresses in MA)
+
+(1 | 2 | 2 | 3 | 3 | 3).distinct()
+# Expected: [1, 2, 3]
+
+# isDistinct() - are all unique?
+name.given.isDistinct()
+# Expected: true (John, William, Johnny all different)
+
+(1 | 2 | 3).isDistinct()
+# Expected: true
+
+(1 | 2 | 2).isDistinct()
+# Expected: false
+
+# union (|) - combine and deduplicate
+(1 | 2 | 3) | (3 | 4 | 5)
+# Expected: [1, 2, 3, 4, 5]
+
+name.given | contact.name.given
+# Combines patient and contact given names
+
+# combine() - combine keeping duplicates
+(1 | 2).combine(2 | 3)
+# Expected: [1, 2, 2, 3]
+
+# intersect() - common elements
+(1 | 2 | 3).intersect(2 | 3 | 4)
+# Expected: [2, 3]
+
+# exclude() - elements not in other
+(1 | 2 | 3 | 4).exclude(2 | 4)
+# Expected: [1, 3]
+
+# subsetOf()
+(1 | 2).subsetOf(1 | 2 | 3)
+# Expected: true
+
+(1 | 4).subsetOf(1 | 2 | 3)
+# Expected: false
+
+# supersetOf()
+(1 | 2 | 3).supersetOf(1 | 2)
+# Expected: true
+
+# flatten() - flatten nested collections
+# (Complex example with nested arrays)
+
+# ============================================
+# TYPE CONVERSION
+# ============================================
+
+# toBoolean()
+'true'.toBoolean()
+# Expected: true
+
+'false'.toBoolean()
+# Expected: false
+
+'yes'.toBoolean()
+# Expected: true
+
+'1'.toBoolean()
+# Expected: true
+
+# convertsToBoolean()
+'true'.convertsToBoolean()
+# Expected: true
+
+'maybe'.convertsToBoolean()
+# Expected: false
+
+# toInteger()
+'42'.toInteger()
+# Expected: 42
+
+'3.0'.toInteger()
+# Expected: 3
+
+# convertsToInteger()
+'42'.convertsToInteger()
+# Expected: true
+
+'hello'.convertsToInteger()
+# Expected: false
+
+# toDecimal()
+'3.14159'.toDecimal()
+# Expected: 3.14159
+
+42.toDecimal()
+# Expected: 42.0
+
+# convertsToDecimal()
+'3.14'.convertsToDecimal()
+# Expected: true
+
+# toString()
+42.toString()
+# Expected: "42"
+
+true.toString()
+# Expected: "true"
+
+3.14.toString()
+# Expected: "3.14"
+
+# convertsToString()
+42.convertsToString()
+# Expected: true
+
+# toDate()
+'2024-03-15'.toDate()
+# Returns date
+
+'2024-03-15T10:30:00Z'.toDate()
+# Returns date portion: 2024-03-15
+
+# convertsToDate()
+'2024-03-15'.convertsToDate()
+# Expected: true
+
+'not-a-date'.convertsToDate()
+# Expected: false
+
+# toDateTime()
+'2024-03-15'.toDateTime()
+# Returns datetime
+
+'2024-03-15T10:30:00Z'.toDateTime()
+# Returns full datetime
+
+# convertsToDateTime()
+'2024-03-15T10:30:00'.convertsToDateTime()
+# Expected: true
+
+# toTime()
+'10:30:45'.toTime()
+# Returns time
+
+# convertsToTime()
+'10:30:45'.convertsToTime()
+# Expected: true
+
+# toQuantity()
+100.toQuantity()
+# Returns 100 '1' (unitless)
+
+'100 mg'.toQuantity()
+# Returns 100 mg
+
+# convertsToQuantity()
+'100 mg'.convertsToQuantity()
+# Expected: true
+
+# ============================================
+# DATE/TIME FUNCTIONS
+# ============================================
+
+# today() - current date
+today()
+# Returns today's date
+
+# now() - current datetime
+now()
+# Returns current datetime
+
+# timeOfDay() - current time
+timeOfDay()
+# Returns current time
+
+# Date comparisons
+birthDate < @1990-01-01
+# Expected: true (born 1985)
+
+birthDate > @1980-01-01
+# Expected: true
+
+birthDate >= @1985-06-15
+# Expected: true (exact match)
+
+# ============================================
+# UTILITY FUNCTIONS
+# ============================================
+
+# iif(condition, true-result, false-result)
+iif(gender = 'male', 'Mr.', 'Ms.')
+# Expected: "Mr."
+
+iif(active, 'Active', 'Inactive')
+# Expected: "Active"
+
+iif(deceased, 'Deceased', 'Living')
+# Expected: "Living"
+
+# trace(name) - debugging, returns input unchanged
+name.trace('debug-names')
+# Returns names (logs for debugging)
+
+# ============================================
+# TREE NAVIGATION
+# ============================================
+
+# children() - all child elements
+# Returns all direct children of current element
+
+# descendants() - all descendant elements recursively
+# Returns all nested elements
+
+# ============================================
+# COMPLEX REAL-WORLD EXAMPLES
+# ============================================
+
+# Get formatted full name
+name.where(use = 'official').select(given.join(' ') & ' ' & family).first()
+# Expected: "John William Smith"
+
+# Get all phone numbers formatted
+telecom.where(system = 'phone').select('Phone: ' & value)
+# Expected: ["Phone: +1-555-123-4567", "Phone: +1-555-987-6543"]
+
+# Full address as string
+address.where(use = 'home').select(line.join(', ') & ', ' & city & ', ' & state & ' ' & postalCode).first()
+# Expected: "123 Main Street, Apt 4B, Boston, MA 02101"
+
+# Check if patient has emergency contact
+contact.exists(relationship.coding.code = 'N')
+# Expected: true
+
+# Get emergency contact phone
+contact.where(relationship.coding.code = 'N').telecom.value.first()
+# Expected: "+1-555-222-3333"
+
+# Validate patient has required fields
+name.exists() and birthDate.exists() and gender.exists()
+# Expected: true
+
+# Count communication preferences
+communication.count()
+# Expected: 1
+
+# Check preferred language
+communication.where(preferred = true).language.coding.display.first()
+# Expected: "English"
+
+# Age calculation (simplified - checks birth year)
+birthDate.substring(0, 4).toInteger() < 1990
+# Expected: true (born 1985)
+
+# Get managing organization display
+managingOrganization.display
+# Expected: "Boston General Hospital"
+
+# Get general practitioner
+generalPractitioner.display.first()
+# Expected: "Dr. Sarah Johnson"
+
+# Complex validation: active patient with contact
+active = true and contact.exists()
+# Expected: true
+
+# Get all identifiers as formatted strings
+identifier.select(system & ': ' & value)
+# Expected: ["http://hospital.example.org/patients: 12345", "http://national-id.example.org: 987-65-4321"]
