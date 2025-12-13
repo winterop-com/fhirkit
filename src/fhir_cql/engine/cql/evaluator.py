@@ -23,6 +23,10 @@ from .context import CQLContext, DataSource  # noqa: E402
 from .library import CQLLibrary, LibraryManager  # noqa: E402
 from .visitor import CQLEvaluatorVisitor  # noqa: E402
 
+# Import ELM serializer (lazy import to avoid circular dependency)
+ELMSerializer = None
+ELMLibrary = None
+
 
 class CQLErrorListener:
     """ANTLR error listener that raises CQLError."""
@@ -341,6 +345,116 @@ class CQLEvaluator:
         if not lib:
             return {}
         return {name: param.default_value for name, param in lib.parameters.items()}
+
+    def to_elm(self, source: str | None = None) -> Any:
+        """Convert CQL source to ELM (Expression Logical Model).
+
+        Args:
+            source: CQL source code. If not provided, uses the source
+                from the current library.
+
+        Returns:
+            ELMLibrary model instance.
+
+        Raises:
+            CQLError: If no source is available or conversion fails.
+
+        Example:
+            evaluator = CQLEvaluator()
+            evaluator.compile("library Test define Sum: 1 + 2")
+            elm = evaluator.to_elm()
+        """
+        global ELMSerializer, ELMLibrary
+        if ELMSerializer is None:
+            from ..elm.models.library import ELMLibrary as _ELMLibrary
+            from ..elm.serializer import ELMSerializer as _ELMSerializer
+
+            ELMSerializer = _ELMSerializer
+            ELMLibrary = _ELMLibrary
+
+        # Get source
+        if source is None:
+            if self._current_library and self._current_library.source:
+                source = self._current_library.source
+            else:
+                raise CQLError("No CQL source available. Provide source or compile a library first.")
+
+        try:
+            serializer = ELMSerializer()
+            return serializer.serialize_to_model(source)
+        except Exception as e:
+            raise CQLError(f"Failed to convert to ELM: {e}") from e
+
+    def to_elm_json(self, source: str | None = None, indent: int = 2) -> str:
+        """Convert CQL source to ELM JSON string.
+
+        Args:
+            source: CQL source code. If not provided, uses the source
+                from the current library.
+            indent: JSON indentation level (default 2).
+
+        Returns:
+            ELM library as JSON string.
+
+        Raises:
+            CQLError: If no source is available or conversion fails.
+
+        Example:
+            evaluator = CQLEvaluator()
+            evaluator.compile("library Test define Sum: 1 + 2")
+            elm_json = evaluator.to_elm_json()
+            print(elm_json)
+        """
+        global ELMSerializer
+        if ELMSerializer is None:
+            from ..elm.serializer import ELMSerializer as _ELMSerializer
+
+            ELMSerializer = _ELMSerializer
+
+        # Get source
+        if source is None:
+            if self._current_library and self._current_library.source:
+                source = self._current_library.source
+            else:
+                raise CQLError("No CQL source available. Provide source or compile a library first.")
+
+        try:
+            serializer = ELMSerializer()
+            return serializer.serialize_library_json(source, indent)
+        except Exception as e:
+            raise CQLError(f"Failed to convert to ELM JSON: {e}") from e
+
+    def to_elm_dict(self, source: str | None = None) -> dict[str, Any]:
+        """Convert CQL source to ELM dictionary.
+
+        Args:
+            source: CQL source code. If not provided, uses the source
+                from the current library.
+
+        Returns:
+            ELM library as dictionary.
+
+        Raises:
+            CQLError: If no source is available or conversion fails.
+        """
+        global ELMSerializer
+        if ELMSerializer is None:
+            from ..elm.serializer import ELMSerializer as _ELMSerializer
+
+            ELMSerializer = _ELMSerializer
+
+        # Get source
+        if source is None:
+            if self._current_library and self._current_library.source:
+                source = self._current_library.source
+            else:
+                raise CQLError("No CQL source available. Provide source or compile a library first.")
+
+        try:
+            serializer = ELMSerializer()
+            return serializer.serialize_library(source)
+        except Exception as e:
+            raise CQLError(f"Failed to convert to ELM dict: {e}") from e
 
     def _parse_library(self, source: str) -> cqlParser.LibraryContext:
         """Parse CQL library source code."""

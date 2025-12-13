@@ -101,13 +101,23 @@ class ELMEvaluator:
         elif isinstance(source, dict):
             library = ELMLoader.parse(source)
         elif isinstance(source, str):
-            # Check if it's a file path
-            path = Path(source)
-            if path.exists() and path.is_file():
-                library = ELMLoader.load_file(path)
-            else:
-                # Assume it's JSON content
+            # Check if it looks like JSON content first (starts with { or [)
+            stripped = source.strip()
+            if stripped.startswith("{") or stripped.startswith("["):
+                # It's JSON content
                 library = ELMLoader.load_json(source)
+            else:
+                # Check if it's a file path
+                try:
+                    path = Path(source)
+                    if path.exists() and path.is_file():
+                        library = ELMLoader.load_file(path)
+                    else:
+                        # Try to parse as JSON anyway
+                        library = ELMLoader.load_json(source)
+                except (OSError, ValueError):
+                    # If path check fails, try as JSON
+                    library = ELMLoader.load_json(source)
         else:
             raise ELMValidationError(f"Unsupported source type: {type(source)}")
 
