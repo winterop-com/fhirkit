@@ -1,0 +1,185 @@
+# CDS Hooks Services Configuration
+# This file configures CDS services that use CQL libraries for clinical decision support
+
+services:
+  # Medication Safety Alerts - triggered when signing orders
+  - id: medication-safety-alerts
+    hook: order-sign
+    title: Medication Safety Alerts
+    description: >
+      Evaluates medication orders for drug-drug interactions,
+      drug-disease contraindications, and dosing concerns.
+
+    cqlLibrary: examples/cql/24_medication_safety.cql
+    evaluateDefinitions:
+      - HasDrugInteractions
+      - ActiveDrugInteractions
+      - ActiveContraindications
+      - RenalDosingAlerts
+      - HepaticMonitoringNeeded
+      - BeersListAlert
+      - IsOnHighRiskMedication
+      - MedicationSafetySummary
+
+    prefetch:
+      patient: Patient/{{context.patientId}}
+      medications: MedicationRequest?patient={{context.patientId}}&status=active
+      conditions: Condition?patient={{context.patientId}}&clinical-status=active
+      observations: Observation?patient={{context.patientId}}&_count=50&_sort=-date
+
+    cards:
+      - condition: HasDrugInteractions
+        indicator: warning
+        summary: "Drug Interaction Alert: {{ActiveDrugInteractions|length}} potential interaction(s)"
+        detail: |
+          ## Drug-Drug Interactions Detected
+
+          The following potential interactions have been identified:
+          {% for interaction in interactions %}
+          - {{interaction}}
+          {% endfor %}
+
+          Please review before signing orders.
+        source: Medication Safety CDS
+
+      - condition: RenalDosingAlerts
+        indicator: warning
+        summary: "Renal Dosing Alert"
+        detail: "Review dosing for renally-cleared medications based on current kidney function."
+        source: Medication Safety CDS
+
+      - condition: BeersListAlert
+        indicator: info
+        summary: "Potentially Inappropriate Medications for Elderly Patient"
+        detail: >
+          This patient is 65 or older. Consider reviewing medications against
+          the AGS Beers Criteria for potentially inappropriate medications.
+        source: Geriatric Medication Safety
+        links:
+          - label: View Beers Criteria
+            url: https://www.healthinaging.org/medications-older-adults
+            type: absolute
+
+  # Cardiovascular Risk Assessment - triggered on patient view
+  - id: cardiovascular-risk
+    hook: patient-view
+    title: Cardiovascular Risk Assessment
+    description: >
+      Calculates CHA2DS2-VASc stroke risk score for patients with atrial fibrillation
+      and recommends anticoagulation when appropriate.
+
+    cqlLibrary: examples/cql/23_risk_scores.cql
+    evaluateDefinitions:
+      - HasAtrialFibrillation
+      - CHA2DS2VAScScore
+      - CHA2DS2VAScRiskCategory
+      - AnticoagulationRecommended
+      - HASBLEDScore
+      - HASBLEDRiskCategory
+      - ActiveRiskAlerts
+
+    prefetch:
+      patient: Patient/{{context.patientId}}
+      conditions: Condition?patient={{context.patientId}}&clinical-status=active
+      observations: Observation?patient={{context.patientId}}&_count=100&_sort=-date
+
+    cards:
+      - condition: AnticoagulationRecommended
+        indicator: warning
+        summary: "Stroke Risk: CHA2DS2-VASc {{CHA2DS2VAScScore}} - Anticoagulation recommended"
+        detail: |
+          ## Atrial Fibrillation Stroke Risk Assessment
+
+          **CHA2DS2-VASc Score:** {{CHA2DS2VAScScore}} ({{CHA2DS2VAScRiskCategory}} risk)
+          **HAS-BLED Score:** {{HASBLEDScore}} ({{HASBLEDRiskCategory}} bleeding risk)
+
+          Based on the CHA2DS2-VASc score of {{CHA2DS2VAScScore}}, anticoagulation therapy
+          is recommended to reduce stroke risk.
+        source: Clinical Risk Calculator
+        suggestions:
+          - label: Order anticoagulation consult
+            isRecommended: true
+            actions:
+              - type: create
+                description: Create referral for anticoagulation therapy evaluation
+
+  # Diabetes Care Gaps - triggered on patient view
+  - id: diabetes-care-gaps
+    hook: patient-view
+    title: Diabetes Care Gap Alerts
+    description: >
+      Identifies care gaps for diabetic patients including HbA1c monitoring,
+      eye exams, and foot exams.
+
+    cqlLibrary: examples/cql/25_population_health.cql
+    evaluateDefinitions:
+      - Diabetes IPP
+      - Diabetes Denominator
+      - Diabetes Numerator
+      - Diabetes Measure Met
+
+    prefetch:
+      patient: Patient/{{context.patientId}}
+      conditions: Condition?patient={{context.patientId}}&code=73211009&clinical-status=active
+      observations: Observation?patient={{context.patientId}}&code=4548-4&_count=5&_sort=-date
+
+    cards:
+      - condition: Diabetes IPP and not Diabetes Numerator
+        indicator: info
+        summary: "Diabetes Quality Gap: HbA1c monitoring needed"
+        detail: |
+          ## Diabetes Quality Measure Gap
+
+          Patient has diabetes but does not meet the HbA1c control measure.
+
+          **Recommendation:** Consider ordering HbA1c test and reviewing
+          glycemic control strategies.
+        source: Diabetes Quality Measures
+        suggestions:
+          - label: Order HbA1c test
+            isRecommended: false
+            actions:
+              - type: create
+                description: Order Hemoglobin A1c lab test
+
+  # Immunization Recommendations - triggered on patient view
+  - id: immunization-recommendations
+    hook: patient-view
+    title: Immunization Recommendations
+    description: >
+      Reviews vaccination history and recommends due or overdue immunizations
+      based on age and clinical conditions.
+
+    cqlLibrary: examples/cql/21_immunizations.cql
+    evaluateDefinitions:
+      - FluVaccineRecommended
+      - COVIDBoosterRecommended
+      - TdapDue
+      - PneumococcalVaccineRecommended
+      - ShinglesVaccineRecommended
+      - NumberOfVaccinesDue
+      - ImmunizationSummary
+
+    prefetch:
+      patient: Patient/{{context.patientId}}
+      immunizations: Immunization?patient={{context.patientId}}&status=completed
+
+    cards:
+      - condition: NumberOfVaccinesDue > 0
+        indicator: info
+        summary: "{{NumberOfVaccinesDue}} vaccination(s) due or recommended"
+        detail: |
+          ## Immunization Recommendations
+
+          The following vaccinations are due or recommended:
+
+          {% if FluVaccineRecommended %}- Influenza vaccine (annual){% endif %}
+          {% if COVIDBoosterRecommended %}- COVID-19 booster{% endif %}
+          {% if TdapDue %}- Tdap (every 10 years){% endif %}
+          {% if PneumococcalVaccineRecommended %}- Pneumococcal vaccine{% endif %}
+          {% if ShinglesVaccineRecommended %}- Shingles vaccine (Shingrix){% endif %}
+        source: Immunization Registry
+        links:
+          - label: View CDC Immunization Schedule
+            url: https://www.cdc.gov/vaccines/schedules/
+            type: absolute
