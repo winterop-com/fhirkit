@@ -1692,15 +1692,13 @@ class ELMExpressionVisitor:
         if not name:
             raise ELMReferenceError("Identifier reference missing name")
 
-        # Try alias first
-        value = self.context.get_alias(name)
-        if value is not None:
-            return value
+        # Try alias first (checking has_alias to handle None values)
+        if self.context.has_alias(name):
+            return self.context.get_alias(name)
 
         # Try parameter
-        value = self.context.get_parameter(name)
-        if value is not None:
-            return value
+        if self.context.has_parameter(name):
+            return self.context.get_parameter(name)
 
         # Try definition
         if self._library:
@@ -1815,8 +1813,7 @@ class ELMExpressionVisitor:
 
         # Process aggregate
         if aggregate:
-            # TODO: Implement aggregate clause
-            pass
+            return self._apply_aggregate(results, aggregate, alias)
 
         # Process sort
         if sort:
@@ -1834,6 +1831,62 @@ class ELMExpressionVisitor:
                 seen.add(key)
                 result.append(item)
         return result
+
+    def _apply_aggregate(self, results: list[Any], aggregate: dict[str, Any], source_alias: str | None) -> Any:
+        """Apply aggregate clause to accumulate a value across results.
+
+        Aggregate clause syntax: aggregate [distinct] identifier starting value : expression
+
+        Args:
+            results: The query results to aggregate over
+            aggregate: The aggregate clause definition
+            source_alias: The source alias name for the query
+
+        Returns:
+            The accumulated result value
+        """
+        # Get the accumulator identifier
+        identifier = aggregate.get("identifier")
+        if not identifier:
+            return results
+
+        # Get starting value
+        starting = aggregate.get("starting")
+        if starting:
+            accumulator = self.evaluate(starting)
+        else:
+            accumulator = None
+
+        # Check for distinct modifier
+        is_distinct = aggregate.get("distinct", False)
+
+        # Apply distinct if specified
+        if is_distinct:
+            results = self._make_distinct(results)
+
+        # Get the aggregation expression
+        agg_expression = aggregate.get("expression")
+        if not agg_expression:
+            return accumulator
+
+        # Iterate through results, accumulating value
+        for item in results:
+            self.context.push_alias_scope()
+            try:
+                # Set the source item alias
+                if source_alias:
+                    self.context.set_alias(source_alias, item)
+                self.context.set_alias("$this", item)
+
+                # Set the accumulator variable
+                self.context.set_alias(identifier, accumulator)
+
+                # Evaluate the aggregation expression
+                accumulator = self.evaluate(agg_expression)
+            finally:
+                self.context.pop_alias_scope()
+
+        return accumulator
 
     def _apply_sort(self, items: list[Any], sort: dict[str, Any]) -> list[Any]:
         """Apply sort clause to results."""
