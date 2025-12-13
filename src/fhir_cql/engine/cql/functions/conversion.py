@@ -302,6 +302,270 @@ def _sqrt(args: list[Any]) -> float | None:
     return None
 
 
+def _precision(args: list[Any]) -> int | None:
+    """Get precision of a value.
+
+    For Decimal: returns number of decimal places
+    For Date/DateTime/Time: returns precision level (year=4, month=6, day=8, etc.)
+    """
+    if not args or args[0] is None:
+        return None
+
+    val = args[0]
+
+    # Decimal precision - count digits after decimal point
+    if isinstance(val, Decimal):
+        sign, digits, exponent = val.as_tuple()
+        if exponent < 0:
+            return -exponent
+        return 0
+
+    if isinstance(val, float):
+        # Convert to string and count decimal places
+        s = str(val)
+        if "." in s:
+            return len(s.split(".")[1].rstrip("0")) or 0
+        return 0
+
+    if isinstance(val, int):
+        return 0
+
+    # Date/DateTime precision based on components present
+    if isinstance(val, FHIRDateTime):
+        if val.millisecond is not None:
+            return 17  # Full millisecond precision
+        if val.second is not None:
+            return 14  # Second precision
+        if val.minute is not None:
+            return 12  # Minute precision
+        if val.hour is not None:
+            return 10  # Hour precision
+        if val.day is not None:
+            return 8  # Day precision
+        if val.month is not None:
+            return 6  # Month precision
+        return 4  # Year precision
+
+    if isinstance(val, FHIRDate):
+        if val.day is not None:
+            return 8  # Day precision
+        if val.month is not None:
+            return 6  # Month precision
+        return 4  # Year precision
+
+    if isinstance(val, FHIRTime):
+        if val.millisecond is not None:
+            return 9  # Millisecond precision
+        if val.second is not None:
+            return 6  # Second precision
+        if val.minute is not None:
+            return 4  # Minute precision
+        return 2  # Hour precision
+
+    if isinstance(val, (date, datetime)):
+        return 8  # Python date/datetime always has day precision
+
+    return None
+
+
+def _low_boundary(args: list[Any]) -> Any:
+    """Get the lowest possible value for an imprecise value.
+
+    LowBoundary(value, precision) returns the least possible value
+    that the input could represent.
+    """
+    if len(args) < 2 or args[0] is None:
+        return None
+
+    val = args[0]
+    precision = args[1]
+
+    # For Decimal - pad with zeros to reach precision
+    if isinstance(val, (Decimal, float, int)):
+        decimal_val = Decimal(str(val))
+        if precision is not None:
+            # Low boundary for a decimal at given precision is the value itself
+            # truncated to that precision
+            quantize_str = "1." + "0" * int(precision) if precision > 0 else "1"
+            return decimal_val.quantize(Decimal(quantize_str))
+        return decimal_val
+
+    # For FHIRDate - fill in lowest possible values for missing components
+    if isinstance(val, FHIRDate):
+        return FHIRDate(
+            year=val.year,
+            month=val.month if val.month is not None else 1,
+            day=val.day if val.day is not None else 1,
+        )
+
+    # For FHIRDateTime - fill in lowest possible values
+    if isinstance(val, FHIRDateTime):
+        return FHIRDateTime(
+            year=val.year,
+            month=val.month if val.month is not None else 1,
+            day=val.day if val.day is not None else 1,
+            hour=val.hour if val.hour is not None else 0,
+            minute=val.minute if val.minute is not None else 0,
+            second=val.second if val.second is not None else 0,
+            millisecond=val.millisecond if val.millisecond is not None else 0,
+        )
+
+    # For FHIRTime - fill in lowest values
+    if isinstance(val, FHIRTime):
+        return FHIRTime(
+            hour=val.hour,
+            minute=val.minute if val.minute is not None else 0,
+            second=val.second if val.second is not None else 0,
+            millisecond=val.millisecond if val.millisecond is not None else 0,
+        )
+
+    return val
+
+
+def _high_boundary(args: list[Any]) -> Any:
+    """Get the highest possible value for an imprecise value.
+
+    HighBoundary(value, precision) returns the greatest possible value
+    that the input could represent.
+    """
+    if len(args) < 2 or args[0] is None:
+        return None
+
+    val = args[0]
+    precision = args[1]
+
+    # For Decimal - add 0.5 at the next precision level
+    if isinstance(val, (Decimal, float, int)):
+        decimal_val = Decimal(str(val))
+        if precision is not None and precision >= 0:
+            # High boundary is value + (10^-precision - smallest_unit)
+            increment = Decimal(10) ** (-int(precision))
+            # Round up to next precision boundary minus smallest representable
+            quantize_str = "1." + "0" * int(precision) if precision > 0 else "1"
+            return (decimal_val + increment - Decimal("0.00000001")).quantize(Decimal(quantize_str))
+        return decimal_val
+
+    # For FHIRDate - fill in highest possible values for missing components
+    if isinstance(val, FHIRDate):
+        month = val.month if val.month is not None else 12
+        # Calculate days in month
+        if month in (1, 3, 5, 7, 8, 10, 12):
+            max_day = 31
+        elif month in (4, 6, 9, 11):
+            max_day = 30
+        else:  # February
+            year = val.year
+            is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+            max_day = 29 if is_leap else 28
+
+        return FHIRDate(
+            year=val.year,
+            month=month,
+            day=val.day if val.day is not None else max_day,
+        )
+
+    # For FHIRDateTime - fill in highest possible values
+    if isinstance(val, FHIRDateTime):
+        month = val.month if val.month is not None else 12
+        if month in (1, 3, 5, 7, 8, 10, 12):
+            max_day = 31
+        elif month in (4, 6, 9, 11):
+            max_day = 30
+        else:
+            year = val.year
+            is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+            max_day = 29 if is_leap else 28
+
+        return FHIRDateTime(
+            year=val.year,
+            month=month,
+            day=val.day if val.day is not None else max_day,
+            hour=val.hour if val.hour is not None else 23,
+            minute=val.minute if val.minute is not None else 59,
+            second=val.second if val.second is not None else 59,
+            millisecond=val.millisecond if val.millisecond is not None else 999,
+        )
+
+    # For FHIRTime - fill in highest values
+    if isinstance(val, FHIRTime):
+        return FHIRTime(
+            hour=val.hour,
+            minute=val.minute if val.minute is not None else 59,
+            second=val.second if val.second is not None else 59,
+            millisecond=val.millisecond if val.millisecond is not None else 999,
+        )
+
+    return val
+
+
+def _min_value(args: list[Any]) -> Any:
+    """Get minimum representable value for a type.
+
+    MinValue(type) returns the minimum value for Integer, Decimal, Date, DateTime, Time.
+    """
+    import sys
+
+    if not args:
+        return None
+
+    type_name = str(args[0]).lower() if args[0] else None
+
+    if type_name in ("integer", "int"):
+        return -sys.maxsize - 1
+
+    if type_name == "decimal":
+        # CQL spec: minimum decimal is -10^28 + 1
+        return Decimal("-99999999999999999999999999.99999999")
+
+    if type_name == "date":
+        return FHIRDate(year=1, month=1, day=1)
+
+    if type_name == "datetime":
+        return FHIRDateTime(year=1, month=1, day=1, hour=0, minute=0, second=0, millisecond=0)
+
+    if type_name == "time":
+        return FHIRTime(hour=0, minute=0, second=0, millisecond=0)
+
+    if type_name == "quantity":
+        return Quantity(value=Decimal("-99999999999999999999999999.99999999"), unit="1")
+
+    return None
+
+
+def _max_value(args: list[Any]) -> Any:
+    """Get maximum representable value for a type.
+
+    MaxValue(type) returns the maximum value for Integer, Decimal, Date, DateTime, Time.
+    """
+    import sys
+
+    if not args:
+        return None
+
+    type_name = str(args[0]).lower() if args[0] else None
+
+    if type_name in ("integer", "int"):
+        return sys.maxsize
+
+    if type_name == "decimal":
+        # CQL spec: maximum decimal is 10^28 - 1
+        return Decimal("99999999999999999999999999.99999999")
+
+    if type_name == "date":
+        return FHIRDate(year=9999, month=12, day=31)
+
+    if type_name == "datetime":
+        return FHIRDateTime(year=9999, month=12, day=31, hour=23, minute=59, second=59, millisecond=999)
+
+    if type_name == "time":
+        return FHIRTime(hour=23, minute=59, second=59, millisecond=999)
+
+    if type_name == "quantity":
+        return Quantity(value=Decimal("99999999999999999999999999.99999999"), unit="1")
+
+    return None
+
+
 def register(registry: "FunctionRegistry") -> None:
     """Register all conversion functions."""
     registry.register("ToString", _to_string, category="conversion", min_args=1, max_args=1)
@@ -330,3 +594,9 @@ def register(registry: "FunctionRegistry") -> None:
     registry.register("Exp", _exp, category="math", min_args=1, max_args=1)
     registry.register("Power", _power, category="math", min_args=2, max_args=2)
     registry.register("Sqrt", _sqrt, category="math", min_args=1, max_args=1)
+    # Precision and boundary functions
+    registry.register("Precision", _precision, category="math", min_args=1, max_args=1)
+    registry.register("LowBoundary", _low_boundary, category="math", min_args=2, max_args=2)
+    registry.register("HighBoundary", _high_boundary, category="math", min_args=2, max_args=2)
+    registry.register("MinValue", _min_value, category="math", min_args=1, max_args=1)
+    registry.register("MaxValue", _max_value, category="math", min_args=1, max_args=1)
