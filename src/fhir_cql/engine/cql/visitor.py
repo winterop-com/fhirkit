@@ -774,6 +774,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if self._library and name in self._library.concepts:
             return self._library.resolve_concept(name)
 
+        # Check if it's an included library alias
+        included_lib = self.context.resolve_library(name)
+        if included_lib:
+            return included_lib
+
         return None
 
     def visitFunctionInvocation(self, ctx: cqlParser.FunctionInvocationContext) -> Any:
@@ -798,6 +803,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if isinstance(invocation, cqlParser.QualifiedMemberInvocationContext):
             # Property access on target
             name = self._get_identifier_text(invocation.referentialIdentifier())
+
+            # Handle included library expression references
+            if isinstance(target, CQLLibrary):
+                return self._evaluate_library_definition(target, name)
+
             if isinstance(target, dict):
                 return target.get(name)
             elif isinstance(target, CQLTuple):
@@ -809,6 +819,15 @@ class CQLEvaluatorVisitor(cqlVisitor):
             # Method call on target
             func_ctx = invocation.qualifiedFunction()
             name = self._get_identifier_text(func_ctx.identifierOrFunctionIdentifier())
+
+            # Handle included library function calls
+            if isinstance(target, CQLLibrary):
+                args = []
+                param_list = func_ctx.paramList()
+                if param_list:
+                    for expr in param_list.expression():
+                        args.append(self.visit(expr))
+                return self._call_library_function(target, name, args)
 
             args = [target]
             param_list = func_ctx.paramList()
@@ -945,7 +964,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
     def _process_query_sources(self, ctx: cqlParser.SourceClauseContext) -> list[Any]:
         """Process query source clause and return initial result set."""
-        results: list[dict[str, Any]] = []
+        results: list[dict[str, Any]] | None = None
 
         for alias_def in ctx.aliasedQuerySource():
             source = alias_def.querySource()
@@ -958,8 +977,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
             if not isinstance(source_value, list):
                 source_value = [source_value] if source_value is not None else []
 
-            # Initialize result set with source
-            if not results:
+            # Initialize result set with first source
+            if results is None:
                 results = [{alias: item} for item in source_value]
             else:
                 # Cross join with additional source
@@ -971,7 +990,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                         new_results.append(combined)
                 results = new_results
 
-        return results
+        return results if results is not None else []
 
     def _evaluate_query_source(self, ctx: cqlParser.QuerySourceContext) -> Any:
         """Evaluate a query source."""
@@ -1752,19 +1771,101 @@ class CQLEvaluatorVisitor(cqlVisitor):
         finally:
             self.context.end_evaluation(name)
 
+    def _evaluate_library_definition(self, library: CQLLibrary, name: str) -> Any:
+        """Evaluate a named definition from an external library.
+
+        Args:
+            library: The external library to evaluate from
+            name: Name of the definition to evaluate
+
+        Returns:
+            The evaluation result
+        """
+        # Use a unique cache key for external definitions
+        cache_key = f"{library.name}:{library.version}:{name}"
+
+        # Check cache
+        found, cached = self.context.get_cached_definition(cache_key)
+        if found:
+            return cached
+
+        # Check for recursion
+        if not self.context.start_evaluation(cache_key):
+            raise CQLError(f"Recursive definition detected: {library.name}.{name}")
+
+        # Save current library and switch to external library
+        old_library = self._library
+        old_context_library = self.context.library
+        self._library = library
+        self.context.library = library
+
+        try:
+            definition = library.definitions.get(name)
+            if not definition or not definition.expression_tree:
+                return None
+
+            result = self.visit(definition.expression_tree)
+            self.context.cache_definition(cache_key, result)
+            return result
+        finally:
+            self._library = old_library
+            self.context.library = old_context_library
+            self.context.end_evaluation(cache_key)
+
+    def _call_library_function(self, library: CQLLibrary, name: str, args: list[Any]) -> Any:
+        """Call a function from an external library.
+
+        Args:
+            library: The external library containing the function
+            name: Name of the function to call
+            args: Function arguments
+
+        Returns:
+            The function result
+        """
+        # Check if the function exists in the external library
+        func = library.get_function(name, len(args))
+        if func and func.body_tree:
+            # Save current library and switch to external library
+            old_library = self._library
+            old_context_library = self.context.library
+            self._library = library
+            self.context.library = library
+
+            try:
+                return self._call_user_function(func, args)
+            finally:
+                self._library = old_library
+                self.context.library = old_context_library
+
+        # Fall back to built-in functions
+        return self._call_builtin_function(name, args)
+
     def _call_function(self, name: str, args: list[Any]) -> Any:
         """Call a function by name with arguments.
 
         Resolution order:
-        1. User-defined functions in current library
-        2. Plugin functions from the registry
-        3. Built-in functions
+        1. User-defined functions in current library (non-external)
+        2. External functions via plugin registry
+        3. Plugin functions from the registry
+        4. Built-in functions
         """
         # Check for user-defined functions
         if self._library:
             func = self._library.get_function(name, len(args))
-            if func and func.body_tree:
-                return self._call_user_function(func, args)
+            if func:
+                if func.body_tree:
+                    # Regular user-defined function with a body
+                    return self._call_user_function(func, args)
+                elif func.external:
+                    # External function - must be implemented via plugin registry
+                    plugin_registry = getattr(self.context, "plugin_registry", None)
+                    if plugin_registry and plugin_registry.has(name):
+                        return plugin_registry.call(name, *args)
+                    raise CQLError(
+                        f"External function '{name}' declared but no implementation found. "
+                        f"Register it using the plugin registry."
+                    )
 
         # Check for plugin functions
         plugin_registry = getattr(self.context, "plugin_registry", None)

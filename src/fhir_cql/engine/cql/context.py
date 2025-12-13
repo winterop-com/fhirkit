@@ -228,12 +228,18 @@ class CQLContext(EvaluationContext):
     # Library resolution
 
     def resolve_library(self, alias: str) -> "CQLLibrary | None":
-        """Resolve a library by its alias."""
+        """Resolve a library by its alias.
+
+        When no alias is specified in the include statement, the library name
+        is used as the alias.
+        """
         if not self._library or not self._library_manager:
             return None
 
         for include in self._library.includes:
-            if include.alias == alias:
+            # Match by explicit alias, or by library name if no alias was specified
+            effective_alias = include.alias or include.library
+            if effective_alias == alias:
                 return self._library_manager.get_library(include.library, include.version)
 
         return None
