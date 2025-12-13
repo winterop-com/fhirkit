@@ -17,26 +17,26 @@ This project provides complete implementations of:
 
 ```bash
 # Evaluate FHIRPath against a FHIR resource
-fhirpath eval "Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.family" -r patient.json
 # Output: 'Smith'
 
 # Filter and transform
-fhirpath eval "Patient.name.where(use = 'official').given.first()" -r patient.json
+fhir fhirpath eval "Patient.name.where(use = 'official').given.first()" -r patient.json
 ```
 
 ### CQL
 
 ```bash
 # Evaluate a CQL expression
-cql eval "1 + 2 * 3"
+fhir cql eval "1 + 2 * 3"
 # Output: 7
 
 # Run a CQL library
-cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/01_hello_world.cql
 # Output: Table with all definition results
 
 # Evaluate specific definition
-cql run library.cql --definition "Initial Population" --data patient.json
+fhir cql run library.cql --definition "Initial Population" --data patient.json
 ```
 
 ### Python API

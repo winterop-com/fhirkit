@@ -32,7 +32,7 @@ Learn to evaluate simple CQL expressions.
 ### Run Your First Expression
 
 ```bash
-cql eval "1 + 2"
+fhir cql eval "1 + 2"
 ```
 
 Output:
@@ -43,10 +43,10 @@ Output:
 ### Try More Arithmetic
 
 ```bash
-cql eval "10 - 3"
-cql eval "4 * 5"
-cql eval "15 / 3"
-cql eval "2 + 3 * 4"
+fhir cql eval "10 - 3"
+fhir cql eval "4 * 5"
+fhir cql eval "15 / 3"
+fhir cql eval "2 + 3 * 4"
 ```
 
 The last one outputs `14` (multiplication before addition).
@@ -55,7 +55,7 @@ The last one outputs `14` (multiplication before addition).
 
 ```bash
 # Integer division (truncates)
-cql eval "7 div 2"
+fhir cql eval "7 div 2"
 ```
 
 Output:
@@ -65,7 +65,7 @@ Output:
 
 ```bash
 # Decimal division
-cql eval "7.0 / 2.0"
+fhir cql eval "7.0 / 2.0"
 ```
 
 Output:
@@ -76,7 +76,7 @@ Output:
 ### Modulo (Remainder)
 
 ```bash
-cql eval "7 mod 3"
+fhir cql eval "7 mod 3"
 ```
 
 Output:
@@ -89,10 +89,10 @@ Output:
 Calculate these:
 
 ```bash
-cql eval "(10 + 5) * 2"
-cql eval "100 div 7"
-cql eval "100 mod 7"
-cql eval "2.5 + 3.5"
+fhir cql eval "(10 + 5) * 2"
+fhir cql eval "100 div 7"
+fhir cql eval "100 mod 7"
+fhir cql eval "2.5 + 3.5"
 ```
 
 ### What You Learned
@@ -113,8 +113,8 @@ Learn CQL's core data types.
 ### Strings (Use Single Quotes!)
 
 ```bash
-cql eval "'Hello, World!'"
-cql eval "'CQL' + ' is ' + 'powerful'"
+fhir cql eval "'Hello, World!'"
+fhir cql eval "'CQL' + ' is ' + 'powerful'"
 ```
 
 Important: CQL uses **single quotes** for strings. Double quotes are for identifiers.
@@ -122,54 +122,54 @@ Important: CQL uses **single quotes** for strings. Double quotes are for identif
 ### String Functions
 
 ```bash
-cql eval "Upper('hello')"
-cql eval "Lower('HELLO')"
-cql eval "Length('Hello')"
-cql eval "Substring('Hello World', 0, 5)"
+fhir cql eval "Upper('hello')"
+fhir cql eval "Lower('HELLO')"
+fhir cql eval "Length('Hello')"
+fhir cql eval "Substring('Hello World', 0, 5)"
 ```
 
 ### Booleans
 
 ```bash
-cql eval "true"
-cql eval "false"
-cql eval "true and false"
-cql eval "true or false"
-cql eval "not true"
+fhir cql eval "true"
+fhir cql eval "false"
+fhir cql eval "true and false"
+fhir cql eval "true or false"
+fhir cql eval "not true"
 ```
 
 ### Boolean Logic
 
 ```bash
-cql eval "5 > 3"
-cql eval "5 = 5"
-cql eval "5 != 3"
-cql eval "5 >= 5"
-cql eval "3 < 5 and 5 < 10"
+fhir cql eval "5 > 3"
+fhir cql eval "5 = 5"
+fhir cql eval "5 != 3"
+fhir cql eval "5 >= 5"
+fhir cql eval "3 < 5 and 5 < 10"
 ```
 
 ### Null
 
 ```bash
-cql eval "null"
-cql eval "5 + null"
-cql eval "null = null"
+fhir cql eval "null"
+fhir cql eval "5 + null"
+fhir cql eval "null = null"
 ```
 
 Note: In CQL, `null = null` returns `null`, not `true`. Use `is null` to check:
 
 ```bash
-cql eval "null is null"
-cql eval "5 is not null"
+fhir cql eval "null is null"
+fhir cql eval "5 is not null"
 ```
 
 ### Try It Yourself
 
 ```bash
-cql eval "'Hello' + ' ' + 'World'"
-cql eval "Upper('hello') = 'HELLO'"
-cql eval "10 > 5 and 10 < 20"
-cql eval "StartsWith('Hello', 'He')"
+fhir cql eval "'Hello' + ' ' + 'World'"
+fhir cql eval "Upper('hello') = 'HELLO'"
+fhir cql eval "10 > 5 and 10 < 20"
+fhir cql eval "StartsWith('Hello', 'He')"
 ```
 
 ### What You Learned
@@ -204,7 +204,7 @@ define IsTrue: true and not false
 ### Run the Library
 
 ```bash
-cql run hello.cql
+fhir cql run hello.cql
 ```
 
 Output:
@@ -223,13 +223,13 @@ Library: HelloWorld v1.0.0
 ### Run a Specific Definition
 
 ```bash
-cql run hello.cql --definition Sum
+fhir cql run hello.cql --definition Sum
 ```
 
 ### List Definitions
 
 ```bash
-cql definitions hello.cql
+fhir cql definitions hello.cql
 ```
 
 ### Definitions Can Reference Each Other
@@ -249,7 +249,7 @@ define Average: (A + B) / 2.0
 Run it:
 
 ```bash
-cql run hello.cql
+fhir cql run hello.cql
 ```
 
 ### Try It Yourself
@@ -266,7 +266,7 @@ define Circumference: 2 * Pi * Radius
 ```
 
 ```bash
-cql run math.cql
+fhir cql run math.cql
 ```
 
 ### What You Learned
@@ -274,7 +274,7 @@ cql run math.cql
 - Libraries start with `library Name version '...'`
 - `define Name: expression` creates definitions
 - Definitions can reference other definitions
-- `cql run` evaluates all definitions
+- `fhir cql run` evaluates all definitions
 - `--definition` evaluates a specific one
 
 ---
@@ -288,69 +288,69 @@ Learn to create and manipulate lists.
 ### Creating Lists
 
 ```bash
-cql eval "{1, 2, 3, 4, 5}"
-cql eval "{'apple', 'banana', 'cherry'}"
-cql eval "{}"
+fhir cql eval "{1, 2, 3, 4, 5}"
+fhir cql eval "{'apple', 'banana', 'cherry'}"
+fhir cql eval "{}"
 ```
 
 ### Accessing Elements
 
 ```bash
-cql eval "First({1, 2, 3})"
-cql eval "Last({1, 2, 3})"
-cql eval "{1, 2, 3, 4, 5}[2]"
+fhir cql eval "First({1, 2, 3})"
+fhir cql eval "Last({1, 2, 3})"
+fhir cql eval "{1, 2, 3, 4, 5}[2]"
 ```
 
 ### List Operations
 
 ```bash
 # Count
-cql eval "Count({1, 2, 3, 4, 5})"
+fhir cql eval "Count({1, 2, 3, 4, 5})"
 
 # Take first N
-cql eval "Take({1, 2, 3, 4, 5}, 3)"
+fhir cql eval "Take({1, 2, 3, 4, 5}, 3)"
 
 # Skip first N
-cql eval "Skip({1, 2, 3, 4, 5}, 2)"
+fhir cql eval "Skip({1, 2, 3, 4, 5}, 2)"
 
 # Tail (all except first)
-cql eval "Tail({1, 2, 3, 4, 5})"
+fhir cql eval "Tail({1, 2, 3, 4, 5})"
 ```
 
 ### Aggregate Functions
 
 ```bash
-cql eval "Sum({1, 2, 3, 4, 5})"
-cql eval "Avg({10, 20, 30})"
-cql eval "Min({5, 2, 8, 1, 9})"
-cql eval "Max({5, 2, 8, 1, 9})"
+fhir cql eval "Sum({1, 2, 3, 4, 5})"
+fhir cql eval "Avg({10, 20, 30})"
+fhir cql eval "Min({5, 2, 8, 1, 9})"
+fhir cql eval "Max({5, 2, 8, 1, 9})"
 ```
 
 ### Membership
 
 ```bash
 # Check if list contains value
-cql eval "{1, 2, 3} contains 2"
+fhir cql eval "{1, 2, 3} contains 2"
 
 # Check if value is in list
-cql eval "2 in {1, 2, 3}"
+fhir cql eval "2 in {1, 2, 3}"
 
 # Check if exists
-cql eval "exists({1, 2, 3})"
-cql eval "exists({})"
+fhir cql eval "exists({1, 2, 3})"
+fhir cql eval "exists({})"
 ```
 
 ### Combining Lists
 
 ```bash
 # Union (removes duplicates)
-cql eval "{1, 2, 3} union {3, 4, 5}"
+fhir cql eval "{1, 2, 3} union {3, 4, 5}"
 
 # Intersect (common elements)
-cql eval "{1, 2, 3, 4} intersect {2, 3, 5}"
+fhir cql eval "{1, 2, 3, 4} intersect {2, 3, 5}"
 
 # Except (remove elements)
-cql eval "{1, 2, 3, 4} except {2, 4}"
+fhir cql eval "{1, 2, 3, 4} except {2, 4}"
 ```
 
 ### Create a Library
@@ -376,15 +376,15 @@ define OddNumbers: Numbers except EvenNumbers
 ```
 
 ```bash
-cql run lists.cql
+fhir cql run lists.cql
 ```
 
 ### Try It Yourself
 
 ```bash
-cql eval "Flatten({{1, 2}, {3, 4}, {5}})"
-cql eval "distinct {1, 1, 2, 2, 3, 3}"
-cql eval "Sort({5, 2, 8, 1, 9})"
+fhir cql eval "Flatten({{1, 2}, {3, 4}, {5}})"
+fhir cql eval "distinct {1, 1, 2, 2, 3, 3}"
+fhir cql eval "Sort({5, 2, 8, 1, 9})"
 ```
 
 ### What You Learned
@@ -407,59 +407,59 @@ Learn to work with dates and times.
 
 ```bash
 # Date literal (starts with @)
-cql eval "@2024-06-15"
+fhir cql eval "@2024-06-15"
 
 # DateTime literal
-cql eval "@2024-06-15T10:30:00"
+fhir cql eval "@2024-06-15T10:30:00"
 
 # Partial dates
-cql eval "@2024-06"
-cql eval "@2024"
+fhir cql eval "@2024-06"
+fhir cql eval "@2024"
 ```
 
 ### Current Date/Time
 
 ```bash
-cql eval "Today()"
-cql eval "Now()"
+fhir cql eval "Today()"
+fhir cql eval "Now()"
 ```
 
 ### Date Arithmetic
 
 ```bash
 # Add duration
-cql eval "@2024-01-15 + 30 days"
-cql eval "@2024-01-15 + 2 months"
-cql eval "@2024-01-15 + 1 year"
+fhir cql eval "@2024-01-15 + 30 days"
+fhir cql eval "@2024-01-15 + 2 months"
+fhir cql eval "@2024-01-15 + 1 year"
 
 # Subtract duration
-cql eval "@2024-06-15 - 10 days"
-cql eval "Today() - 1 week"
+fhir cql eval "@2024-06-15 - 10 days"
+fhir cql eval "Today() - 1 week"
 ```
 
 ### Duration Between Dates
 
 ```bash
-cql eval "years between @1990-03-15 and @2024-06-15"
-cql eval "months between @2024-01-01 and @2024-06-15"
-cql eval "days between @2024-06-01 and @2024-06-15"
+fhir cql eval "years between @1990-03-15 and @2024-06-15"
+fhir cql eval "months between @2024-01-01 and @2024-06-15"
+fhir cql eval "days between @2024-06-01 and @2024-06-15"
 ```
 
 ### Extract Date Parts
 
 ```bash
-cql eval "year from @2024-06-15"
-cql eval "month from @2024-06-15"
-cql eval "day from @2024-06-15"
+fhir cql eval "year from @2024-06-15"
+fhir cql eval "month from @2024-06-15"
+fhir cql eval "day from @2024-06-15"
 ```
 
 ### Date Comparisons
 
 ```bash
-cql eval "@2024-01-01 before @2024-06-15"
-cql eval "@2024-06-15 after @2024-01-01"
-cql eval "@2024-06-15 same day as @2024-06-15"
-cql eval "@2024-06-15 same month as @2024-06-01"
+fhir cql eval "@2024-01-01 before @2024-06-15"
+fhir cql eval "@2024-06-15 after @2024-01-01"
+fhir cql eval "@2024-06-15 same day as @2024-06-15"
+fhir cql eval "@2024-06-15 same month as @2024-06-01"
 ```
 
 ### Create a Library
@@ -487,15 +487,15 @@ define LastMonth: Today() - 1 month
 ```
 
 ```bash
-cql run dates.cql
+fhir cql run dates.cql
 ```
 
 ### Try It Yourself
 
 ```bash
-cql eval "Today() + 100 days"
-cql eval "years between @2000-01-01 and Today()"
-cql eval "@2024-02-28 + 1 day"
+fhir cql eval "Today() + 100 days"
+fhir cql eval "years between @2000-01-01 and Today()"
+fhir cql eval "@2024-02-28 + 1 day"
 ```
 
 ### What You Learned
@@ -518,26 +518,26 @@ Learn to write conditional expressions.
 ### If-Then-Else
 
 ```bash
-cql eval "if 5 > 3 then 'yes' else 'no'"
-cql eval "if true then 100 else 0"
+fhir cql eval "if 5 > 3 then 'yes' else 'no'"
+fhir cql eval "if true then 100 else 0"
 ```
 
 ### Nested Conditions
 
 ```bash
-cql eval "if 10 > 20 then 'big' else if 10 > 5 then 'medium' else 'small'"
+fhir cql eval "if 10 > 20 then 'big' else if 10 > 5 then 'medium' else 'small'"
 ```
 
 ### Case Expressions
 
 ```bash
-cql eval "case when 5 > 10 then 'big' when 5 > 3 then 'medium' else 'small' end"
+fhir cql eval "case when 5 > 10 then 'big' when 5 > 3 then 'medium' else 'small' end"
 ```
 
 ### Case with Value
 
 ```bash
-cql eval "case 'red' when 'red' then 'stop' when 'green' then 'go' else 'caution' end"
+fhir cql eval "case 'red' when 'red' then 'stop' when 'green' then 'go' else 'caution' end"
 ```
 
 ### Create a Library
@@ -577,18 +577,18 @@ define TemperatureStatus:
 ```
 
 ```bash
-cql run conditions.cql
+fhir cql run conditions.cql
 ```
 
 ### Null Handling
 
 ```bash
 # Coalesce returns first non-null
-cql eval "Coalesce(null, null, 'default')"
-cql eval "Coalesce(5, 10, 15)"
+fhir cql eval "Coalesce(null, null, 'default')"
+fhir cql eval "Coalesce(5, 10, 15)"
 
 # If null then default
-cql eval "if null is null then 'was null' else 'not null'"
+fhir cql eval "if null is null then 'was null' else 'not null'"
 ```
 
 ### Try It Yourself
@@ -613,7 +613,7 @@ define BMICategory:
 ```
 
 ```bash
-cql run bmi.cql
+fhir cql run bmi.cql
 ```
 
 ### What You Learned
@@ -635,16 +635,16 @@ Learn to define and use functions.
 
 ```bash
 # Math
-cql eval "Abs(-5)"
-cql eval "Round(3.456, 2)"
-cql eval "Sqrt(16)"
-cql eval "Power(2, 10)"
+fhir cql eval "Abs(-5)"
+fhir cql eval "Round(3.456, 2)"
+fhir cql eval "Sqrt(16)"
+fhir cql eval "Power(2, 10)"
 
 # String
-cql eval "Concat('Hello', ' ', 'World')"
-cql eval "Combine({'a', 'b', 'c'}, ', ')"
-cql eval "Split('a,b,c', ',')"
-cql eval "Replace('Hello', 'l', 'L')"
+fhir cql eval "Concat('Hello', ' ', 'World')"
+fhir cql eval "Combine({'a', 'b', 'c'}, ', ')"
+fhir cql eval "Split('a,b,c', ',')"
+fhir cql eval "Replace('Hello', 'l', 'L')"
 ```
 
 ### User-Defined Functions
@@ -688,7 +688,7 @@ define BodyTempC: FahrenheitToCelsius(98.6)
 ```
 
 ```bash
-cql run functions.cql
+fhir cql run functions.cql
 ```
 
 ### Recursive Functions
@@ -707,7 +707,7 @@ define Fact10: Factorial(10)
 ```
 
 ```bash
-cql run factorial.cql
+fhir cql run factorial.cql
 ```
 
 ### Try It Yourself
@@ -773,9 +773,9 @@ Save as `patient.json`:
 
 ```bash
 # Direct expression with patient context
-cql eval "Patient.gender" --data patient.json
-cql eval "Patient.birthDate" --data patient.json
-cql eval "Patient.name.first().family" --data patient.json
+fhir cql eval "Patient.gender" --data patient.json
+fhir cql eval "Patient.birthDate" --data patient.json
+fhir cql eval "Patient.name.first().family" --data patient.json
 ```
 
 ### Create a Patient Library
@@ -813,7 +813,7 @@ define AgeCategory:
 ```
 
 ```bash
-cql run patient-info.cql --data patient.json
+fhir cql run patient-info.cql --data patient.json
 ```
 
 ### Working with Bundles
@@ -900,7 +900,7 @@ define ObservationCount: Count(Observations)
 ```
 
 ```bash
-cql run retrieve-example.cql --data patient-bundle.json
+fhir cql run retrieve-example.cql --data patient-bundle.json
 ```
 
 ### Try It Yourself
@@ -943,7 +943,7 @@ Learn CQL query syntax for filtering and transforming data.
 
 ```bash
 # Filter a list
-cql eval "from n in {1, 2, 3, 4, 5} where n > 2 return n"
+fhir cql eval "from n in {1, 2, 3, 4, 5} where n > 2 return n"
 ```
 
 Output:
@@ -955,7 +955,7 @@ Output:
 
 ```bash
 # Double each value
-cql eval "from n in {1, 2, 3, 4, 5} return n * 2"
+fhir cql eval "from n in {1, 2, 3, 4, 5} return n * 2"
 ```
 
 Output:
@@ -967,15 +967,15 @@ Output:
 
 ```bash
 # Define intermediate values
-cql eval "from n in {1, 2, 3, 4, 5} let squared: n * n where squared > 10 return squared"
+fhir cql eval "from n in {1, 2, 3, 4, 5} let squared: n * n where squared > 10 return squared"
 ```
 
 ### Sorting
 
 ```bash
-cql eval "Sort({5, 2, 8, 1, 9})"
-cql eval "from n in {5, 2, 8, 1, 9} return n sort asc"
-cql eval "from n in {5, 2, 8, 1, 9} return n sort desc"
+fhir cql eval "Sort({5, 2, 8, 1, 9})"
+fhir cql eval "from n in {5, 2, 8, 1, 9} return n sort asc"
+fhir cql eval "from n in {5, 2, 8, 1, 9} return n sort desc"
 ```
 
 ### Query Library
@@ -1022,7 +1022,7 @@ define FirstThreeEven:
 ```
 
 ```bash
-cql run queries.cql
+fhir cql run queries.cql
 ```
 
 ### FHIR Queries
@@ -1069,17 +1069,17 @@ define ConditionCodes:
 ```
 
 ```bash
-cql run fhir-queries.cql --data patient-bundle.json
+fhir cql run fhir-queries.cql --data patient-bundle.json
 ```
 
 ### Try It Yourself
 
 ```bash
 # Query strings
-cql eval "from name in {'Alice', 'Bob', 'Charlie'} where StartsWith(name, 'A') return name"
+fhir cql eval "from name in {'Alice', 'Bob', 'Charlie'} where StartsWith(name, 'A') return name"
 
 # Query with transformation
-cql eval "from name in {'alice', 'bob', 'charlie'} return Upper(name)"
+fhir cql eval "from name in {'alice', 'bob', 'charlie'} return Upper(name)"
 ```
 
 ### What You Learned
@@ -1294,7 +1294,7 @@ define MeasureSummary:
 ### Run the Measure
 
 ```bash
-cql run diabetes-measure.cql --data diabetic-patient.json
+fhir cql run diabetes-measure.cql --data diabetic-patient.json
 ```
 
 ### Expected Output
@@ -1392,8 +1392,8 @@ sort by field
 - Try the existing example libraries:
 
 ```bash
-cql run examples/cql/01_hello_world.cql
-cql run examples/cql/09_string_functions.cql
-cql run examples/cql/10_math_functions.cql
-cql run examples/cql/16_clinical_calculations.cql
+fhir cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/09_string_functions.cql
+fhir cql run examples/cql/10_math_functions.cql
+fhir cql run examples/cql/16_clinical_calculations.cql
 ```

@@ -17,11 +17,12 @@ make generate
 ## Verify Installation
 
 ```bash
-# Check FHIRPath CLI
-fhirpath --help
+# Check unified CLI
+fhir --help
 
-# Check CQL CLI
-cql --help
+# Check subcommands
+fhir cql --help
+fhir fhirpath --help
 
 # Run tests
 make test
@@ -44,19 +45,19 @@ Save it as `patient.json`, then evaluate:
 
 ```bash
 # Get the family name
-fhirpath eval "Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.family" -r patient.json
 # Output: 'Smith'
 
 # Get given names
-fhirpath eval "Patient.name.given" -r patient.json
+fhir fhirpath eval "Patient.name.given" -r patient.json
 # Output: ['John']
 
 # Check gender
-fhirpath eval "Patient.gender = 'male'" -r patient.json
+fhir fhirpath eval "Patient.gender = 'male'" -r patient.json
 # Output: true
 
 # Calculate something with dates
-fhirpath eval "Patient.birthDate" -r patient.json
+fhir fhirpath eval "Patient.birthDate" -r patient.json
 ```
 
 ## Your First CQL Expression
@@ -65,19 +66,19 @@ CQL can be evaluated directly without a library:
 
 ```bash
 # Simple arithmetic
-cql eval "1 + 2 * 3"
+fhir cql eval "1 + 2 * 3"
 # Output: 7
 
 # String operations
-cql eval "Upper('hello world')"
+fhir cql eval "Upper('hello world')"
 # Output: 'HELLO WORLD'
 
 # Date operations
-cql eval "Today()"
+fhir cql eval "Today()"
 # Output: @2024-12-13
 
 # List operations
-cql eval "Sum({1, 2, 3, 4, 5})"
+fhir cql eval "Sum({1, 2, 3, 4, 5})"
 # Output: 15
 ```
 
@@ -109,16 +110,16 @@ Save it as `hello.cql`, then run:
 
 ```bash
 # Parse and validate
-cql parse hello.cql
+fhir cql parse hello.cql
 
 # List definitions
-cql definitions hello.cql
+fhir cql definitions hello.cql
 
 # Run and evaluate all definitions
-cql run hello.cql
+fhir cql run hello.cql
 
 # Evaluate specific definition
-cql run hello.cql --definition Sum
+fhir cql run hello.cql --definition Sum
 ```
 
 ## Using CQL with Patient Data
@@ -145,7 +146,7 @@ define PatientName:
 Run with patient data:
 
 ```bash
-cql run patient_info.cql --data patient.json
+fhir cql run patient_info.cql --data patient.json
 ```
 
 ## Using the Python API
@@ -233,9 +234,10 @@ python-fhir-cql/
 │   ├── engine/
 │   │   ├── cql/          # CQL evaluator
 │   │   └── fhirpath/     # FHIRPath evaluator
+│   ├── cli.py            # Unified CLI
 │   ├── cql_cli.py        # CQL CLI
 │   └── fhirpath_cli.py   # FHIRPath CLI
-├── tests/                 # Test suite (555+ tests)
+├── tests/                 # Test suite (1190+ tests)
 └── docs/                  # Documentation
 ```
 
@@ -248,12 +250,12 @@ Explore the examples:
 ls examples/cql/
 
 # Run a specific example
-cql run examples/cql/01_hello_world.cql
-cql run examples/cql/10_math_functions.cql
-cql run examples/cql/16_clinical_calculations.cql
+fhir cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/10_math_functions.cql
+fhir cql run examples/cql/16_clinical_calculations.cql
 
 # View an example
-cql show examples/cql/08_quality_measure.cql
+fhir cql show examples/cql/08_quality_measure.cql
 ```
 
 ## Next Steps

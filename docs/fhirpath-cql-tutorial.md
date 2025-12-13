@@ -1123,19 +1123,19 @@ define "Needs BP Screening":
 
 ```bash
 # Evaluate a single expression
-cql eval "1 + 2 * 3"
+fhir cql eval "1 + 2 * 3"
 
 # Run a library
-cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/01_hello_world.cql
 
 # Run with specific definition
-cql run library.cql --definition "Initial Population"
+fhir cql run library.cql --definition "Initial Population"
 
 # Run with patient data
-cql run library.cql --data patient.json
+fhir cql run library.cql --data patient.json
 
 # Output results to file
-cql run library.cql --output results.json
+fhir cql run library.cql --output results.json
 ```
 
 ### Using the Python API

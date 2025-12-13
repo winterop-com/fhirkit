@@ -1,5 +1,16 @@
 # CLI Reference
 
+The unified `fhir` CLI provides access to both CQL and FHIRPath functionality:
+
+```bash
+fhir cql <command>      # CQL commands
+fhir fhirpath <command> # FHIRPath commands
+```
+
+Standalone commands are also available: `cql` and `fhirpath`.
+
+---
+
 ## FHIRPath CLI
 
 ### eval
@@ -7,8 +18,8 @@
 Evaluate a FHIRPath expression against a FHIR resource.
 
 ```bash
-fhirpath eval <expression> -r <resource.json>
-fhirpath eval <expression> --json '<inline-json>'
+fhir fhirpath eval <expression> -r <resource.json>
+fhir fhirpath eval <expression> --json '<inline-json>'
 ```
 
 **Options:**
@@ -23,16 +34,16 @@ fhirpath eval <expression> --json '<inline-json>'
 
 ```bash
 # Basic navigation
-fhirpath eval "Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.family" -r patient.json
 
 # Filtering
-fhirpath eval "Patient.name.where(use = 'official').given" -r patient.json
+fhir fhirpath eval "Patient.name.where(use = 'official').given" -r patient.json
 
 # Boolean expression
-fhirpath eval "Patient.gender = 'male'" -r patient.json
+fhir fhirpath eval "Patient.gender = 'male'" -r patient.json
 
 # JSON output
-fhirpath eval "Patient.name.given" -r patient.json --json-output
+fhir fhirpath eval "Patient.name.given" -r patient.json --json-output
 ```
 
 ### eval-file
@@ -40,7 +51,7 @@ fhirpath eval "Patient.name.given" -r patient.json --json-output
 Evaluate multiple expressions from a file.
 
 ```bash
-fhirpath eval-file <expressions.fhirpath> -r <resource.json>
+fhir fhirpath eval-file <expressions.fhirpath> -r <resource.json>
 ```
 
 ### parse
@@ -48,8 +59,8 @@ fhirpath eval-file <expressions.fhirpath> -r <resource.json>
 Validate FHIRPath syntax.
 
 ```bash
-fhirpath parse <expression>
-fhirpath parse <expression> -q  # quiet mode
+fhir fhirpath parse <expression>
+fhir fhirpath parse <expression> -q  # quiet mode
 ```
 
 ### ast
@@ -57,8 +68,8 @@ fhirpath parse <expression> -q  # quiet mode
 Display the Abstract Syntax Tree.
 
 ```bash
-fhirpath ast <expression>
-fhirpath ast <expression> --depth 5  # limit depth
+fhir fhirpath ast <expression>
+fhir fhirpath ast <expression> --depth 5  # limit depth
 ```
 
 ### tokens
@@ -66,8 +77,8 @@ fhirpath ast <expression> --depth 5  # limit depth
 Show the token stream.
 
 ```bash
-fhirpath tokens <expression>
-fhirpath tokens <expression> --limit 20
+fhir fhirpath tokens <expression>
+fhir fhirpath tokens <expression> --limit 20
 ```
 
 ### parse-file
@@ -75,7 +86,7 @@ fhirpath tokens <expression> --limit 20
 Parse multiple expressions from a file.
 
 ```bash
-fhirpath parse-file <file.fhirpath>
+fhir fhirpath parse-file <file.fhirpath>
 ```
 
 ### repl
@@ -83,8 +94,8 @@ fhirpath parse-file <file.fhirpath>
 Start interactive REPL.
 
 ```bash
-fhirpath repl
-fhirpath repl -r patient.json  # with resource loaded
+fhir fhirpath repl
+fhir fhirpath repl -r patient.json  # with resource loaded
 ```
 
 **REPL Commands:**
@@ -99,7 +110,7 @@ fhirpath repl -r patient.json  # with resource loaded
 Display a file with syntax highlighting.
 
 ```bash
-fhirpath show <file.fhirpath>
+fhir fhirpath show <file.fhirpath>
 ```
 
 ---
@@ -111,9 +122,9 @@ fhirpath show <file.fhirpath>
 Evaluate a CQL expression directly.
 
 ```bash
-cql eval <expression>
-cql eval <expression> --library <file.cql>
-cql eval <expression> --data <resource.json>
+fhir cql eval <expression>
+fhir cql eval <expression> --library <file.cql>
+fhir cql eval <expression> --data <resource.json>
 ```
 
 **Options:**
@@ -127,36 +138,36 @@ cql eval <expression> --data <resource.json>
 
 ```bash
 # Simple arithmetic
-cql eval "1 + 2 * 3"
+fhir cql eval "1 + 2 * 3"
 # Output: 7
 
 # String operations
-cql eval "Upper('hello')"
+fhir cql eval "Upper('hello')"
 # Output: 'HELLO'
 
-cql eval "Combine({'a', 'b', 'c'}, ', ')"
+fhir cql eval "Combine({'a', 'b', 'c'}, ', ')"
 # Output: 'a, b, c'
 
 # Date operations
-cql eval "Today()"
-cql eval "Today() + 30 days"
-cql eval "years between @1990-01-01 and Today()"
+fhir cql eval "Today()"
+fhir cql eval "Today() + 30 days"
+fhir cql eval "years between @1990-01-01 and Today()"
 
 # List operations
-cql eval "Sum({1, 2, 3, 4, 5})"
-cql eval "Avg({10, 20, 30})"
-cql eval "First({1, 2, 3})"
+fhir cql eval "Sum({1, 2, 3, 4, 5})"
+fhir cql eval "Avg({10, 20, 30})"
+fhir cql eval "First({1, 2, 3})"
 
 # Math functions
-cql eval "Round(3.14159, 2)"
-cql eval "Sqrt(16)"
-cql eval "Power(2, 10)"
+fhir cql eval "Round(3.14159, 2)"
+fhir cql eval "Sqrt(16)"
+fhir cql eval "Power(2, 10)"
 
 # Evaluate definition from library
-cql eval "Sum" --library examples/cql/01_hello_world.cql
+fhir cql eval "Sum" --library examples/cql/01_hello_world.cql
 
 # With patient data
-cql eval "Patient.birthDate" --data patient.json
+fhir cql eval "Patient.birthDate" --data patient.json
 ```
 
 ### run
@@ -164,10 +175,10 @@ cql eval "Patient.birthDate" --data patient.json
 Run a CQL library and evaluate definitions.
 
 ```bash
-cql run <file.cql>
-cql run <file.cql> --definition <name>
-cql run <file.cql> --data <resource.json>
-cql run <file.cql> --output <results.json>
+fhir cql run <file.cql>
+fhir cql run <file.cql> --definition <name>
+fhir cql run <file.cql> --data <resource.json>
+fhir cql run <file.cql> --output <results.json>
 ```
 
 **Options:**
@@ -182,19 +193,19 @@ cql run <file.cql> --output <results.json>
 
 ```bash
 # Run all definitions in library
-cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/01_hello_world.cql
 
 # Evaluate specific definition
-cql run examples/cql/01_hello_world.cql --definition Sum
+fhir cql run examples/cql/01_hello_world.cql --definition Sum
 
 # Run with patient data
-cql run library.cql --data patient.json
+fhir cql run library.cql --data patient.json
 
 # Run with patient bundle
-cql run library.cql --data examples/fhir/bundle_patient_diabetic.json
+fhir cql run library.cql --data examples/fhir/bundle_patient_diabetic.json
 
 # Save results to JSON file
-cql run library.cql --output results.json
+fhir cql run library.cql --output results.json
 ```
 
 **Output Format:**
@@ -213,13 +224,44 @@ Library: HelloWorld v1.0.0
 └──────────────────┴─────────────────────────┘
 ```
 
+### check
+
+Validate and analyze a CQL library.
+
+```bash
+fhir cql check <file.cql>
+```
+
+**Output includes:**
+
+- Library structure validation
+- Definition count
+- Function count with signatures
+- Code systems, value sets, and codes
+- Any parse errors
+
+### measure
+
+Evaluate a quality measure against patient data.
+
+```bash
+fhir cql measure <file.cql> --data <patient.json>
+fhir cql measure <file.cql> --data <bundle.json>
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-d, --data` | Patient data (JSON resource or bundle) |
+
 ### parse
 
 Parse a CQL file and report syntax errors.
 
 ```bash
-cql parse <file.cql>
-cql parse <file.cql> -q  # quiet mode
+fhir cql parse <file.cql>
+fhir cql parse <file.cql> -q  # quiet mode
 ```
 
 ### ast
@@ -227,8 +269,8 @@ cql parse <file.cql> -q  # quiet mode
 Display the Abstract Syntax Tree.
 
 ```bash
-cql ast <file.cql>
-cql ast <file.cql> --depth 5
+fhir cql ast <file.cql>
+fhir cql ast <file.cql> --depth 5
 ```
 
 ### tokens
@@ -236,8 +278,8 @@ cql ast <file.cql> --depth 5
 Show the token stream.
 
 ```bash
-cql tokens <file.cql>
-cql tokens <file.cql> --limit 50
+fhir cql tokens <file.cql>
+fhir cql tokens <file.cql> --limit 50
 ```
 
 ### validate
@@ -245,8 +287,8 @@ cql tokens <file.cql> --limit 50
 Validate multiple CQL files.
 
 ```bash
-cql validate file1.cql file2.cql
-cql validate examples/cql/*.cql
+fhir cql validate file1.cql file2.cql
+fhir cql validate examples/cql/*.cql
 ```
 
 **Output:**
@@ -265,7 +307,7 @@ Results: 17/17 passed, 0/17 failed
 List library definitions.
 
 ```bash
-cql definitions <file.cql>
+fhir cql definitions <file.cql>
 ```
 
 **Output includes:**
@@ -283,7 +325,7 @@ cql definitions <file.cql>
 Display a file with syntax highlighting.
 
 ```bash
-cql show <file.cql>
+fhir cql show <file.cql>
 ```
 
 ---
@@ -294,27 +336,29 @@ cql show <file.cql>
 
 | Command | Description |
 |---------|-------------|
-| `fhirpath eval` | Evaluate expression against resource |
-| `fhirpath eval-file` | Evaluate expressions from file |
-| `fhirpath parse` | Validate syntax |
-| `fhirpath ast` | Show Abstract Syntax Tree |
-| `fhirpath tokens` | Show token stream |
-| `fhirpath parse-file` | Parse expressions from file |
-| `fhirpath repl` | Interactive REPL mode |
-| `fhirpath show` | Display file with highlighting |
+| `fhir fhirpath eval` | Evaluate expression against resource |
+| `fhir fhirpath eval-file` | Evaluate expressions from file |
+| `fhir fhirpath parse` | Validate syntax |
+| `fhir fhirpath ast` | Show Abstract Syntax Tree |
+| `fhir fhirpath tokens` | Show token stream |
+| `fhir fhirpath parse-file` | Parse expressions from file |
+| `fhir fhirpath repl` | Interactive REPL mode |
+| `fhir fhirpath show` | Display file with highlighting |
 
 ### CQL Commands
 
 | Command | Description |
 |---------|-------------|
-| `cql eval` | Evaluate expression |
-| `cql run` | Run library and evaluate definitions |
-| `cql parse` | Parse and validate file |
-| `cql ast` | Show Abstract Syntax Tree |
-| `cql tokens` | Show token stream |
-| `cql validate` | Validate multiple files |
-| `cql definitions` | List library definitions |
-| `cql show` | Display file with highlighting |
+| `fhir cql eval` | Evaluate expression |
+| `fhir cql run` | Run library and evaluate definitions |
+| `fhir cql check` | Validate and analyze library |
+| `fhir cql measure` | Evaluate quality measure |
+| `fhir cql parse` | Parse and validate file |
+| `fhir cql ast` | Show Abstract Syntax Tree |
+| `fhir cql tokens` | Show token stream |
+| `fhir cql validate` | Validate multiple files |
+| `fhir cql definitions` | List library definitions |
+| `fhir cql show` | Display file with highlighting |
 
 ---
 
@@ -323,62 +367,62 @@ cql show <file.cql>
 ### Evaluate arithmetic
 
 ```bash
-cql eval "1 + 2 * 3"           # 7
-cql eval "10 / 3"              # 3.333...
-cql eval "10 div 3"            # 3 (integer division)
-cql eval "10 mod 3"            # 1 (modulo)
+fhir cql eval "1 + 2 * 3"           # 7
+fhir cql eval "10 / 3"              # 3.333...
+fhir cql eval "10 div 3"            # 3 (integer division)
+fhir cql eval "10 mod 3"            # 1 (modulo)
 ```
 
 ### Work with strings
 
 ```bash
-cql eval "'Hello' + ' ' + 'World'"
-cql eval "Upper('hello')"
-cql eval "Substring('Hello World', 0, 5)"
-cql eval "Split('a,b,c', ',')"
+fhir cql eval "'Hello' + ' ' + 'World'"
+fhir cql eval "Upper('hello')"
+fhir cql eval "Substring('Hello World', 0, 5)"
+fhir cql eval "Split('a,b,c', ',')"
 ```
 
 ### Work with dates
 
 ```bash
-cql eval "Today()"
-cql eval "Now()"
-cql eval "@2024-06-15 + 30 days"
-cql eval "years between @1990-01-01 and Today()"
+fhir cql eval "Today()"
+fhir cql eval "Now()"
+fhir cql eval "@2024-06-15 + 30 days"
+fhir cql eval "years between @1990-01-01 and Today()"
 ```
 
 ### Work with lists
 
 ```bash
-cql eval "{1, 2, 3, 4, 5}"
-cql eval "Sum({1, 2, 3})"
-cql eval "First({1, 2, 3})"
-cql eval "from n in {1,2,3,4,5} where n > 2 return n * 2"
+fhir cql eval "{1, 2, 3, 4, 5}"
+fhir cql eval "Sum({1, 2, 3})"
+fhir cql eval "First({1, 2, 3})"
+fhir cql eval "from n in {1,2,3,4,5} where n > 2 return n * 2"
 ```
 
 ### Work with intervals
 
 ```bash
-cql eval "Interval[1, 10] contains 5"
-cql eval "5 in Interval[1, 10]"
-cql eval "Interval[1, 5] overlaps Interval[3, 8]"
+fhir cql eval "Interval[1, 10] contains 5"
+fhir cql eval "5 in Interval[1, 10]"
+fhir cql eval "Interval[1, 5] overlaps Interval[3, 8]"
 ```
 
 ### Run example libraries
 
 ```bash
 # Hello World basics
-cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/01_hello_world.cql
 
 # String functions
-cql run examples/cql/09_string_functions.cql
+fhir cql run examples/cql/09_string_functions.cql
 
 # Math functions
-cql run examples/cql/10_math_functions.cql
+fhir cql run examples/cql/10_math_functions.cql
 
 # Date/time operations
-cql run examples/cql/12_date_time_operations.cql
+fhir cql run examples/cql/12_date_time_operations.cql
 
 # Clinical calculations
-cql run examples/cql/16_clinical_calculations.cql
+fhir cql run examples/cql/16_clinical_calculations.cql
 ```

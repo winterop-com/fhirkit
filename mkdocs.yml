@@ -1,4 +1,4 @@
-site_name: python-fhir-cql
+site_name: FHIR CQL
 site_description: FHIRPath and CQL evaluators for Python
 site_url: https://mortenoh.github.io/python-fhir-cql
 repo_url: https://github.com/mortenoh/python-fhir-cql
@@ -23,7 +23,6 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.sections
-    - navigation.expand
     - content.code.copy
     - toc.follow
 
@@ -41,13 +40,12 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - CLI Reference: cli.md
-  - Tutorials:
-    - FHIRPath Tutorial: fhirpath-tutorial.md
-    - CQL Tutorial: cql-tutorial.md
+  - CLI: cli.md
   - FHIRPath:
-    - FHIRPath Guide: fhirpath-guide.md
-    - FHIRPath Python API: fhirpath-api.md
+      - Tutorial: fhirpath-tutorial.md
+      - Guide: fhirpath-guide.md
+      - Python API: fhirpath-api.md
   - CQL:
-    - CQL Python API: cql-api.md
-    - FHIRPath and CQL Reference: fhirpath-cql-tutorial.md
+      - Tutorial: cql-tutorial.md
+      - Python API: cql-api.md
+      - Reference: fhirpath-cql-tutorial.md

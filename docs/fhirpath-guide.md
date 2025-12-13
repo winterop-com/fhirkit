@@ -40,15 +40,15 @@ Try these expressions:
 
 ```bash
 # Get the family name
-fhirpath eval "Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.family" -r patient.json
 # Result: 'Smith'
 
 # Get the gender
-fhirpath eval "Patient.gender" -r patient.json
+fhir fhirpath eval "Patient.gender" -r patient.json
 # Result: 'male'
 
 # Check if patient is male
-fhirpath eval "Patient.gender = 'male'" -r patient.json
+fhir fhirpath eval "Patient.gender = 'male'" -r patient.json
 # Result: True
 ```
 
@@ -725,49 +725,49 @@ Observation.subject.display
 
 ```bash
 # Full name
-fhirpath eval "Patient.name.where(use='official').given.join(' ') & ' ' & Patient.name.where(use='official').family" -r patient.json
+fhir fhirpath eval "Patient.name.where(use='official').given.join(' ') & ' ' & Patient.name.where(use='official').family" -r patient.json
 
 # Age check (is adult)
-fhirpath eval "Patient.birthDate <= today() - 18 years" -r patient.json
+fhir fhirpath eval "Patient.birthDate <= today() - 18 years" -r patient.json
 
 # Contact info
-fhirpath eval "Patient.telecom.where(system='phone').value" -r patient.json
+fhir fhirpath eval "Patient.telecom.where(system='phone').value" -r patient.json
 ```
 
 ### Clinical Checks
 
 ```bash
 # Is blood pressure high?
-fhirpath eval "Observation.component.where(code.coding.code='8480-6').valueQuantity.value > 140" -r observation_bp.json
+fhir fhirpath eval "Observation.component.where(code.coding.code='8480-6').valueQuantity.value > 140" -r observation_bp.json
 
 # Get all high interpretations
-fhirpath eval "Observation.interpretation.coding.where(code='H').exists()" -r observation_bp.json
+fhir fhirpath eval "Observation.interpretation.coding.where(code='H').exists()" -r observation_bp.json
 ```
 
 ### Data Validation
 
 ```bash
 # Patient has required fields
-fhirpath eval "Patient.name.exists() and Patient.birthDate.exists() and Patient.gender.exists()" -r patient.json
+fhir fhirpath eval "Patient.name.exists() and Patient.birthDate.exists() and Patient.gender.exists()" -r patient.json
 
 # All identifiers have systems
-fhirpath eval "Patient.identifier.all(system.exists())" -r patient.json
+fhir fhirpath eval "Patient.identifier.all(system.exists())" -r patient.json
 
 # No duplicate identifiers
-fhirpath eval "Patient.identifier.value.isDistinct()" -r patient.json
+fhir fhirpath eval "Patient.identifier.value.isDistinct()" -r patient.json
 ```
 
 ### Data Extraction
 
 ```bash
 # All codes from an observation
-fhirpath eval "Observation.code.coding.code | Observation.component.code.coding.code" -r observation_bp.json
+fhir fhirpath eval "Observation.code.coding.code | Observation.component.code.coding.code" -r observation_bp.json
 
 # All phone numbers
-fhirpath eval "Patient.telecom.where(system='phone').value" -r patient.json
+fhir fhirpath eval "Patient.telecom.where(system='phone').value" -r patient.json
 
 # Contact emergency info
-fhirpath eval "Patient.contact.where(relationship.coding.code='N').telecom.value" -r patient.json
+fhir fhirpath eval "Patient.contact.where(relationship.coding.code='N').telecom.value" -r patient.json
 ```
 
 ---
@@ -3126,7 +3126,7 @@ Patient.nickname.first() | Patient.name.given.first()
     Begin with basic navigation, then add filtering and functions as needed.
 
 !!! tip "Use the REPL"
-    Test expressions interactively with `fhirpath repl -r resource.json`
+    Test expressions interactively with `fhir fhirpath repl -r resource.json`
 
 !!! tip "Remember Collections"
     Everything is a collection. Use `.first()` when you need a single value.

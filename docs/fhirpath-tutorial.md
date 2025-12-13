@@ -50,7 +50,7 @@ Save this as `patient.json`:
 ### Run Your First Command
 
 ```bash
-fhirpath eval "Patient.id" -r patient.json
+fhir fhirpath eval "Patient.id" -r patient.json
 ```
 
 Output:
@@ -63,9 +63,9 @@ Output:
 Run these commands and observe the output:
 
 ```bash
-fhirpath eval "Patient.gender" -r patient.json
-fhirpath eval "Patient.birthDate" -r patient.json
-fhirpath eval "Patient.resourceType" -r patient.json
+fhir fhirpath eval "Patient.gender" -r patient.json
+fhir fhirpath eval "Patient.birthDate" -r patient.json
+fhir fhirpath eval "Patient.resourceType" -r patient.json
 ```
 
 ### What You Learned
@@ -100,10 +100,10 @@ Look at the `name` field in our patient - it's an array of objects:
 
 ```bash
 # Get the name array
-fhirpath eval "Patient.name" -r patient.json
+fhir fhirpath eval "Patient.name" -r patient.json
 
 # Get family names (from all name entries)
-fhirpath eval "Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.family" -r patient.json
 ```
 
 Output:
@@ -115,7 +115,7 @@ Output:
 
 ```bash
 # Get given names
-fhirpath eval "Patient.name.given" -r patient.json
+fhir fhirpath eval "Patient.name.given" -r patient.json
 ```
 
 Output:
@@ -154,9 +154,9 @@ Update `patient.json` with an address:
 ### Try It Yourself
 
 ```bash
-fhirpath eval "Patient.address.city" -r patient.json
-fhirpath eval "Patient.address.state" -r patient.json
-fhirpath eval "Patient.address.postalCode" -r patient.json
+fhir fhirpath eval "Patient.address.city" -r patient.json
+fhir fhirpath eval "Patient.address.state" -r patient.json
+fhir fhirpath eval "Patient.address.postalCode" -r patient.json
 ```
 
 ### What You Learned
@@ -177,7 +177,7 @@ Learn to select specific elements from arrays.
 
 ```bash
 # Get first given name
-fhirpath eval "Patient.name.given.first()" -r patient.json
+fhir fhirpath eval "Patient.name.given.first()" -r patient.json
 ```
 
 Output:
@@ -187,7 +187,7 @@ Output:
 
 ```bash
 # Get last given name
-fhirpath eval "Patient.name.given.last()" -r patient.json
+fhir fhirpath eval "Patient.name.given.last()" -r patient.json
 ```
 
 Output:
@@ -199,17 +199,17 @@ Output:
 
 ```bash
 # Get first N elements
-fhirpath eval "Patient.name.given.take(1)" -r patient.json
+fhir fhirpath eval "Patient.name.given.take(1)" -r patient.json
 
 # Skip first N elements
-fhirpath eval "Patient.name.given.skip(1)" -r patient.json
+fhir fhirpath eval "Patient.name.given.skip(1)" -r patient.json
 ```
 
 ### Counting
 
 ```bash
 # Count elements
-fhirpath eval "Patient.name.given.count()" -r patient.json
+fhir fhirpath eval "Patient.name.given.count()" -r patient.json
 ```
 
 Output:
@@ -221,10 +221,10 @@ Output:
 
 ```bash
 # Check if array is empty
-fhirpath eval "Patient.name.empty()" -r patient.json
+fhir fhirpath eval "Patient.name.empty()" -r patient.json
 
 # Check if array has elements
-fhirpath eval "Patient.name.exists()" -r patient.json
+fhir fhirpath eval "Patient.name.exists()" -r patient.json
 ```
 
 ### Add More Names
@@ -254,10 +254,10 @@ Update `patient.json` with multiple names:
 ### Try It Yourself
 
 ```bash
-fhirpath eval "Patient.name.count()" -r patient.json
-fhirpath eval "Patient.name.family" -r patient.json
-fhirpath eval "Patient.name.given" -r patient.json
-fhirpath eval "Patient.name.first().family" -r patient.json
+fhir fhirpath eval "Patient.name.count()" -r patient.json
+fhir fhirpath eval "Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.given" -r patient.json
+fhir fhirpath eval "Patient.name.first().family" -r patient.json
 ```
 
 ### What You Learned
@@ -281,14 +281,14 @@ Using our patient with multiple names:
 
 ```bash
 # Get only official names
-fhirpath eval "Patient.name.where(use = 'official')" -r patient.json
+fhir fhirpath eval "Patient.name.where(use = 'official')" -r patient.json
 ```
 
 ### Chain with Property Access
 
 ```bash
 # Get family name from official name only
-fhirpath eval "Patient.name.where(use = 'official').family" -r patient.json
+fhir fhirpath eval "Patient.name.where(use = 'official').family" -r patient.json
 ```
 
 Output:
@@ -325,27 +325,27 @@ Save this as `observation.json`:
 
 ```bash
 # Check the status
-fhirpath eval "Observation.status = 'final'" -r observation.json
+fhir fhirpath eval "Observation.status = 'final'" -r observation.json
 
 # Get coding with specific system
-fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org')" -r observation.json
+fhir fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org')" -r observation.json
 ```
 
 ### Multiple Conditions
 
 ```bash
 # Multiple conditions with 'and'
-fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org' and code = '2339-0')" -r observation.json
+fhir fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org' and code = '2339-0')" -r observation.json
 ```
 
 ### Try It Yourself
 
 ```bash
 # Get the code value
-fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org').code" -r observation.json
+fhir fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org').code" -r observation.json
 
 # Get the display text
-fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org').display" -r observation.json
+fhir fhirpath eval "Observation.code.coding.where(system = 'http://loinc.org').display" -r observation.json
 ```
 
 ### What You Learned
@@ -366,15 +366,15 @@ Learn string manipulation functions.
 ### Case Conversion
 
 ```bash
-fhirpath eval "Patient.name.family.lower()" -r patient.json
-fhirpath eval "Patient.name.family.upper()" -r patient.json
+fhir fhirpath eval "Patient.name.family.lower()" -r patient.json
+fhir fhirpath eval "Patient.name.family.upper()" -r patient.json
 ```
 
 ### Substring
 
 ```bash
 # Get first 2 characters
-fhirpath eval "Patient.name.family.first().substring(0, 2)" -r patient.json
+fhir fhirpath eval "Patient.name.family.first().substring(0, 2)" -r patient.json
 ```
 
 Output:
@@ -386,26 +386,26 @@ Output:
 
 ```bash
 # Check if starts with
-fhirpath eval "Patient.name.family.first().startsWith('Sm')" -r patient.json
+fhir fhirpath eval "Patient.name.family.first().startsWith('Sm')" -r patient.json
 
 # Check if contains
-fhirpath eval "Patient.name.family.first().contains('mit')" -r patient.json
+fhir fhirpath eval "Patient.name.family.first().contains('mit')" -r patient.json
 
 # Check if ends with
-fhirpath eval "Patient.name.family.first().endsWith('th')" -r patient.json
+fhir fhirpath eval "Patient.name.family.first().endsWith('th')" -r patient.json
 ```
 
 ### Length
 
 ```bash
-fhirpath eval "Patient.name.family.first().length()" -r patient.json
+fhir fhirpath eval "Patient.name.family.first().length()" -r patient.json
 ```
 
 ### String Concatenation
 
 ```bash
 # Combine strings
-fhirpath eval "Patient.name.given.first() + ' ' + Patient.name.family.first()" -r patient.json
+fhir fhirpath eval "Patient.name.given.first() + ' ' + Patient.name.family.first()" -r patient.json
 ```
 
 Output:
@@ -417,10 +417,10 @@ Output:
 
 ```bash
 # Get the first letter of the family name
-fhirpath eval "Patient.name.family.first().substring(0, 1)" -r patient.json
+fhir fhirpath eval "Patient.name.family.first().substring(0, 1)" -r patient.json
 
 # Check if any given name contains 'ob'
-fhirpath eval "Patient.name.given.where(contains('ob'))" -r patient.json
+fhir fhirpath eval "Patient.name.given.where(contains('ob'))" -r patient.json
 ```
 
 ### What You Learned
@@ -442,10 +442,10 @@ Learn to write conditions and comparisons.
 
 ```bash
 # Equality
-fhirpath eval "Patient.gender = 'male'" -r patient.json
+fhir fhirpath eval "Patient.gender = 'male'" -r patient.json
 
 # Not equal
-fhirpath eval "Patient.gender != 'female'" -r patient.json
+fhir fhirpath eval "Patient.gender != 'female'" -r patient.json
 ```
 
 ### Numeric Comparisons
@@ -454,38 +454,38 @@ Using our observation file:
 
 ```bash
 # Greater than
-fhirpath eval "Observation.valueQuantity.value > 90" -r observation.json
+fhir fhirpath eval "Observation.valueQuantity.value > 90" -r observation.json
 
 # Less than or equal
-fhirpath eval "Observation.valueQuantity.value <= 100" -r observation.json
+fhir fhirpath eval "Observation.valueQuantity.value <= 100" -r observation.json
 ```
 
 ### Combining with and/or
 
 ```bash
 # Both conditions true
-fhirpath eval "Observation.status = 'final' and Observation.valueQuantity.value > 50" -r observation.json
+fhir fhirpath eval "Observation.status = 'final' and Observation.valueQuantity.value > 50" -r observation.json
 
 # Either condition true
-fhirpath eval "Patient.gender = 'male' or Patient.gender = 'female'" -r patient.json
+fhir fhirpath eval "Patient.gender = 'male' or Patient.gender = 'female'" -r patient.json
 ```
 
 ### Negation
 
 ```bash
 # Not
-fhirpath eval "Patient.gender != 'female'" -r patient.json
-fhirpath eval "not(Patient.gender = 'female')" -r patient.json
+fhir fhirpath eval "Patient.gender != 'female'" -r patient.json
+fhir fhirpath eval "not(Patient.gender = 'female')" -r patient.json
 ```
 
 ### Existence Checks
 
 ```bash
 # Check if property exists
-fhirpath eval "Patient.birthDate.exists()" -r patient.json
+fhir fhirpath eval "Patient.birthDate.exists()" -r patient.json
 
 # Check if missing
-fhirpath eval "Patient.deceased.exists()" -r patient.json
+fhir fhirpath eval "Patient.deceased.exists()" -r patient.json
 ```
 
 ### Try It Yourself
@@ -518,10 +518,10 @@ Create a condition file `condition.json`:
 
 ```bash
 # Check if condition is active
-fhirpath eval "Condition.clinicalStatus.coding.code.first() = 'active'" -r condition.json
+fhir fhirpath eval "Condition.clinicalStatus.coding.code.first() = 'active'" -r condition.json
 
 # Check the SNOMED code
-fhirpath eval "Condition.code.coding.where(system = 'http://snomed.info/sct').code" -r condition.json
+fhir fhirpath eval "Condition.code.coding.where(system = 'http://snomed.info/sct').code" -r condition.json
 ```
 
 ### What You Learned
@@ -543,24 +543,24 @@ Learn to combine and transform data.
 
 ```bash
 # Combine two lists
-fhirpath eval "Patient.name.given | Patient.name.family" -r patient.json
+fhir fhirpath eval "Patient.name.given | Patient.name.family" -r patient.json
 ```
 
 ### Distinct
 
 ```bash
 # Remove duplicates
-fhirpath eval "(Patient.name.given | Patient.name.given).distinct()" -r patient.json
+fhir fhirpath eval "(Patient.name.given | Patient.name.given).distinct()" -r patient.json
 ```
 
 ### All/Any Checks
 
 ```bash
 # Check if all names have a family
-fhirpath eval "Patient.name.all(family.exists())" -r patient.json
+fhir fhirpath eval "Patient.name.all(family.exists())" -r patient.json
 
 # Check if any name is a nickname
-fhirpath eval "Patient.name.where(use = 'nickname').exists()" -r patient.json
+fhir fhirpath eval "Patient.name.where(use = 'nickname').exists()" -r patient.json
 ```
 
 ### Transform with select
@@ -593,17 +593,17 @@ Save multiple observations as `observations.json`:
 
 ```bash
 # Get all observation values
-fhirpath eval "Bundle.entry.resource.valueQuantity.value" -r observations.json
+fhir fhirpath eval "Bundle.entry.resource.valueQuantity.value" -r observations.json
 ```
 
 ### Try It Yourself
 
 ```bash
 # Combine family and given into full name
-fhirpath eval "Patient.name.first().given.first() + ' ' + Patient.name.first().family" -r patient.json
+fhir fhirpath eval "Patient.name.first().given.first() + ' ' + Patient.name.first().family" -r patient.json
 
 # Get all unique values from observations
-fhirpath eval "Bundle.entry.resource.valueQuantity.value.distinct()" -r observations.json
+fhir fhirpath eval "Bundle.entry.resource.valueQuantity.value.distinct()" -r observations.json
 ```
 
 ### What You Learned
@@ -670,34 +670,34 @@ Save this bundle as `patient-data.json`:
 Find active conditions:
 
 ```bash
-fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition' and clinicalStatus.coding.code = 'active').code.coding.display" -r patient-data.json
+fhir fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition' and clinicalStatus.coding.code = 'active').code.coding.display" -r patient-data.json
 ```
 
 ### Example 2: Get Patient's Age Data
 
 ```bash
 # Get birth date
-fhirpath eval "Bundle.entry.resource.where(resourceType = 'Patient').birthDate" -r patient-data.json
+fhir fhirpath eval "Bundle.entry.resource.where(resourceType = 'Patient').birthDate" -r patient-data.json
 
 # Get patient name
-fhirpath eval "Bundle.entry.resource.where(resourceType = 'Patient').name.given.first() + ' ' + Bundle.entry.resource.where(resourceType = 'Patient').name.family.first()" -r patient-data.json
+fhir fhirpath eval "Bundle.entry.resource.where(resourceType = 'Patient').name.given.first() + ' ' + Bundle.entry.resource.where(resourceType = 'Patient').name.family.first()" -r patient-data.json
 ```
 
 ### Example 3: Count Resources
 
 ```bash
 # Count all conditions
-fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition').count()" -r patient-data.json
+fhir fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition').count()" -r patient-data.json
 
 # Count active conditions
-fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition' and clinicalStatus.coding.code = 'active').count()" -r patient-data.json
+fhir fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition' and clinicalStatus.coding.code = 'active').count()" -r patient-data.json
 ```
 
 ### Example 4: Check for Specific Condition
 
 ```bash
 # Does patient have hypertension?
-fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition').code.coding.where(display = 'Hypertension').exists()" -r patient-data.json
+fhir fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition').code.coding.where(display = 'Hypertension').exists()" -r patient-data.json
 ```
 
 ### Using the Interactive REPL
@@ -705,7 +705,7 @@ fhirpath eval "Bundle.entry.resource.where(resourceType = 'Condition').code.codi
 Start the REPL for experimentation:
 
 ```bash
-fhirpath repl -r patient-data.json
+fhir fhirpath repl -r patient-data.json
 ```
 
 In the REPL, type expressions interactively:

@@ -46,14 +46,14 @@ make generate
 
 ```bash
 # Evaluate FHIRPath against a FHIR resource
-fhirpath eval "Patient.name.family" -r examples/fhir/patient.json
+fhir fhirpath eval "Patient.name.family" -r examples/fhir/patient.json
 # Output: 'Smith'
 
 # Filter and transform
-fhirpath eval "Patient.name.where(use = 'official').given.first()" -r examples/fhir/patient.json
+fhir fhirpath eval "Patient.name.where(use = 'official').given.first()" -r examples/fhir/patient.json
 
 # Boolean expressions
-fhirpath eval "Patient.gender = 'male'" -r examples/fhir/patient.json
+fhir fhirpath eval "Patient.gender = 'male'" -r examples/fhir/patient.json
 # Output: True
 ```
 
@@ -61,26 +61,26 @@ fhirpath eval "Patient.gender = 'male'" -r examples/fhir/patient.json
 
 ```bash
 # Evaluate CQL expressions directly
-cql eval "1 + 2 * 3"
+fhir cql eval "1 + 2 * 3"
 # Output: 7
 
-cql eval "Upper('hello world')"
+fhir cql eval "Upper('hello world')"
 # Output: 'HELLO WORLD'
 
-cql eval "Today() + 30 days"
+fhir cql eval "Today() + 30 days"
 # Output: @2025-01-12
 
-cql eval "Sum({1, 2, 3, 4, 5})"
+fhir cql eval "Sum({1, 2, 3, 4, 5})"
 # Output: 15
 
 # Run a CQL library
-cql run examples/cql/01_hello_world.cql
+fhir cql run examples/cql/01_hello_world.cql
 
 # Evaluate specific definition
-cql run examples/cql/01_hello_world.cql --definition Sum
+fhir cql run examples/cql/01_hello_world.cql --definition Sum
 
 # Run with patient data
-cql run library.cql --data patient.json
+fhir cql run library.cql --data patient.json
 ```
 
 ### Python API
