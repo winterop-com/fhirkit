@@ -23,6 +23,13 @@ from cqlVisitor import cqlVisitor  # noqa: E402
 from ..exceptions import CQLError  # noqa: E402
 from ..types import FHIRDate, FHIRDateTime, FHIRTime, Quantity  # noqa: E402
 from .context import CQLContext  # noqa: E402
+from .functions import get_registry  # noqa: E402
+from .functions.intervals import (  # noqa: E402
+    collapse_intervals,
+    interval_point_timing,
+    interval_timing,
+    point_interval_timing,
+)
 from .library import (  # noqa: E402
     CodeDefinition,
     CodeSystemDefinition,
@@ -1434,11 +1441,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         # Handle interval timing
         if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
-            return self._interval_timing(left, right, op_text)
+            return interval_timing(left, right, op_text)
         elif isinstance(left, CQLInterval):
-            return self._interval_point_timing(left, right, op_text)
+            return interval_point_timing(left, right, op_text)
         elif isinstance(right, CQLInterval):
-            return self._point_interval_timing(left, right, op_text)
+            return point_interval_timing(left, right, op_text)
 
         # Handle point comparisons
         if "before" in op_text:
@@ -1446,114 +1453,6 @@ class CQLEvaluatorVisitor(cqlVisitor):
         elif "after" in op_text:
             return left > right
 
-        return None
-
-    def _interval_timing(self, left: CQLInterval[Any], right: CQLInterval[Any], op: str) -> bool | None:
-        """Handle interval-to-interval timing comparisons.
-
-        CQL interval timing operators:
-        - before/after: intervals don't overlap and one is entirely before/after the other
-        - meets before/after: intervals touch at exactly one point
-        - overlaps before: left overlaps right AND left starts before right
-        - overlaps after: left overlaps right AND left ends after right
-        - starts: left and right have same start AND left ends before or at right's end
-        - ends: left and right have same end AND left starts at or after right's start
-        - during/included in: left is entirely within right
-        - includes: right is entirely within left
-        """
-        # Handle compound 'overlaps before/after' first (before 'before'/'after' checks)
-        if "overlaps" in op:
-            if "before" in op:
-                # overlaps before: left overlaps right AND left starts before right starts
-                if left.low is None or right.low is None:
-                    return None
-                return left.overlaps(right) and left.low < right.low
-            elif "after" in op:
-                # overlaps after: left overlaps right AND left ends after right ends
-                if left.high is None or right.high is None:
-                    return None
-                return left.overlaps(right) and left.high > right.high
-            else:
-                # Simple overlaps
-                return left.overlaps(right)
-
-        # Handle compound 'meets before/after'
-        if "meets" in op:
-            if "before" in op:
-                return left.high == right.low
-            elif "after" in op:
-                return left.low == right.high
-            else:
-                return left.high == right.low or left.low == right.high
-
-        # Handle simple before/after (intervals don't overlap)
-        if "before" in op:
-            if left.high is None or right.low is None:
-                return None
-            return left.high < right.low
-        elif "after" in op:
-            if left.low is None or right.high is None:
-                return None
-            return left.low > right.high
-
-        # Handle 'starts': same start AND left is contained within or equal to right
-        elif "starts" in op:
-            if left.low is None or right.low is None:
-                return None
-            if left.low != right.low:
-                return False
-            # Also check low_closed matches
-            if left.low_closed != right.low_closed:
-                return False
-            # left must end before or at right's end
-            if left.high is None and right.high is None:
-                return True
-            if left.high is None or right.high is None:
-                return left.high is None  # left unbounded ends after right
-            return left.high <= right.high
-
-        # Handle 'ends': same end AND left is contained within or equal to right
-        elif "ends" in op:
-            if left.high is None or right.high is None:
-                return None
-            if left.high != right.high:
-                return False
-            # Also check high_closed matches
-            if left.high_closed != right.high_closed:
-                return False
-            # left must start at or after right's start
-            if left.low is None and right.low is None:
-                return True
-            if left.low is None or right.low is None:
-                return right.low is None  # right unbounded starts before left
-            return left.low >= right.low
-
-        elif "during" in op or "included in" in op:
-            return right.includes(left)
-        elif "includes" in op:
-            return left.includes(right)
-        elif "same" in op:
-            return left == right
-        return None
-
-    def _interval_point_timing(self, interval: CQLInterval[Any], point: Any, op: str) -> bool | None:
-        """Handle interval-to-point timing comparisons."""
-        if "before" in op:
-            return interval.high is not None and interval.high < point
-        elif "after" in op:
-            return interval.low is not None and interval.low > point
-        elif "contains" in op or "includes" in op:
-            return interval.contains(point)
-        return None
-
-    def _point_interval_timing(self, point: Any, interval: CQLInterval[Any], op: str) -> bool | None:
-        """Handle point-to-interval timing comparisons."""
-        if "before" in op:
-            return interval.low is not None and point < interval.low
-        elif "after" in op:
-            return interval.high is not None and point > interval.high
-        elif "during" in op or "in" in op or "included in" in op:
-            return interval.contains(point)
         return None
 
     # =========================================================================
@@ -1677,7 +1576,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 value = self.visit(expressions[0])
                 if isinstance(value, list):
                     intervals = [i for i in value if isinstance(i, CQLInterval)]
-                    return self._collapse_intervals(intervals)
+                    return collapse_intervals(intervals, CQLInterval)
             return []
 
         elif op == "expand":
@@ -1893,338 +1792,21 @@ class CQLEvaluatorVisitor(cqlVisitor):
             self.context = old_ctx
 
     def _call_builtin_function(self, name: str, args: list[Any]) -> Any:
-        """Call a built-in function."""
-        # Basic built-in functions for Phase 1
+        """Call a built-in function.
+
+        This method checks the function registry first for pure functions,
+        then handles context-dependent functions inline.
+        """
         name_lower = name.lower()
 
-        if name_lower == "count":
-            if args and isinstance(args[0], list):
-                return len(args[0])
-            return 0
+        # Try the function registry first for pure functions
+        registry = get_registry()
+        if registry.has(name_lower):
+            return registry.call(name_lower, args)
 
-        if name_lower == "exists":
-            if args:
-                val = args[0]
-                if isinstance(val, list):
-                    return len(val) > 0
-                return val is not None
-            return False
+        # Context-dependent functions that need self.context or other instance methods
 
-        if name_lower == "first":
-            if args and isinstance(args[0], list) and len(args[0]) > 0:
-                return args[0][0]
-            return None
-
-        if name_lower == "last":
-            if args and isinstance(args[0], list) and len(args[0]) > 0:
-                return args[0][-1]
-            return None
-
-        if name_lower == "length":
-            if args:
-                val = args[0]
-                if isinstance(val, str):
-                    return len(val)
-                if isinstance(val, list):
-                    return len(val)
-            return None
-
-        if name_lower == "tostring":
-            if args and args[0] is not None:
-                return str(args[0])
-            return None
-
-        if name_lower == "tointeger":
-            if args and args[0] is not None:
-                try:
-                    return int(args[0])
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        if name_lower == "todecimal":
-            if args and args[0] is not None:
-                try:
-                    return Decimal(str(args[0]))
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        if name_lower == "toboolean":
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, bool):
-                    return val
-                if isinstance(val, str):
-                    return val.lower() in ("true", "t", "yes", "y", "1")
-            return None
-
-        if name_lower == "coalesce":
-            for arg in args:
-                if arg is not None:
-                    if isinstance(arg, list):
-                        if len(arg) > 0:
-                            return arg
-                    else:
-                        return arg
-            return None
-
-        if name_lower == "isnull":
-            return args[0] is None if args else True
-
-        if name_lower in ("sum", "avg", "min", "max"):
-            if args and isinstance(args[0], list):
-                values = [v for v in args[0] if v is not None and isinstance(v, (int, float, Decimal))]
-                if not values:
-                    return None
-                if name_lower == "sum":
-                    return sum(values)
-                if name_lower == "avg":
-                    return sum(values) / len(values)
-                if name_lower == "min":
-                    return min(values)
-                if name_lower == "max":
-                    return max(values)
-            return None
-
-        # Phase 2: List functions
-        if name_lower == "tail":
-            if args and isinstance(args[0], list) and len(args[0]) > 0:
-                return args[0][1:]
-            return []
-
-        if name_lower == "take":
-            if len(args) >= 2 and isinstance(args[0], list):
-                n = args[1]
-                if n is None or n < 0:
-                    return []
-                return args[0][:n]
-            return []
-
-        if name_lower == "skip":
-            if len(args) >= 2 and isinstance(args[0], list):
-                n = args[1]
-                if n is None or n < 0:
-                    return args[0]
-                return args[0][n:]
-            return []
-
-        if name_lower == "flatten":
-            if args and isinstance(args[0], list):
-                result = []
-                for item in args[0]:
-                    if isinstance(item, list):
-                        result.extend(item)
-                    else:
-                        result.append(item)
-                return result
-            return []
-
-        if name_lower == "distinct":
-            if args and isinstance(args[0], list):
-                seen: list[Any] = []
-                for item in args[0]:
-                    if item not in seen:
-                        seen.append(item)
-                return seen
-            return []
-
-        if name_lower == "sort":
-            if args and isinstance(args[0], list):
-                items = [i for i in args[0] if i is not None]
-                try:
-                    return sorted(items)
-                except TypeError:
-                    return items
-            return []
-
-        if name_lower == "indexof":
-            if len(args) >= 2:
-                # List IndexOf - find element in list
-                if isinstance(args[0], list):
-                    try:
-                        return args[0].index(args[1])
-                    except ValueError:
-                        return -1
-                # String IndexOf - find substring in string
-                if isinstance(args[0], str) and isinstance(args[1], str):
-                    return args[0].find(args[1])
-            return -1
-
-        if name_lower == "singleton":
-            if args and isinstance(args[0], list):
-                if len(args[0]) == 1:
-                    return args[0][0]
-                elif len(args[0]) == 0:
-                    return None
-                else:
-                    raise CQLError("Expected single element but found multiple")
-            return args[0] if args else None
-
-        if name_lower == "alltrue":
-            if args and isinstance(args[0], list):
-                for item in args[0]:
-                    if item is not True:
-                        return False
-                return True
-            return True
-
-        if name_lower == "anytrue":
-            if args and isinstance(args[0], list):
-                for item in args[0]:
-                    if item is True:
-                        return True
-                return False
-            return False
-
-        if name_lower == "allfalse":
-            if args and isinstance(args[0], list):
-                for item in args[0]:
-                    if item is not False:
-                        return False
-                return True
-            return True
-
-        if name_lower == "anyfalse":
-            if args and isinstance(args[0], list):
-                for item in args[0]:
-                    if item is False:
-                        return True
-                return False
-            return False
-
-        if name_lower == "reverse":
-            if args and isinstance(args[0], list):
-                return list(reversed(args[0]))
-            return []
-
-        if name_lower == "slice":
-            if len(args) >= 3 and isinstance(args[0], list):
-                start = args[1] if args[1] is not None else 0
-                length = args[2] if args[2] is not None else len(args[0])
-                return args[0][start : start + length]
-            return []
-
-        if name_lower == "singletonFrom":
-            return self._call_builtin_function("singleton", args)
-
-        if name_lower == "combine":
-            if len(args) >= 2 and isinstance(args[0], list) and isinstance(args[1], list):
-                # Combine two lists (list concatenation)
-                return args[0] + args[1]
-            elif len(args) >= 1 and isinstance(args[0], list):
-                # Combine list of strings with optional separator (string join)
-                strings = args[0]
-                separator = args[1] if len(args) > 1 and args[1] is not None else ""
-                if isinstance(separator, str):
-                    return separator.join(str(s) for s in strings if s is not None)
-            return []
-
-        if name_lower == "union":
-            if len(args) >= 2 and isinstance(args[0], list) and isinstance(args[1], list):
-                result = list(args[0])
-                for item in args[1]:
-                    if item not in result:
-                        result.append(item)
-                return result
-            return []
-
-        if name_lower == "intersect":
-            if len(args) >= 2 and isinstance(args[0], list) and isinstance(args[1], list):
-                return [item for item in args[0] if item in args[1]]
-            return []
-
-        if name_lower == "except":
-            if len(args) >= 2 and isinstance(args[0], list) and isinstance(args[1], list):
-                return [item for item in args[0] if item not in args[1]]
-            return []
-
-        # Aggregate functions with context
-        if name_lower == "populationvariance":
-            if args and isinstance(args[0], list):
-                values = [Decimal(str(v)) for v in args[0] if v is not None and isinstance(v, (int, float, Decimal))]
-                if len(values) < 1:
-                    return None
-                mean = sum(values) / Decimal(len(values))
-                return sum((v - mean) ** 2 for v in values) / Decimal(len(values))
-            return None
-
-        if name_lower == "variance":
-            if args and isinstance(args[0], list):
-                values = [Decimal(str(v)) for v in args[0] if v is not None and isinstance(v, (int, float, Decimal))]
-                if len(values) < 2:
-                    return None
-                mean = sum(values) / Decimal(len(values))
-                return sum((v - mean) ** 2 for v in values) / Decimal(len(values) - 1)
-            return None
-
-        if name_lower == "populationstddev":
-            if args and isinstance(args[0], list):
-                variance = self._call_builtin_function("populationvariance", args)
-                if variance is not None:
-                    return Decimal(variance).sqrt()
-            return None
-
-        if name_lower == "stddev":
-            if args and isinstance(args[0], list):
-                variance = self._call_builtin_function("variance", args)
-                if variance is not None:
-                    return Decimal(variance).sqrt()
-            return None
-
-        if name_lower == "median":
-            if args and isinstance(args[0], list):
-                values = sorted(
-                    Decimal(str(v)) for v in args[0] if v is not None and isinstance(v, (int, float, Decimal))
-                )
-                if not values:
-                    return None
-                n = len(values)
-                if n % 2 == 1:
-                    return values[n // 2]
-                else:
-                    return (values[n // 2 - 1] + values[n // 2]) / 2
-            return None
-
-        if name_lower == "mode":
-            if args and isinstance(args[0], list):
-                values = [v for v in args[0] if v is not None]
-                if not values:
-                    return None
-                # Count occurrences
-                counts: dict[Any, int] = {}
-                for v in values:
-                    counts[v] = counts.get(v, 0) + 1
-                max_count = max(counts.values())
-                return [k for k, v in counts.items() if v == max_count][0]
-            return None
-
-        if name_lower == "product":
-            if args and isinstance(args[0], list):
-                values = [v for v in args[0] if v is not None and isinstance(v, (int, float, Decimal))]
-                if not values:
-                    return None
-                product_result = Decimal(1)
-                for v in values:
-                    product_result *= Decimal(str(v))
-                return product_result
-            return None
-
-        if name_lower == "geometricmean":
-            if args and isinstance(args[0], list):
-                values = [v for v in args[0] if v is not None and isinstance(v, (int, float, Decimal))]
-                if not values or any(v <= 0 for v in values):
-                    return None
-                product = self._call_builtin_function("product", args)
-                if product is not None:
-                    return Decimal(product) ** (Decimal(1) / Decimal(len(values)))
-            return None
-
-        # =====================================================================
-        # Phase 3: Date/Time and Interval Functions
-        # =====================================================================
-
-        # Date/Time constructors
+        # Date/Time constructors using context.now
         if name_lower == "today":
             d = self.context.now.date() if self.context.now else datetime.now().date()
             return FHIRDate(year=d.year, month=d.month, day=d.day)
@@ -2245,37 +1827,6 @@ class CQLEvaluatorVisitor(cqlVisitor):
             now = self.context.now or datetime.now()
             t = now.time()
             return FHIRTime(hour=t.hour, minute=t.minute, second=t.second, millisecond=t.microsecond // 1000)
-
-        if name_lower == "date":
-            # Date(year, month, day)
-            if len(args) >= 1:
-                year = args[0]
-                month = args[1] if len(args) > 1 else 1
-                day = args[2] if len(args) > 2 else 1
-                if year is not None:
-                    return FHIRDate(year=int(year), month=int(month or 1), day=int(day or 1))
-            return None
-
-        if name_lower == "datetime":
-            # DateTime(year, month, day, hour, minute, second, millisecond, timezone)
-            if len(args) >= 1 and args[0] is not None:
-                year = int(args[0])
-                month = int(args[1]) if len(args) > 1 and args[1] is not None else 1
-                day = int(args[2]) if len(args) > 2 and args[2] is not None else 1
-                hour = int(args[3]) if len(args) > 3 and args[3] is not None else 0
-                minute = int(args[4]) if len(args) > 4 and args[4] is not None else 0
-                second = int(args[5]) if len(args) > 5 and args[5] is not None else 0
-                return FHIRDateTime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
-            return None
-
-        if name_lower == "time":
-            # Time(hour, minute, second, millisecond)
-            if len(args) >= 1 and args[0] is not None:
-                hour = int(args[0])
-                minute = int(args[1]) if len(args) > 1 and args[1] is not None else 0
-                second = int(args[2]) if len(args) > 2 and args[2] is not None else 0
-                return FHIRTime(hour=hour, minute=minute, second=second)
-            return None
 
         # Interval functions
         if name_lower in ("start", "startof"):
@@ -2298,7 +1849,6 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 interval = args[0]
                 if interval.low is None or interval.high is None:
                     return None
-                # Size includes boundaries for closed intervals
                 width = interval.high - interval.low
                 if isinstance(width, int):
                     width += 1 if interval.low_closed and interval.high_closed else 0
@@ -2316,7 +1866,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if name_lower == "collapse":
             if args and isinstance(args[0], list):
                 intervals = [i for i in args[0] if isinstance(i, CQLInterval)]
-                return self._collapse_intervals(intervals)
+                return collapse_intervals(intervals, CQLInterval)
             return []
 
         if name_lower == "expand":
@@ -2326,85 +1876,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 return self._expand_interval(interval, per)
             return []
 
-        # Component extraction
-        if name_lower in ("year", "yearfrom"):
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDate):
-                    return val.year
-                if isinstance(val, FHIRDateTime):
-                    return val.year
-                if isinstance(val, date):
-                    return val.year
-                if isinstance(val, datetime):
-                    return val.year
-            return None
-
-        if name_lower in ("month", "monthfrom"):
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDate):
-                    return val.month
-                if isinstance(val, FHIRDateTime):
-                    return val.month
-                if isinstance(val, date):
-                    return val.month
-                if isinstance(val, datetime):
-                    return val.month
-            return None
-
-        if name_lower in ("day", "dayfrom"):
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDate):
-                    return val.day
-                if isinstance(val, FHIRDateTime):
-                    return val.day
-                if isinstance(val, date):
-                    return val.day
-                if isinstance(val, datetime):
-                    return val.day
-            return None
-
-        if name_lower in ("hour", "hourfrom"):
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDateTime):
-                    return val.hour
-                if isinstance(val, FHIRTime):
-                    return val.hour
-                if isinstance(val, datetime):
-                    return val.hour
-                if isinstance(val, time):
-                    return val.hour
-            return None
-
-        if name_lower in ("minute", "minutefrom"):
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDateTime):
-                    return val.minute
-                if isinstance(val, FHIRTime):
-                    return val.minute
-                if isinstance(val, datetime):
-                    return val.minute
-                if isinstance(val, time):
-                    return val.minute
-            return None
-
-        if name_lower in ("second", "secondfrom"):
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDateTime):
-                    return val.second
-                if isinstance(val, FHIRTime):
-                    return val.second
-                if isinstance(val, datetime):
-                    return val.second
-                if isinstance(val, time):
-                    return val.second
-            return None
-
+        # Timezone extraction (needs FHIRDateTime type check)
         if name_lower in ("timezone", "timezonefrom", "timezoneoffsetfrom"):
             if args and args[0] is not None:
                 val = args[0]
@@ -2417,12 +1889,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return None
 
         if name_lower == "datediff":
-            # Calculate difference in days
             if len(args) >= 2:
                 return self._date_diff(args[0], args[1], "day")
             return None
 
-        # Clinical age functions
+        # Clinical age functions (need context)
         if name_lower == "ageinyears":
             birthdate = self._get_patient_birthdate()
             if birthdate:
@@ -2483,317 +1954,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 return self._calculate_age_in_days(args[0], args[1])
             return None
 
-        # =====================================================================
-        # Phase 4: String Functions
-        # =====================================================================
-
-        if name_lower == "concat":
-            # Concatenate all string arguments
-            concat_result = ""
-            for arg in args:
-                if arg is not None:
-                    concat_result += str(arg)
-            return concat_result
-
-        if name_lower == "split":
-            # Split string by separator
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                return str(args[0]).split(str(args[1]))
-            return None
-
-        if name_lower == "upper":
-            if args and args[0] is not None:
-                return str(args[0]).upper()
-            return None
-
-        if name_lower == "lower":
-            if args and args[0] is not None:
-                return str(args[0]).lower()
-            return None
-
-        if name_lower == "substring":
-            # Substring(string, startIndex[, length])
-            if args and args[0] is not None:
-                s = str(args[0])
-                start = int(args[1]) if len(args) > 1 and args[1] is not None else 0
-                if len(args) > 2 and args[2] is not None:
-                    length = int(args[2])
-                    return s[start : start + length]
-                return s[start:]
-            return None
-
-        if name_lower == "startswith":
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                return str(args[0]).startswith(str(args[1]))
-            return None
-
-        if name_lower == "endswith":
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                return str(args[0]).endswith(str(args[1]))
-            return None
-
-        if name_lower == "matches":
-            # Regex match
-            import re
-
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                try:
-                    return bool(re.search(str(args[1]), str(args[0])))
-                except re.error:
-                    return None
-            return None
-
-        if name_lower == "replacematches":
-            # Regex replace
-            import re
-
-            if len(args) >= 3 and args[0] is not None:
-                try:
-                    return re.sub(str(args[1]), str(args[2]), str(args[0]))
-                except re.error:
-                    return None
-            return None
-
-        if name_lower == "replace":
-            # Simple string replace
-            if len(args) >= 3 and args[0] is not None:
-                return str(args[0]).replace(str(args[1] or ""), str(args[2] or ""))
-            return None
-
-        if name_lower == "indexof":
-            # IndexOf(string, substring) - find substring in string
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                try:
-                    return str(args[0]).find(str(args[1]))
-                except ValueError:
-                    return -1
-            return None
-
-        if name_lower == "lastpositionof":
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                try:
-                    return str(args[1]).rindex(str(args[0]))
-                except ValueError:
-                    return -1
-            return None
-
-        if name_lower == "positionof":
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                try:
-                    return str(args[1]).index(str(args[0]))
-                except ValueError:
-                    return -1
-            return None
-
-        if name_lower == "trim":
-            if args and args[0] is not None:
-                return str(args[0]).strip()
-            return None
-
-        if name_lower == "length":
-            if args and args[0] is not None:
-                if isinstance(args[0], str):
-                    return len(args[0])
-                if isinstance(args[0], list):
-                    return len(args[0])
-            return None
-
-        # =====================================================================
-        # Phase 4: Type Conversion Functions
-        # =====================================================================
-
-        if name_lower in ("tostring", "convert"):
-            if args and args[0] is not None:
-                return str(args[0])
-            return None
-
-        if name_lower == "tointeger":
-            if args and args[0] is not None:
-                try:
-                    return int(args[0])
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        if name_lower == "todecimal":
-            if args and args[0] is not None:
-                try:
-                    return Decimal(str(args[0]))
-                except Exception:
-                    return None
-            return None
-
-        if name_lower == "toboolean":
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, bool):
-                    return val
-                if isinstance(val, str):
-                    lower = val.lower()
-                    if lower in ("true", "t", "yes", "y", "1"):
-                        return True
-                    if lower in ("false", "f", "no", "n", "0"):
-                        return False
-                return None
-            return None
-
-        if name_lower == "todate":
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDate):
-                    return val
-                if isinstance(val, FHIRDateTime):
-                    return FHIRDate(year=val.year, month=val.month, day=val.day)
-                if isinstance(val, str):
-                    return FHIRDate.parse(val)
-            return None
-
-        if name_lower == "todatetime":
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRDateTime):
-                    return val
-                if isinstance(val, FHIRDate):
-                    return FHIRDateTime(year=val.year, month=val.month, day=val.day)
-                if isinstance(val, str):
-                    return FHIRDateTime.parse(val)
-            return None
-
-        if name_lower == "totime":
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, FHIRTime):
-                    return val
-                if isinstance(val, str):
-                    return FHIRTime.parse(val)
-            return None
-
-        if name_lower == "toquantity":
-            if args:
-                if len(args) >= 2:
-                    return Quantity(value=Decimal(str(args[0])), unit=str(args[1]))
-                if isinstance(args[0], Quantity):
-                    return args[0]
-            return None
-
-        # =====================================================================
-        # Phase 4: Utility Functions
-        # =====================================================================
-
-        if name_lower == "coalesce":
-            # Return first non-null argument
-            for arg in args:
-                if arg is not None:
-                    return arg
-            return None
-
-        if name_lower == "isnull":
-            return args[0] is None if args else True
-
-        if name_lower == "isnotnull":
-            return args[0] is not None if args else False
-
-        if name_lower == "istrue":
-            return args[0] is True if args else False
-
-        if name_lower == "isfalse":
-            return args[0] is False if args else False
-
-        if name_lower == "abs":
-            if args and args[0] is not None:
-                val = args[0]
-                if isinstance(val, Quantity):
-                    return Quantity(value=abs(val.value), unit=val.unit)
-                return abs(val)
-            return None
-
-        if name_lower == "ceiling":
-            import math
-
-            if args and args[0] is not None:
-                return math.ceil(float(args[0]))
-            return None
-
-        if name_lower == "floor":
-            import math
-
-            if args and args[0] is not None:
-                return math.floor(float(args[0]))
-            return None
-
-        if name_lower == "truncate":
-            if args and args[0] is not None:
-                return int(float(args[0]))
-            return None
-
-        if name_lower == "round":
-            if args and args[0] is not None:
-                precision = int(args[1]) if len(args) > 1 and args[1] is not None else 0
-                return round(float(args[0]), precision)
-            return None
-
-        if name_lower == "ln":
-            import math
-
-            if args and args[0] is not None:
-                try:
-                    return math.log(float(args[0]))
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        if name_lower == "log":
-            import math
-
-            if args and args[0] is not None:
-                base = float(args[1]) if len(args) > 1 and args[1] is not None else 10
-                try:
-                    return math.log(float(args[0]), base)
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        if name_lower == "exp":
-            import math
-
-            if args and args[0] is not None:
-                try:
-                    return math.exp(float(args[0]))
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        if name_lower == "power":
-            if len(args) >= 2 and args[0] is not None and args[1] is not None:
-                return float(args[0]) ** float(args[1])
-            return None
-
-        if name_lower == "sqrt":
-            import math
-
-            if args and args[0] is not None:
-                try:
-                    return math.sqrt(float(args[0]))
-                except (ValueError, TypeError):
-                    return None
-            return None
-
-        # =====================================================================
-        # Phase 4: Code/Terminology Functions
-        # =====================================================================
-
+        # Code/Terminology functions (need CQL type constructors)
         if name_lower == "tocode":
-            # Convert string to Code
             if args and args[0] is not None:
                 if isinstance(args[0], CQLCode):
                     return args[0]
                 if isinstance(args[0], str):
-                    # Simple string to code (no system)
                     return CQLCode(code=args[0], system="")
             return None
 
         if name_lower == "toconcept":
-            # Convert code(s) to Concept
             if args:
                 if isinstance(args[0], CQLConcept):
                     return args[0]
@@ -2806,7 +1976,6 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return None
 
         if name_lower == "code":
-            # Create a Code from system and code
             if len(args) >= 2:
                 return CQLCode(
                     code=str(args[0]),
@@ -3238,39 +2407,6 @@ class CQLEvaluatorVisitor(cqlVisitor):
         elif unit == "millisecond":
             return dt + timedelta(milliseconds=value)
         return None
-
-    def _collapse_intervals(self, intervals: list[CQLInterval[Any]]) -> list[CQLInterval[Any]]:
-        """Collapse overlapping/adjacent intervals into merged intervals."""
-        if not intervals:
-            return []
-
-        # Sort by low bound - we filter to only intervals with non-None low
-        filtered = [i for i in intervals if i.low is not None]
-        sorted_intervals = sorted(filtered, key=lambda x: x.low)  # type: ignore[arg-type,return-value]
-
-        if not sorted_intervals:
-            return []
-
-        result = [sorted_intervals[0]]
-        for current in sorted_intervals[1:]:
-            last = result[-1]
-            # Check if intervals overlap or are adjacent
-            if last.high is not None and current.low is not None:
-                if last.high >= current.low or (last.high == current.low and (last.high_closed or current.low_closed)):
-                    # Merge intervals
-                    new_high = max(last.high, current.high) if current.high is not None else current.high
-                    result[-1] = CQLInterval(
-                        low=last.low,
-                        high=new_high,
-                        low_closed=last.low_closed,
-                        high_closed=current.high_closed if new_high == current.high else last.high_closed,
-                    )
-                else:
-                    result.append(current)
-            else:
-                result.append(current)
-
-        return result
 
     # =========================================================================
     # Missing Expression Terms (Phase 8)

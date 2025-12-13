@@ -1,0 +1,184 @@
+"""CQL String Functions.
+
+Implements: Concatenate, Combine, Split, Upper, Lower, StartsWith, EndsWith,
+Substring, PositionOf, LastPositionOf, Matches, ReplaceMatches, Length
+"""
+
+import re
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .registry import FunctionRegistry
+
+
+def _concatenate(args: list[Any]) -> str:
+    """Concatenate strings.
+
+    Null arguments are skipped.
+    """
+    result = ""
+    for arg in args:
+        if arg is not None:
+            result += str(arg)
+    return result
+
+
+def _split(args: list[Any]) -> list[str] | None:
+    """Split a string by separator."""
+    if len(args) >= 2:
+        s = args[0]
+        sep = args[1]
+        if s is not None and sep is not None:
+            return str(s).split(str(sep))
+    return None
+
+
+def _upper(args: list[Any]) -> str | None:
+    """Convert string to uppercase."""
+    if args and args[0] is not None:
+        return str(args[0]).upper()
+    return None
+
+
+def _lower(args: list[Any]) -> str | None:
+    """Convert string to lowercase."""
+    if args and args[0] is not None:
+        return str(args[0]).lower()
+    return None
+
+
+def _starts_with(args: list[Any]) -> bool | None:
+    """Check if string starts with prefix."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        return str(args[0]).startswith(str(args[1]))
+    return None
+
+
+def _ends_with(args: list[Any]) -> bool | None:
+    """Check if string ends with suffix."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        return str(args[0]).endswith(str(args[1]))
+    return None
+
+
+def _substring(args: list[Any]) -> str | None:
+    """Get substring from start index with optional length."""
+    if len(args) >= 2 and args[0] is not None:
+        s = str(args[0])
+        start = args[1]
+        if start is None:
+            return None
+        start = int(start)
+        if len(args) >= 3 and args[2] is not None:
+            length = int(args[2])
+            return s[start : start + length]
+        return s[start:]
+    return None
+
+
+def _position_of(args: list[Any]) -> int | None:
+    """Find position of pattern in string."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        pattern = str(args[0])
+        s = str(args[1])
+        pos = s.find(pattern)
+        return pos if pos >= 0 else None
+    return None
+
+
+def _last_position_of(args: list[Any]) -> int | None:
+    """Find last position of pattern in string."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        pattern = str(args[0])
+        s = str(args[1])
+        pos = s.rfind(pattern)
+        return pos if pos >= 0 else None
+    return None
+
+
+def _matches(args: list[Any]) -> bool | None:
+    """Check if string matches regex pattern."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        s = str(args[0])
+        pattern = str(args[1])
+        try:
+            return bool(re.search(pattern, s))
+        except re.error:
+            return None
+    return None
+
+
+def _replace_matches(args: list[Any]) -> str | None:
+    """Replace regex matches in string."""
+    if len(args) >= 3 and args[0] is not None:
+        s = str(args[0])
+        pattern = args[1]
+        replacement = args[2]
+        if pattern is None or replacement is None:
+            return None
+        try:
+            return re.sub(str(pattern), str(replacement), s)
+        except re.error:
+            return None
+    return None
+
+
+def _replace(args: list[Any]) -> str | None:
+    """Simple string replace (not regex)."""
+    if len(args) >= 3 and args[0] is not None:
+        s = str(args[0])
+        find = args[1]
+        replace_with = args[2]
+        if find is None or replace_with is None:
+            return None
+        return s.replace(str(find), str(replace_with))
+    return None
+
+
+def _string_length(args: list[Any]) -> int | None:
+    """Get length of a string."""
+    if args and args[0] is not None:
+        return len(str(args[0]))
+    return None
+
+
+def _trim(args: list[Any]) -> str | None:
+    """Trim whitespace from string."""
+    if args and args[0] is not None:
+        return str(args[0]).strip()
+    return None
+
+
+def _indexer(args: list[Any]) -> str | None:
+    """Get character at index (CQL Indexer for strings)."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        s = str(args[0])
+        idx = int(args[1])
+        if 0 <= idx < len(s):
+            return s[idx]
+    return None
+
+
+def _contains_string(args: list[Any]) -> bool | None:
+    """Check if string contains substring."""
+    if len(args) >= 2 and args[0] is not None and args[1] is not None:
+        return str(args[1]) in str(args[0])
+    return None
+
+
+def register(registry: "FunctionRegistry") -> None:
+    """Register all string functions."""
+    registry.register("Concatenate", _concatenate, aliases=["Concat"], category="string", min_args=1)
+    registry.register("Split", _split, category="string", min_args=2, max_args=2)
+    registry.register("Upper", _upper, category="string", min_args=1, max_args=1)
+    registry.register("Lower", _lower, category="string", min_args=1, max_args=1)
+    registry.register("StartsWith", _starts_with, category="string", min_args=2, max_args=2)
+    registry.register("EndsWith", _ends_with, category="string", min_args=2, max_args=2)
+    registry.register("Substring", _substring, category="string", min_args=2, max_args=3)
+    registry.register("PositionOf", _position_of, category="string", min_args=2, max_args=2)
+    registry.register("LastPositionOf", _last_position_of, category="string", min_args=2, max_args=2)
+    registry.register("Matches", _matches, category="string", min_args=2, max_args=2)
+    registry.register("ReplaceMatches", _replace_matches, category="string", min_args=3, max_args=3)
+    registry.register("Replace", _replace, category="string", min_args=3, max_args=3)
+    registry.register("Trim", _trim, category="string", min_args=1, max_args=1)
+    registry.register("Indexer", _indexer, category="string", min_args=2, max_args=2)
