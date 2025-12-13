@@ -878,14 +878,24 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if let_clause:
             results = self._apply_let_clause(results, let_clause)
 
+        # Apply query inclusion clauses (with/without)
+        inclusion_clauses = ctx.queryInclusionClause()
+        if inclusion_clauses:
+            for inclusion in inclusion_clauses:
+                results = self._apply_inclusion_clause(results, inclusion)
+
         # Apply where clause
         where_clause = ctx.whereClause()
         if where_clause:
             results = self._apply_where_clause(results, where_clause)
 
-        # Apply return clause
+        # Apply aggregate clause OR return clause (mutually exclusive)
+        aggregate_clause = ctx.aggregateClause()
         return_clause = ctx.returnClause()
-        if return_clause:
+
+        if aggregate_clause:
+            return self._apply_aggregate_clause(results, aggregate_clause)
+        elif return_clause:
             results = self._apply_return_clause(results, return_clause)
 
         # Apply sort clause
@@ -1074,6 +1084,166 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     pass
 
         return results
+
+    def _apply_inclusion_clause(
+        self, results: list[dict[str, Any]], ctx: cqlParser.QueryInclusionClauseContext
+    ) -> list[dict[str, Any]]:
+        """Apply with/without clause to filter results based on related data."""
+        # Check if it's a with or without clause
+        with_clause = ctx.withClause()
+        without_clause = ctx.withoutClause()
+
+        if with_clause:
+            return self._apply_with_clause(results, with_clause)
+        elif without_clause:
+            return self._apply_without_clause(results, without_clause)
+
+        return results
+
+    def _apply_with_clause(
+        self, results: list[dict[str, Any]], ctx: cqlParser.WithClauseContext
+    ) -> list[dict[str, Any]]:
+        """Apply with clause - include rows that have matching related data."""
+        # Get the aliased query source
+        aliased_source = ctx.aliasedQuerySource()
+        source = aliased_source.querySource()
+        alias = self._get_identifier_text(aliased_source.alias().identifier())
+
+        # Get the 'such that' condition expression
+        condition = ctx.expression()
+
+        # Evaluate the source
+        source_value = self._evaluate_query_source(source)
+        if not isinstance(source_value, list):
+            source_value = [source_value] if source_value is not None else []
+
+        # Filter results based on whether any related item matches the condition
+        filtered = []
+        for row in results:
+            has_match = False
+            for related_item in source_value:
+                # Create context with current row aliases and the related item
+                self.context.push_scope()
+                for row_alias, value in row.items():
+                    self.context.set_alias(row_alias, value)
+                self.context.set_alias(alias, related_item)
+
+                try:
+                    result = self.visit(condition)
+                    if result is True:
+                        has_match = True
+                        break
+                finally:
+                    self.context.pop_scope()
+
+            if has_match:
+                filtered.append(row)
+
+        return filtered
+
+    def _apply_without_clause(
+        self, results: list[dict[str, Any]], ctx: cqlParser.WithoutClauseContext
+    ) -> list[dict[str, Any]]:
+        """Apply without clause - include rows that have NO matching related data."""
+        # Get the aliased query source
+        aliased_source = ctx.aliasedQuerySource()
+        source = aliased_source.querySource()
+        alias = self._get_identifier_text(aliased_source.alias().identifier())
+
+        # Get the 'such that' condition expression
+        condition = ctx.expression()
+
+        # Evaluate the source
+        source_value = self._evaluate_query_source(source)
+        if not isinstance(source_value, list):
+            source_value = [source_value] if source_value is not None else []
+
+        # Filter results based on whether NO related item matches the condition
+        filtered = []
+        for row in results:
+            has_match = False
+            for related_item in source_value:
+                # Create context with current row aliases and the related item
+                self.context.push_scope()
+                for row_alias, value in row.items():
+                    self.context.set_alias(row_alias, value)
+                self.context.set_alias(alias, related_item)
+
+                try:
+                    result = self.visit(condition)
+                    if result is True:
+                        has_match = True
+                        break
+                finally:
+                    self.context.pop_scope()
+
+            if not has_match:
+                filtered.append(row)
+
+        return filtered
+
+    def _apply_aggregate_clause(self, results: list[dict[str, Any]], ctx: cqlParser.AggregateClauseContext) -> Any:
+        """Apply aggregate clause to accumulate a value across results.
+
+        Syntax: aggregate [all|distinct] identifier [starting value] : expression
+        """
+        # Get the accumulator identifier
+        identifier = self._get_identifier_text(ctx.identifier())
+
+        # Check for distinct modifier
+        is_distinct = "distinct" in ctx.getText().lower().split("aggregate")[1].split(identifier)[0]
+
+        # Get starting value
+        starting_clause = ctx.startingClause()
+        if starting_clause:
+            # Check for different starting value formats
+            simple_literal = starting_clause.simpleLiteral()
+            quantity = starting_clause.quantity()
+            paren_expr = starting_clause.expression()
+
+            if simple_literal:
+                accumulator = self.visit(simple_literal)
+            elif quantity:
+                accumulator = self.visit(quantity)
+            elif paren_expr:
+                accumulator = self.visit(paren_expr)
+            else:
+                accumulator = None
+        else:
+            accumulator = None
+
+        # Get the aggregation expression
+        agg_expression = ctx.expression()
+
+        # Apply distinct if specified
+        if is_distinct:
+            seen: list[Any] = []
+            unique_results = []
+            for row in results:
+                # Get a hashable representation
+                row_key = tuple(sorted(row.items())) if isinstance(row, dict) else row
+                if row_key not in seen:
+                    seen.append(row_key)
+                    unique_results.append(row)
+            results = unique_results
+
+        # Iterate through results, accumulating value
+        for row in results:
+            self.context.push_scope()
+
+            # Set row aliases
+            for row_alias, value in row.items():
+                self.context.set_alias(row_alias, value)
+
+            # Set the accumulator
+            self.context.set_alias(identifier, accumulator)
+
+            try:
+                accumulator = self.visit(agg_expression)
+            finally:
+                self.context.pop_scope()
+
+        return accumulator
 
     def visitRetrieve(self, ctx: cqlParser.RetrieveContext) -> list[Any]:
         """Visit retrieve expression [ResourceType: property in ValueSet].
@@ -2895,6 +3065,440 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 result.append(current)
 
         return result
+
+    # =========================================================================
+    # Missing Expression Terms (Phase 8)
+    # =========================================================================
+
+    def visitAggregateExpressionTerm(self, ctx: cqlParser.AggregateExpressionTermContext) -> Any:
+        """Visit aggregate expression term (distinct/flatten as expression)."""
+        # Get the operation (first token: 'distinct' or 'flatten')
+        op = ctx.getChild(0).getText().lower()
+        expr = ctx.expression()
+        value = self.visit(expr)
+
+        if op == "distinct":
+            if isinstance(value, list):
+                seen: list[Any] = []
+                for item in value:
+                    if item not in seen:
+                        seen.append(item)
+                return seen
+            return value
+
+        elif op == "flatten":
+            if isinstance(value, list):
+                result: list[Any] = []
+                for item in value:
+                    if isinstance(item, list):
+                        result.extend(item)
+                    else:
+                        result.append(item)
+                return result
+            return value
+
+        return value
+
+    def visitElementExtractorExpressionTerm(self, ctx: cqlParser.ElementExtractorExpressionTermContext) -> Any:
+        """Visit element extractor expression (singleton from X)."""
+        expr = ctx.expressionTerm()
+        value = self.visit(expr)
+
+        if isinstance(value, list):
+            if len(value) == 0:
+                return None
+            elif len(value) == 1:
+                return value[0]
+            else:
+                raise CQLError("singleton from requires a list with at most one element")
+        return value
+
+    def visitPointExtractorExpressionTerm(self, ctx: cqlParser.PointExtractorExpressionTermContext) -> Any:
+        """Visit point extractor expression (point from Interval)."""
+        expr = ctx.expressionTerm()
+        value = self.visit(expr)
+
+        if isinstance(value, CQLInterval):
+            # point from requires a unit interval (low == high)
+            if value.low is not None and value.high is not None and value.low == value.high:
+                if value.low_closed and value.high_closed:
+                    return value.low
+            raise CQLError("point from requires a unit interval (low = high, both closed)")
+        return None
+
+    def visitSuccessorExpressionTerm(self, ctx: cqlParser.SuccessorExpressionTermContext) -> Any:
+        """Visit successor expression (successor of X)."""
+        expr = ctx.expressionTerm()
+        value = self.visit(expr)
+
+        if value is None:
+            return None
+
+        # Integer successor
+        if isinstance(value, int):
+            return value + 1
+
+        # Decimal successor (add minimum precision)
+        if isinstance(value, Decimal):
+            # Get the scale and add the smallest increment
+            sign, digits, exp = value.as_tuple()
+            if exp < 0:
+                increment = Decimal(10) ** exp
+            else:
+                increment = Decimal(1)
+            return value + increment
+
+        # Date successor (next day)
+        if isinstance(value, (date, FHIRDate)):
+            d = self._to_date(value)
+            if d:
+                next_day = d + timedelta(days=1)
+                return FHIRDate(year=next_day.year, month=next_day.month, day=next_day.day)
+
+        # DateTime successor (next millisecond)
+        if isinstance(value, (datetime, FHIRDateTime)):
+            dt = self._to_datetime(value)
+            if dt:
+                next_ms = dt + timedelta(milliseconds=1)
+                return FHIRDateTime(
+                    year=next_ms.year,
+                    month=next_ms.month,
+                    day=next_ms.day,
+                    hour=next_ms.hour,
+                    minute=next_ms.minute,
+                    second=next_ms.second,
+                    microsecond=next_ms.microsecond,
+                )
+
+        # Time successor
+        if isinstance(value, (time, FHIRTime)):
+            t = self._to_time(value)
+            if t:
+                # Add 1 millisecond
+                total_ms = (t.hour * 3600 + t.minute * 60 + t.second) * 1000 + t.microsecond // 1000 + 1
+                if total_ms >= 24 * 3600 * 1000:
+                    total_ms = 0  # Wrap around
+                h = (total_ms // 3600000) % 24
+                m = (total_ms // 60000) % 60
+                s = (total_ms // 1000) % 60
+                ms = total_ms % 1000
+                return FHIRTime(hour=h, minute=m, second=s, millisecond=ms)
+
+        return None
+
+    def visitPredecessorExpressionTerm(self, ctx: cqlParser.PredecessorExpressionTermContext) -> Any:
+        """Visit predecessor expression (predecessor of X)."""
+        expr = ctx.expressionTerm()
+        value = self.visit(expr)
+
+        if value is None:
+            return None
+
+        # Integer predecessor
+        if isinstance(value, int):
+            return value - 1
+
+        # Decimal predecessor
+        if isinstance(value, Decimal):
+            sign, digits, exp = value.as_tuple()
+            if exp < 0:
+                decrement = Decimal(10) ** exp
+            else:
+                decrement = Decimal(1)
+            return value - decrement
+
+        # Date predecessor (previous day)
+        if isinstance(value, (date, FHIRDate)):
+            d = self._to_date(value)
+            if d:
+                prev_day = d - timedelta(days=1)
+                return FHIRDate(year=prev_day.year, month=prev_day.month, day=prev_day.day)
+
+        # DateTime predecessor
+        if isinstance(value, (datetime, FHIRDateTime)):
+            dt = self._to_datetime(value)
+            if dt:
+                prev_ms = dt - timedelta(milliseconds=1)
+                return FHIRDateTime(
+                    year=prev_ms.year,
+                    month=prev_ms.month,
+                    day=prev_ms.day,
+                    hour=prev_ms.hour,
+                    minute=prev_ms.minute,
+                    second=prev_ms.second,
+                    microsecond=prev_ms.microsecond,
+                )
+
+        # Time predecessor
+        if isinstance(value, (time, FHIRTime)):
+            t = self._to_time(value)
+            if t:
+                total_ms = (t.hour * 3600 + t.minute * 60 + t.second) * 1000 + t.microsecond // 1000 - 1
+                if total_ms < 0:
+                    total_ms = 24 * 3600 * 1000 - 1  # Wrap around
+                h = (total_ms // 3600000) % 24
+                m = (total_ms // 60000) % 60
+                s = (total_ms // 1000) % 60
+                ms = total_ms % 1000
+                return FHIRTime(hour=h, minute=m, second=s, millisecond=ms)
+
+        return None
+
+    def visitConversionExpressionTerm(self, ctx: cqlParser.ConversionExpressionTermContext) -> Any:
+        """Visit conversion expression (convert X to Y)."""
+        expr = ctx.expression()
+        value = self.visit(expr)
+
+        if value is None:
+            return None
+
+        # Check if converting to a type specifier or unit
+        type_spec = ctx.typeSpecifier()
+        unit = ctx.unit()
+
+        if type_spec:
+            # Type conversion
+            type_name = type_spec.getText()
+            return self._convert_to_type(value, type_name)
+
+        if unit:
+            # Unit conversion for quantities
+            unit_text = self._unquote_string(unit.getText())
+            if isinstance(value, Quantity):
+                # For now, just change the unit (proper conversion would need unit tables)
+                return Quantity(value=value.value, unit=unit_text)
+            elif isinstance(value, (int, float, Decimal)):
+                return Quantity(value=Decimal(str(value)), unit=unit_text)
+
+        return value
+
+    def _convert_to_type(self, value: Any, type_name: str) -> Any:
+        """Convert a value to the specified type."""
+        type_lower = type_name.lower()
+
+        if type_lower == "string":
+            return str(value) if value is not None else None
+
+        if type_lower == "integer":
+            try:
+                return int(value)
+            except (ValueError, TypeError):
+                return None
+
+        if type_lower == "decimal":
+            try:
+                return Decimal(str(value))
+            except (ValueError, TypeError):
+                return None
+
+        if type_lower == "boolean":
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.lower() in ("true", "t", "yes", "y", "1")
+            return None
+
+        if type_lower == "date":
+            return self._to_fhir_date(value)
+
+        if type_lower == "datetime":
+            return self._to_fhir_datetime(value)
+
+        if type_lower == "quantity":
+            if isinstance(value, Quantity):
+                return value
+            if isinstance(value, (int, float, Decimal)):
+                return Quantity(value=Decimal(str(value)), unit="1")
+            return None
+
+        return value
+
+    def _to_fhir_date(self, value: Any) -> FHIRDate | None:
+        """Convert value to FHIRDate."""
+        if isinstance(value, FHIRDate):
+            return value
+        if isinstance(value, date):
+            return FHIRDate(year=value.year, month=value.month, day=value.day)
+        if isinstance(value, str):
+            try:
+                d = date.fromisoformat(value[:10])
+                return FHIRDate(year=d.year, month=d.month, day=d.day)
+            except ValueError:
+                return None
+        return None
+
+    def _to_fhir_datetime(self, value: Any) -> FHIRDateTime | None:
+        """Convert value to FHIRDateTime."""
+        if isinstance(value, FHIRDateTime):
+            return value
+        if isinstance(value, datetime):
+            return FHIRDateTime(
+                year=value.year,
+                month=value.month,
+                day=value.day,
+                hour=value.hour,
+                minute=value.minute,
+                second=value.second,
+                microsecond=value.microsecond,
+            )
+        if isinstance(value, str):
+            try:
+                dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                return FHIRDateTime(
+                    year=dt.year,
+                    month=dt.month,
+                    day=dt.day,
+                    hour=dt.hour,
+                    minute=dt.minute,
+                    second=dt.second,
+                    microsecond=dt.microsecond,
+                )
+            except ValueError:
+                return None
+        return None
+
+    def visitDurationExpressionTerm(self, ctx: cqlParser.DurationExpressionTermContext) -> Any:
+        """Visit duration expression (duration in X of Interval)."""
+        # Get the precision (pluralDateTimePrecision)
+        precision = ctx.pluralDateTimePrecision().getText().lower()
+        expr = ctx.expressionTerm()
+        interval = self.visit(expr)
+
+        if not isinstance(interval, CQLInterval):
+            return None
+
+        if interval.low is None or interval.high is None:
+            return None
+
+        return self._calculate_duration(interval.low, interval.high, precision)
+
+    def visitDifferenceExpressionTerm(self, ctx: cqlParser.DifferenceExpressionTermContext) -> Any:
+        """Visit difference expression (difference in X of Interval)."""
+        # Get the precision
+        precision = ctx.pluralDateTimePrecision().getText().lower()
+        expr = ctx.expressionTerm()
+        interval = self.visit(expr)
+
+        if not isinstance(interval, CQLInterval):
+            return None
+
+        if interval.low is None or interval.high is None:
+            return None
+
+        # Difference uses calendar-based calculation (same as duration for most cases)
+        return self._calculate_duration(interval.low, interval.high, precision)
+
+    def _calculate_duration(self, low: Any, high: Any, precision: str) -> int | None:
+        """Calculate duration between two values at given precision."""
+        # Handle dates
+        if isinstance(low, (date, FHIRDate)) and isinstance(high, (date, FHIRDate)):
+            d1 = self._to_date(low)
+            d2 = self._to_date(high)
+            if d1 is None or d2 is None:
+                return None
+
+            if precision in ("years", "year"):
+                return d2.year - d1.year - (1 if (d2.month, d2.day) < (d1.month, d1.day) else 0)
+            elif precision in ("months", "month"):
+                return (d2.year - d1.year) * 12 + d2.month - d1.month - (1 if d2.day < d1.day else 0)
+            elif precision in ("weeks", "week"):
+                return (d2 - d1).days // 7
+            elif precision in ("days", "day"):
+                return (d2 - d1).days
+
+        # Handle datetimes
+        if isinstance(low, (datetime, FHIRDateTime)) and isinstance(high, (datetime, FHIRDateTime)):
+            dt1 = self._to_datetime(low)
+            dt2 = self._to_datetime(high)
+            if dt1 is None or dt2 is None:
+                return None
+
+            delta = dt2 - dt1
+
+            if precision in ("years", "year"):
+                return dt2.year - dt1.year - (1 if (dt2.month, dt2.day) < (dt1.month, dt1.day) else 0)
+            elif precision in ("months", "month"):
+                return (dt2.year - dt1.year) * 12 + dt2.month - dt1.month - (1 if dt2.day < dt1.day else 0)
+            elif precision in ("weeks", "week"):
+                return delta.days // 7
+            elif precision in ("days", "day"):
+                return delta.days
+            elif precision in ("hours", "hour"):
+                return int(delta.total_seconds() // 3600)
+            elif precision in ("minutes", "minute"):
+                return int(delta.total_seconds() // 60)
+            elif precision in ("seconds", "second"):
+                return int(delta.total_seconds())
+            elif precision in ("milliseconds", "millisecond"):
+                return int(delta.total_seconds() * 1000)
+
+        # Handle times
+        if isinstance(low, (time, FHIRTime)) and isinstance(high, (time, FHIRTime)):
+            t1 = self._to_time(low)
+            t2 = self._to_time(high)
+            if t1 is None or t2 is None:
+                return None
+
+            secs1 = t1.hour * 3600 + t1.minute * 60 + t1.second + t1.microsecond / 1_000_000
+            secs2 = t2.hour * 3600 + t2.minute * 60 + t2.second + t2.microsecond / 1_000_000
+            delta_secs = secs2 - secs1
+
+            if precision in ("hours", "hour"):
+                return int(delta_secs // 3600)
+            elif precision in ("minutes", "minute"):
+                return int(delta_secs // 60)
+            elif precision in ("seconds", "second"):
+                return int(delta_secs)
+            elif precision in ("milliseconds", "millisecond"):
+                return int(delta_secs * 1000)
+
+        return None
+
+    def visitTypeExtentExpressionTerm(self, ctx: cqlParser.TypeExtentExpressionTermContext) -> Any:
+        """Visit type extent expression (minimum/maximum Type)."""
+        # Get the extent (minimum or maximum)
+        extent = ctx.getChild(0).getText().lower()
+        type_spec = ctx.namedTypeSpecifier()
+        type_name = type_spec.getText().lower() if type_spec else ""
+
+        if extent == "minimum":
+            return self._get_type_minimum(type_name)
+        elif extent == "maximum":
+            return self._get_type_maximum(type_name)
+
+        return None
+
+    def _get_type_minimum(self, type_name: str) -> Any:
+        """Get the minimum value for a type."""
+        if type_name == "integer":
+            return -(2**31)  # CQL Integer is 32-bit
+        elif type_name == "decimal":
+            return Decimal("-99999999999999999999.99999999")
+        elif type_name == "date":
+            return FHIRDate(year=1, month=1, day=1)
+        elif type_name == "datetime":
+            return FHIRDateTime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+        elif type_name == "time":
+            return FHIRTime(hour=0, minute=0, second=0, millisecond=0)
+        elif type_name == "quantity":
+            return Quantity(value=Decimal("-99999999999999999999.99999999"), unit="1")
+        return None
+
+    def _get_type_maximum(self, type_name: str) -> Any:
+        """Get the maximum value for a type."""
+        if type_name == "integer":
+            return 2**31 - 1  # CQL Integer is 32-bit
+        elif type_name == "decimal":
+            return Decimal("99999999999999999999.99999999")
+        elif type_name == "date":
+            return FHIRDate(year=9999, month=12, day=31)
+        elif type_name == "datetime":
+            return FHIRDateTime(year=9999, month=12, day=31, hour=23, minute=59, second=59)
+        elif type_name == "time":
+            return FHIRTime(hour=23, minute=59, second=59, millisecond=999)
+        elif type_name == "quantity":
+            return Quantity(value=Decimal("99999999999999999999.99999999"), unit="1")
+        return None
 
     def _expand_interval(self, interval: CQLInterval[Any], per: Any = None) -> list[Any]:
         """Expand an interval into a list of points."""
