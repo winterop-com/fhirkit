@@ -49,3 +49,5 @@ nav:
       - Tutorial: cql-tutorial.md
       - Python API: cql-api.md
       - Reference: fhirpath-cql-tutorial.md
+  - CDS Hooks:
+      - Guide: cds-hooks-guide.md

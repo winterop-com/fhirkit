@@ -1,13 +1,12 @@
 # CLI Reference
 
-The unified `fhir` CLI provides access to both CQL and FHIRPath functionality:
+The unified `fhir` CLI provides access to CQL, FHIRPath, and CDS Hooks functionality:
 
 ```bash
 fhir cql <command>      # CQL commands
 fhir fhirpath <command> # FHIRPath commands
+fhir cds <command>      # CDS Hooks commands
 ```
-
-Standalone commands are also available: `cql` and `fhirpath`.
 
 ---
 
@@ -330,6 +329,133 @@ fhir cql show <file.cql>
 
 ---
 
+## CDS Hooks CLI
+
+### serve
+
+Start the CDS Hooks server.
+
+```bash
+fhir cds serve
+fhir cds serve --port 8080 --config cds_services.yaml
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-h, --host` | Host to bind to (default: 0.0.0.0) |
+| `-p, --port` | Port to bind to (default: 8080) |
+| `-c, --config` | Services config file (default: cds_services.yaml) |
+| `-r, --reload` | Enable auto-reload for development |
+| `--cql-path` | Base path for CQL library files |
+
+**Example:**
+
+```bash
+# Start server with default settings
+fhir cds serve
+
+# Start on custom port with specific config
+fhir cds serve --port 9000 --config my_services.yaml
+
+# Development mode with auto-reload
+fhir cds serve --reload
+```
+
+### validate
+
+Validate a CDS Hooks configuration file.
+
+```bash
+fhir cds validate <config.yaml>
+```
+
+**Example:**
+
+```bash
+fhir cds validate cds_services.yaml
+```
+
+**Output:**
+
+```
+Valid configuration with 3 service(s)
+
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID              ┃ Hook           ┃ Title                          ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ greeting        │ patient-view   │ Patient Greeting               │
+│ age-check       │ patient-view   │ Age-Based Recommendations      │
+│ drug-alert      │ order-sign     │ Drug Interaction Alert         │
+└─────────────────┴────────────────┴────────────────────────────────┘
+```
+
+### list
+
+List configured CDS services.
+
+```bash
+fhir cds list
+fhir cds list --config custom_services.yaml
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-c, --config` | Services config file (default: cds_services.yaml) |
+
+### test
+
+Test a CDS service with sample data.
+
+```bash
+fhir cds test <service-id>
+fhir cds test <service-id> --config services.yaml --patient patient.json
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-c, --config` | Services config file (default: cds_services.yaml) |
+| `-p, --patient` | Patient JSON file for prefetch data |
+
+**Example:**
+
+```bash
+# Test with default patient
+fhir cds test greeting
+
+# Test with specific patient data
+fhir cds test age-check --patient elderly_patient.json
+```
+
+**Output:**
+
+```
+Testing service: greeting
+
+CQL Results:
+┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Definition     ┃ Value                      ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ Greeting       │ 'Hello, World!'            │
+│ HasGreeting    │ true                       │
+└────────────────┴────────────────────────────┘
+
+Cards generated: 1
+
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Indicator   ┃ Summary                    ┃ Source          ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ info        │ Hello, World!              │ Greeting CDS    │
+└─────────────┴────────────────────────────┴─────────────────┘
+```
+
+---
+
 ## Quick Reference
 
 ### FHIRPath Commands
@@ -359,6 +485,15 @@ fhir cql show <file.cql>
 | `fhir cql validate` | Validate multiple files |
 | `fhir cql definitions` | List library definitions |
 | `fhir cql show` | Display file with highlighting |
+
+### CDS Hooks Commands
+
+| Command | Description |
+|---------|-------------|
+| `fhir cds serve` | Start the CDS Hooks server |
+| `fhir cds validate` | Validate configuration file |
+| `fhir cds list` | List configured services |
+| `fhir cds test` | Test a service with sample data |
 
 ---
 
