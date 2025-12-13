@@ -1,0 +1,86 @@
+{
+  "system": "http://loinc.org",
+  "codes": [
+    {
+      "code": "8310-5",
+      "display": "Body temperature",
+      "unit": "Cel",
+      "normal_low": 36.1,
+      "normal_high": 37.2,
+      "abnormal_low": 35.0,
+      "abnormal_high": 39.5
+    },
+    {
+      "code": "8867-4",
+      "display": "Heart rate",
+      "unit": "/min",
+      "normal_low": 60,
+      "normal_high": 100,
+      "abnormal_low": 40,
+      "abnormal_high": 150
+    },
+    {
+      "code": "9279-1",
+      "display": "Respiratory rate",
+      "unit": "/min",
+      "normal_low": 12,
+      "normal_high": 20,
+      "abnormal_low": 8,
+      "abnormal_high": 30
+    },
+    {
+      "code": "8480-6",
+      "display": "Systolic blood pressure",
+      "unit": "mm[Hg]",
+      "normal_low": 90,
+      "normal_high": 120,
+      "abnormal_low": 70,
+      "abnormal_high": 180
+    },
+    {
+      "code": "8462-4",
+      "display": "Diastolic blood pressure",
+      "unit": "mm[Hg]",
+      "normal_low": 60,
+      "normal_high": 80,
+      "abnormal_low": 40,
+      "abnormal_high": 110
+    },
+    {
+      "code": "2708-6",
+      "display": "Oxygen saturation in Arterial blood",
+      "unit": "%",
+      "normal_low": 95,
+      "normal_high": 100,
+      "abnormal_low": 85,
+      "abnormal_high": null
+    },
+    {
+      "code": "39156-5",
+      "display": "Body mass index",
+      "unit": "kg/m2",
+      "normal_low": 18.5,
+      "normal_high": 24.9,
+      "abnormal_low": 15.0,
+      "abnormal_high": 45.0
+    },
+    {
+      "code": "29463-7",
+      "display": "Body weight",
+      "unit": "kg",
+      "normal_low": 50,
+      "normal_high": 90,
+      "abnormal_low": 30,
+      "abnormal_high": 200
+    },
+    {
+      "code": "8302-2",
+      "display": "Body height",
+      "unit": "cm",
+      "normal_low": 150,
+      "normal_high": 190,
+      "abnormal_low": 120,
+      "abnormal_high": 220
+    }
+  ]
+}

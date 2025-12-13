@@ -1,0 +1,53 @@
+{
+  "contact_relationships": {
+    "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+    "codes": [
+      {"code": "C", "display": "Emergency Contact"},
+      {"code": "N", "display": "Next-of-Kin"}
+    ]
+  },
+  "personal_relationships": {
+    "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+    "codes": [
+      {"code": "SPS", "display": "spouse"},
+      {"code": "PRN", "display": "parent"},
+      {"code": "SIB", "display": "sibling"},
+      {"code": "CHILD", "display": "child"},
+      {"code": "FRND", "display": "unrelated friend"}
+    ]
+  },
+  "identifier_types": {
+    "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+    "codes": [
+      {"code": "MR", "display": "Medical record number"},
+      {"code": "SS", "display": "Social Security Number"},
+      {"code": "DL", "display": "Driver's license number"},
+      {"code": "PPN", "display": "Passport number"},
+      {"code": "MB", "display": "Member number"}
+    ]
+  },
+  "birth_sex": {
+    "extension_url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+    "codes": [
+      {"code": "M", "display": "Male"},
+      {"code": "F", "display": "Female"},
+      {"code": "UNK", "display": "Unknown"}
+    ]
+  },
+  "gender_identity": {
+    "extension_url": "http://hl7.org/fhir/StructureDefinition/patient-genderIdentity",
+    "system": "http://hl7.org/fhir/gender-identity",
+    "codes": [
+      {"code": "male", "display": "Male"},
+      {"code": "female", "display": "Female"},
+      {"code": "non-binary", "display": "Non-binary"},
+      {"code": "transgender-male", "display": "Transgender male"},
+      {"code": "transgender-female", "display": "Transgender female"},
+      {"code": "other", "display": "Other"}
+    ]
+  },
+  "name_suffixes": ["Jr.", "Sr.", "II", "III", "IV", "MD", "PhD", "Esq."],
+  "address_use_codes": ["home", "work", "temp", "old", "billing"],
+  "address_type_codes": ["postal", "physical", "both"],
+  "name_use_codes": ["usual", "official", "temp", "nickname", "maiden", "old"]
+}

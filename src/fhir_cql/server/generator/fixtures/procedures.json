@@ -1,0 +1,20 @@
+{
+  "system": "http://snomed.info/sct",
+  "codes": [
+    {"code": "428191000124101", "display": "Documentation of current medications"},
+    {"code": "171207006", "display": "Screening for depression"},
+    {"code": "271442007", "display": "Electrocardiogram"},
+    {"code": "77477000", "display": "Computed tomography"},
+    {"code": "113091000", "display": "Magnetic resonance imaging"},
+    {"code": "241615005", "display": "Dual-energy X-ray absorptiometry"},
+    {"code": "73761001", "display": "Colonoscopy"},
+    {"code": "241541005", "display": "Mammography"},
+    {"code": "385763009", "display": "Wound care"},
+    {"code": "33195004", "display": "Blood pressure taking"},
+    {"code": "268400002", "display": "Eye examination"},
+    {"code": "46973005", "display": "Blood pressure measurement"},
+    {"code": "71651007", "display": "Mammography"},
+    {"code": "24623002", "display": "Flu vaccination"},
+    {"code": "252465000", "display": "Pulse oximetry"}
+  ]
+}

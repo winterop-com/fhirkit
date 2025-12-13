@@ -1,0 +1,21 @@
+{
+  "specialties": {
+    "system": "http://snomed.info/sct",
+    "codes": [
+      {"code": "419772000", "display": "Family medicine"},
+      {"code": "394802001", "display": "General medicine"},
+      {"code": "394579002", "display": "Cardiology"},
+      {"code": "394583002", "display": "Endocrinology"},
+      {"code": "394584008", "display": "Gastroenterology"},
+      {"code": "394591006", "display": "Neurology"},
+      {"code": "394592004", "display": "Oncology"},
+      {"code": "394600006", "display": "Pulmonology"},
+      {"code": "394587001", "display": "Psychiatry"},
+      {"code": "394586005", "display": "Gynecology"},
+      {"code": "394609007", "display": "General surgery"},
+      {"code": "394610002", "display": "Orthopedic surgery"},
+      {"code": "418112009", "display": "Nurse practitioner"},
+      {"code": "224535009", "display": "Physician assistant"}
+    ]
+  }
+}

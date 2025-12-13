@@ -1,0 +1,32 @@
+{
+  "observation_categories": {
+    "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+    "codes": [
+      {"code": "vital-signs", "display": "Vital Signs"},
+      {"code": "laboratory", "display": "Laboratory"},
+      {"code": "social-history", "display": "Social History"},
+      {"code": "survey", "display": "Survey"},
+      {"code": "exam", "display": "Exam"}
+    ]
+  },
+  "condition_clinical_status": {
+    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+    "codes": [
+      {"code": "active", "display": "Active"},
+      {"code": "recurrence", "display": "Recurrence"},
+      {"code": "relapse", "display": "Relapse"},
+      {"code": "inactive", "display": "Inactive"},
+      {"code": "remission", "display": "Remission"},
+      {"code": "resolved", "display": "Resolved"}
+    ]
+  },
+  "condition_verification_status": {
+    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+    "codes": [
+      {"code": "unconfirmed", "display": "Unconfirmed"},
+      {"code": "provisional", "display": "Provisional"},
+      {"code": "differential", "display": "Differential"},
+      {"code": "confirmed", "display": "Confirmed"}
+    ]
+  }
+}
