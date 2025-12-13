@@ -1,6 +1,5 @@
 """Tests for CDS Hooks configuration settings."""
 
-
 import pytest
 from pydantic import ValidationError
 

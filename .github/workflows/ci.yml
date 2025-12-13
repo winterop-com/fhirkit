@@ -76,11 +76,11 @@ jobs:
         run: uv sync --all-groups
 
       - name: Validate CQL examples
-        run: uv run cql validate examples/cql/*.cql
+        run: uv run fhir cql validate examples/cql/*.cql
 
       - name: Validate FHIRPath examples
         run: |
           for f in examples/fhirpath/*.fhirpath; do
             echo "Validating $f"
-            uv run fhirpath parse-file "$f" -q
+            uv run fhir fhirpath parse-file "$f" -q
           done
