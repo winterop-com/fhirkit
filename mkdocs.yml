@@ -53,6 +53,22 @@ nav:
       - Guide: elm-guide.md
   - FHIR Server:
       - Guide: fhir-server-guide.md
+      - Resources:
+          - Overview: fhir-server/resources/index.md
+          - AllergyIntolerance: fhir-server/resources/allergy-intolerance.md
+          - CarePlan: fhir-server/resources/careplan.md
+          - DiagnosticReport: fhir-server/resources/diagnostic-report.md
+          - DocumentReference: fhir-server/resources/document-reference.md
+          - Goal: fhir-server/resources/goal.md
+          - Immunization: fhir-server/resources/immunization.md
+          - Measure: fhir-server/resources/measure.md
+          - MeasureReport: fhir-server/resources/measure-report.md
+          - Medication: fhir-server/resources/medication.md
+          - ServiceRequest: fhir-server/resources/service-request.md
+      - Search:
+          - Chained Search: fhir-server/search/chained-search.md
+          - Reverse Chained: fhir-server/search/reverse-chained-search.md
+          - Elements & Summary: fhir-server/search/elements-summary.md
       - Operations:
           - Terminology: fhir-server/operations/terminology.md
   - CDS Hooks:
