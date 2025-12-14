@@ -40,7 +40,7 @@ fhir serve --patients 100
 #   Web UI:       http://0.0.0.0:8080/
 #   FHIR API:     http://0.0.0.0:8080/baseR4
 #   Metadata:     http://0.0.0.0:8080/baseR4/metadata
-#   API Docs:     http://0.0.0.0:8080/baseR4/docs
+#   API Docs:     http://0.0.0.0:8080/docs
 ```
 
 ### Make Your First Request
@@ -65,7 +65,7 @@ Open http://localhost:8080/ in your browser to browse resources through the web 
 
 ### View API Documentation
 
-Open http://localhost:8080/baseR4/docs in your browser to see the interactive Swagger UI with all available endpoints.
+Open http://localhost:8080/docs in your browser to see the interactive Swagger UI with all available endpoints.
 
 ---
 
@@ -1222,7 +1222,7 @@ For large datasets, consider:
 
 The server provides built-in API documentation:
 
-- **Swagger UI**: http://localhost:8080/baseR4/docs
+- **Swagger UI**: http://localhost:8080/docs
 - **ReDoc**: http://localhost:8080/baseR4/redoc
 - **OpenAPI JSON**: http://localhost:8080/baseR4/openapi.json
 
