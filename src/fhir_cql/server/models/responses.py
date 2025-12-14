@@ -235,6 +235,8 @@ class CapabilityStatement(BaseModel):
             ("ValueSet", ["_id", "url", "name", "status"]),
             ("CodeSystem", ["_id", "url", "name", "status"]),
             ("Library", ["_id", "url", "name", "version", "status"]),
+            ("Measure", ["_id", "url", "name", "version", "status", "title"]),
+            ("MeasureReport", ["_id", "patient", "subject", "measure", "status", "date", "reporter"]),
         ]
 
         resources = []
@@ -250,6 +252,13 @@ class CapabilityStatement(BaseModel):
                     {
                         "name": "everything",
                         "definition": "http://hl7.org/fhir/OperationDefinition/Patient-everything",
+                    }
+                )
+            elif rtype == "Measure":
+                resource_operations.append(
+                    {
+                        "name": "evaluate-measure",
+                        "definition": "http://hl7.org/fhir/OperationDefinition/Measure-evaluate-measure",
                     }
                 )
 

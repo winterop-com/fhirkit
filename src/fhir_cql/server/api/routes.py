@@ -213,6 +213,204 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             media_type=FHIR_JSON,
         )
 
+    # =========================================================================
+    # Measure Operations
+    # =========================================================================
+
+    @router.get("/Measure/{measure_id}/$evaluate-measure", tags=["Operations"])
+    @router.post("/Measure/{measure_id}/$evaluate-measure", tags=["Operations"])
+    async def evaluate_measure(
+        request: Request,
+        measure_id: str,
+        subject: str | None = Query(default=None, description="Patient or Group reference"),
+        periodStart: str | None = Query(default=None, description="Measurement period start"),
+        periodEnd: str | None = Query(default=None, description="Measurement period end"),
+        reportType: str = Query(default="summary", description="individual|subject-list|summary"),
+    ) -> Response:
+        """Evaluate a measure and return a MeasureReport.
+
+        This operation evaluates a Measure against patient data using the
+        associated CQL Library and returns a MeasureReport with population
+        counts and measure scores.
+
+        Parameters:
+            measure_id: The Measure resource ID
+            subject: Patient/123 or Group/456 (optional, defaults to all patients)
+            periodStart: Start of measurement period (YYYY-MM-DD)
+            periodEnd: End of measurement period (YYYY-MM-DD)
+            reportType: Type of report (individual, subject-list, summary)
+
+        Returns:
+            MeasureReport resource with evaluation results
+        """
+        import base64
+        from datetime import datetime as dt
+
+        from fhir_cql.engine.cql.evaluator import CQLEvaluator
+        from fhir_cql.engine.cql.measure import MeasureEvaluator, MeasureScoring
+
+        # Get the Measure resource
+        measure = store.read("Measure", measure_id)
+        if measure is None:
+            outcome = OperationOutcome.not_found("Measure", measure_id)
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=404,
+                media_type=FHIR_JSON,
+            )
+
+        # Get Library reference from Measure
+        library_refs = measure.get("library", [])
+        if not library_refs:
+            outcome = OperationOutcome.error(
+                "Measure has no associated Library", code="not-found"
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Resolve Library by canonical URL
+        library_url = library_refs[0]
+        libraries, _ = store.search("Library", {"url": library_url})
+        if not libraries:
+            # Try by ID if URL search fails
+            library_id = library_url.split("/")[-1] if "/" in library_url else library_url
+            library = store.read("Library", library_id)
+            if library is None:
+                outcome = OperationOutcome.error(
+                    f"Library not found: {library_url}", code="not-found"
+                )
+                return JSONResponse(
+                    content=outcome.model_dump(exclude_none=True),
+                    status_code=400,
+                    media_type=FHIR_JSON,
+                )
+        else:
+            library = libraries[0]
+
+        # Extract CQL source from Library content
+        cql_source = None
+        for content in library.get("content", []):
+            content_type = content.get("contentType", "")
+            if content_type == "text/cql" or "cql" in content_type.lower():
+                data = content.get("data")
+                if data:
+                    cql_source = base64.b64decode(data).decode("utf-8")
+                    break
+
+        if not cql_source:
+            outcome = OperationOutcome.error(
+                "No CQL content found in Library", code="invalid"
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Get patients to evaluate
+        patients: list[dict[str, Any]] = []
+        if subject:
+            if subject.startswith("Patient/"):
+                patient_id = subject.split("/")[1]
+                patient = store.read("Patient", patient_id)
+                if patient:
+                    patients = [patient]
+            elif subject.startswith("Group/"):
+                # TODO: Handle Group members
+                pass
+            else:
+                # Try as bare patient ID
+                patient = store.read("Patient", subject)
+                if patient:
+                    patients = [patient]
+        else:
+            # All patients
+            patients, _ = store.search("Patient", {})
+
+        if not patients:
+            outcome = OperationOutcome.error(
+                "No patients found for evaluation", code="not-found"
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Create CQL evaluator with store as data source
+        try:
+            cql_evaluator = CQLEvaluator(data_source=store)
+            measure_evaluator = MeasureEvaluator(cql_evaluator=cql_evaluator, data_source=store)
+            measure_evaluator.load_measure(cql_source)
+
+            # Set scoring type from Measure
+            scoring = measure.get("scoring", {}).get("coding", [{}])[0].get("code", "proportion")
+            if scoring == "proportion":
+                measure_evaluator.set_scoring(MeasureScoring.PROPORTION)
+            elif scoring == "ratio":
+                measure_evaluator.set_scoring(MeasureScoring.RATIO)
+            elif scoring == "continuous-variable":
+                measure_evaluator.set_scoring(MeasureScoring.CONTINUOUS_VARIABLE)
+            elif scoring == "cohort":
+                measure_evaluator.set_scoring(MeasureScoring.COHORT)
+
+        except Exception as e:
+            outcome = OperationOutcome.error(
+                f"Failed to compile CQL: {e}", code="invalid"
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Evaluate the measure
+        try:
+            report = measure_evaluator.evaluate_population(patients)
+            fhir_report = report.to_fhir()
+
+            # Enhance the report with additional metadata
+            fhir_report["id"] = str(uuid.uuid4())
+            fhir_report["measure"] = measure.get("url", f"Measure/{measure_id}")
+
+            # Set period from parameters or measure
+            if periodStart and periodEnd:
+                fhir_report["period"] = {
+                    "start": periodStart,
+                    "end": periodEnd,
+                }
+            elif measure.get("effectivePeriod"):
+                fhir_report["period"] = measure["effectivePeriod"]
+
+            # Set report type
+            if reportType == "individual" and len(patients) == 1:
+                fhir_report["type"] = "individual"
+                fhir_report["subject"] = {"reference": f"Patient/{patients[0].get('id')}"}
+            else:
+                fhir_report["type"] = reportType if reportType in ("summary", "subject-list") else "summary"
+
+            # Add improvement notation from measure
+            if measure.get("improvementNotation"):
+                fhir_report["improvementNotation"] = measure["improvementNotation"]
+
+        except Exception as e:
+            outcome = OperationOutcome.error(
+                f"Measure evaluation failed: {e}", code="processing"
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=500,
+                media_type=FHIR_JSON,
+            )
+
+        return JSONResponse(
+            content=fhir_report,
+            media_type=FHIR_JSON,
+        )
+
     # Patient-specific history routes (must come before compartment search)
     @router.get("/Patient/{patient_id}/_history", tags=["History"])
     async def patient_history_instance(

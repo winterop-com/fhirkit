@@ -1,0 +1,33 @@
+{
+  "resourceType": "Library",
+  "id": "library-diabetes",
+  "url": "http://example.org/fhir/Library/DiabetesHbA1c",
+  "identifier": [{
+    "system": "http://example.org/fhir/library-identifier",
+    "value": "DiabetesHbA1cMeasure"
+  }],
+  "version": "1.0.0",
+  "name": "DiabetesHbA1cMeasure",
+  "title": "Diabetes HbA1c Control Measure Library",
+  "status": "active",
+  "experimental": false,
+  "type": {
+    "coding": [{
+      "system": "http://terminology.hl7.org/CodeSystem/library-type",
+      "code": "logic-library",
+      "display": "Logic Library"
+    }]
+  },
+  "date": "2024-01-01",
+  "publisher": "Example Healthcare Organization",
+  "description": "CQL library for evaluating diabetes HbA1c control measure",
+  "content": [{
+    "contentType": "text/cql",
+    "data": "bGlicmFyeSBEaWFiZXRlc0hiQTFjTWVhc3VyZSB2ZXJzaW9uICcxLjAuMCcKCnVzaW5nIEZISVIgdmVyc2lvbiAnNC4wLjEnCgpjb2Rlc3lzdGVtICJMT0lOQyI6ICdodHRwOi8vbG9pbmMub3JnJwpjb2Rlc3lzdGVtICJTTk9NRUQiOiAnaHR0cDovL3Nub21lZC5pbmZvL3NjdCcKCnZhbHVlc2V0ICJEaWFiZXRlcyI6ICdodHRwOi8vZXhhbXBsZS5vcmcvZmhpci9WYWx1ZVNldC9kaWFiZXRlcycKdmFsdWVzZXQgIkhiQTFjIExhYiBUZXN0IjogJ2h0dHA6Ly9leGFtcGxlLm9yZy9maGlyL1ZhbHVlU2V0L2hiYTFjJwoKY29kZSAiSGJBMWMiOiAnNDU0OC00JyBmcm9tICJMT0lOQyIgZGlzcGxheSAnSGVtb2dsb2JpbiBBMWMnCgpwYXJhbWV0ZXIgIk1lYXN1cmVtZW50IFBlcmlvZCIgSW50ZXJ2YWw8RGF0ZVRpbWU+CiAgICBkZWZhdWx0IEludGVydmFsW0AyMDI0LTAxLTAxVDAwOjAwOjAwLCBAMjAyNC0xMi0zMVQyMzo1OTo1OV0KCmNvbnRleHQgUGF0aWVudAoKZGVmaW5lICJJbml0aWFsIFBvcHVsYXRpb24iOgogICAgZXhpc3RzKFtDb25kaXRpb25dIEMKICAgICAgICB3aGVyZSBDLmNsaW5pY2FsU3RhdHVzIH4gJ2FjdGl2ZScpCgpkZWZpbmUgIkRlbm9taW5hdG9yIjoKICAgICJJbml0aWFsIFBvcHVsYXRpb24iCgpkZWZpbmUgIkRlbm9taW5hdG9yIEV4Y2x1c2lvbnMiOgogICAgZmFsc2UKCmRlZmluZSAiTnVtZXJhdG9yIjoKICAgIGV4aXN0cyhbT2JzZXJ2YXRpb25dIE8KICAgICAgICB3aGVyZSBPLnN0YXR1cyA9ICdmaW5hbCcpCg=="
+  }],
+  "relatedArtifact": [{
+    "type": "depends-on",
+    "display": "FHIR Model Info",
+    "resource": "http://hl7.org/fhir/Library/FHIR-ModelInfo|4.0.1"
+  }]
+}

@@ -698,6 +698,108 @@
       ]
     },
     {
+      "name": "Operations",
+      "item": [
+        {
+          "name": "Patient $everything",
+          "description": "Get all resources related to a patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": "{{baseUrl}}/Patient/{{patientId}}/$everything"
+          }
+        },
+        {
+          "name": "Measure $evaluate-measure (Population)",
+          "description": "Evaluate a measure against all patients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Measure/measure-001/$evaluate-measure",
+              "host": ["{{baseUrl}}"],
+              "path": ["Measure", "measure-001", "$evaluate-measure"]
+            }
+          }
+        },
+        {
+          "name": "Measure $evaluate-measure (Individual)",
+          "description": "Evaluate a measure for a single patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Measure/measure-001/$evaluate-measure?subject=Patient/{{patientId}}&reportType=individual",
+              "host": ["{{baseUrl}}"],
+              "path": ["Measure", "measure-001", "$evaluate-measure"],
+              "query": [
+                {"key": "subject", "value": "Patient/{{patientId}}"},
+                {"key": "reportType", "value": "individual"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Measure $evaluate-measure (With Period)",
+          "description": "Evaluate a measure with custom measurement period",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Measure/measure-001/$evaluate-measure?periodStart=2024-01-01&periodEnd=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["Measure", "measure-001", "$evaluate-measure"],
+              "query": [
+                {"key": "periodStart", "value": "2024-01-01"},
+                {"key": "periodEnd", "value": "2024-12-31"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "ValueSet $expand",
+          "description": "Expand a ValueSet to get all codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": "{{baseUrl}}/ValueSet/$expand?url=http://example.org/fhir/ValueSet/example"
+          }
+        },
+        {
+          "name": "CodeSystem $lookup",
+          "description": "Look up a code in a CodeSystem",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": "{{baseUrl}}/CodeSystem/$lookup?system=http://loinc.org&code=8480-6"
+          }
+        },
+        {
+          "name": "ValueSet $validate-code",
+          "description": "Validate that a code is in a ValueSet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": "{{baseUrl}}/ValueSet/$validate-code?url=http://example.org/fhir/ValueSet/example&code=test"
+          }
+        }
+      ]
+    },
+    {
       "name": "Advanced Search",
       "item": [
         {
