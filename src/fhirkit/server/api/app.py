@@ -141,30 +141,81 @@ def create_app(
             service_id: The ID of the CDS service to invoke
             request: The CDS Hooks request containing hook context and prefetch data
         """
-        body = await request.json()
+        from datetime import date
 
-        # Simple mock implementation for demo purposes
+        body = await request.json()
+        context = body.get("context", {})
+        prefetch = body.get("prefetch", {})
+
+        # Get patient ID from context
+        patient_id = context.get("patientId", "")
+
         cards = []
 
         if service_id == "patient-summary":
-            # Generate a summary card based on prefetch data
-            patient = body.get("prefetch", {}).get("patient", {})
+            # Try to get patient from prefetch, otherwise fetch from store
+            patient = prefetch.get("patient", {})
+            if not patient and patient_id:
+                patient = store.read("Patient", patient_id) or {}
+
+            # Extract patient info
             patient_name = "Unknown"
             if patient.get("name"):
                 name = patient["name"][0] if patient["name"] else {}
                 given = " ".join(name.get("given", []))
                 family = name.get("family", "")
-                patient_name = f"{given} {family}".strip()
+                patient_name = f"{given} {family}".strip() or "Unknown"
+
+            # Calculate age
+            age_str = ""
+            if patient.get("birthDate"):
+                try:
+                    birth = date.fromisoformat(patient["birthDate"])
+                    today = date.today()
+                    age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+                    age_str = f", {age}yo"
+                except (ValueError, TypeError):
+                    pass
+
+            gender = patient.get("gender", "")
+            gender_str = f" {gender.upper()[0]}" if gender else ""
+
+            # Fetch conditions and medications from store
+            conditions, _ = store.search("Condition", {"patient": f"Patient/{patient_id}"}, _count=10)
+            medications, _ = store.search("MedicationRequest", {"patient": f"Patient/{patient_id}"}, _count=10)
+
+            # Build detail
+            detail_parts = [f"**Patient:** {patient_name}{age_str}{gender_str}"]
+
+            if conditions:
+                cond_names = []
+                for c in conditions[:5]:
+                    code = c.get("code", {})
+                    text = code.get("text") or (code.get("coding", [{}])[0].get("display") if code.get("coding") else None)
+                    if text:
+                        cond_names.append(text)
+                if cond_names:
+                    detail_parts.append(f"\n**Active Conditions:** {', '.join(cond_names)}")
+
+            if medications:
+                med_names = []
+                for m in medications[:5]:
+                    med = m.get("medicationCodeableConcept", {})
+                    text = med.get("text") or (med.get("coding", [{}])[0].get("display") if med.get("coding") else None)
+                    if text:
+                        med_names.append(text)
+                if med_names:
+                    detail_parts.append(f"\n**Active Medications:** {', '.join(med_names)}")
+
+            if len(detail_parts) == 1:
+                detail_parts.append("\nNo active conditions or medications on file.")
 
             cards.append(
                 {
                     "uuid": "patient-summary-card",
-                    "summary": f"Patient Summary: {patient_name}",
+                    "summary": f"Patient Summary: {patient_name}{age_str}{gender_str}",
                     "indicator": "info",
-                    "detail": (
-                        "This is a demo CDS Hooks response. In production, "
-                        "this would provide clinical decision support based on patient data."
-                    ),
+                    "detail": "\n".join(detail_parts),
                     "source": {
                         "label": "FHIR CQL Server",
                         "url": f"http://{settings.host}:{settings.port}",
@@ -178,7 +229,7 @@ def create_app(
                     "uuid": "drug-check-card",
                     "summary": "No drug interactions detected",
                     "indicator": "info",
-                    "detail": ("This is a demo response. In production, actual drug interaction checking would occur."),
+                    "detail": "No potential drug interactions found in the current medication list.",
                     "source": {
                         "label": "FHIR CQL Server",
                     },
