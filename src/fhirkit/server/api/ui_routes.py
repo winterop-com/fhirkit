@@ -163,6 +163,19 @@ def create_ui_router(
         )
         return templates.TemplateResponse("pages/measures.html", context)
 
+    @router.get("/tutorials", response_class=HTMLResponse, name="ui_tutorials")
+    async def tutorials(request: Request, lesson: str = "welcome") -> HTMLResponse:
+        """Interactive tutorials for learning FHIRPath, CQL, and FHIR."""
+        # Get patients for examples that need patient context
+        patients, _ = store.search("Patient", {}, _count=10)
+
+        context = get_context(
+            request,
+            current_lesson=lesson,
+            patients=patients,
+        )
+        return templates.TemplateResponse("pages/tutorials.html", context)
+
     # =========================================================================
     # Resource CRUD Routes (catch-all must come AFTER specific routes)
     # =========================================================================

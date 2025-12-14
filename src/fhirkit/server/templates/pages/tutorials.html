@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+
+{% block title %}Tutorials - FHIRKit{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Interactive Tutorials
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Learn FHIRPath, CQL, and FHIR step by step
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Left Sidebar: Lesson Navigation -->
+        <div class="lg:col-span-1">
+            <nav class="bg-white shadow rounded-lg p-4">
+                <h2 class="text-sm font-semibold text-gray-900 mb-3">Lessons</h2>
+
+                <div class="space-y-4">
+                    <!-- Getting Started -->
+                    <div>
+                        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Getting Started</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="?lesson=welcome"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'welcome' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="welcome">
+                                    Welcome to FHIRKit
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- FHIRPath -->
+                    <div>
+                        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">FHIRPath Basics</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="?lesson=fhirpath-intro"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'fhirpath-intro' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="fhirpath-intro">
+                                    1. What is FHIRPath?
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?lesson=fhirpath-navigation"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'fhirpath-navigation' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="fhirpath-navigation">
+                                    2. Navigation & Paths
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?lesson=fhirpath-functions"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'fhirpath-functions' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="fhirpath-functions">
+                                    3. Functions
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- CQL -->
+                    <div>
+                        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">CQL Basics</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="?lesson=cql-intro"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'cql-intro' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="cql-intro">
+                                    1. What is CQL?
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?lesson=cql-expressions"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'cql-expressions' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="cql-expressions">
+                                    2. Expressions & Types
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?lesson=cql-queries"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'cql-queries' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="cql-queries">
+                                    3. Querying Patient Data
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Advanced -->
+                    <div>
+                        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Advanced Topics</h3>
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="?lesson=quality-measures"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'quality-measures' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="quality-measures">
+                                    Quality Measures
+                                </a>
+                            </li>
+                            <li>
+                                <a href="?lesson=cds-hooks"
+                                   class="lesson-link block px-3 py-2 text-sm rounded-md {% if current_lesson == 'cds-hooks' %}bg-fhir-100 text-fhir-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+                                   data-lesson="cds-hooks">
+                                    CDS Hooks
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="lg:col-span-3 space-y-6">
+            <!-- Lesson Content -->
+            <div id="lesson-content" class="bg-white shadow rounded-lg overflow-hidden">
+                <!-- Welcome Lesson -->
+                <div id="lesson-welcome" class="lesson-panel {% if current_lesson != 'welcome' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-fhir-50 to-indigo-50">
+                        <h2 class="text-xl font-bold text-gray-900">Welcome to FHIRKit Tutorials</h2>
+                        <p class="text-sm text-gray-600 mt-1">Your journey to mastering clinical data queries starts here</p>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p>FHIRKit is a comprehensive toolkit for working with healthcare data using industry standards:</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <div class="border rounded-lg p-4 bg-green-50 border-green-200">
+                                    <h3 class="font-semibold text-green-800">FHIRPath</h3>
+                                    <p class="text-sm text-green-700 mt-1">Navigate and extract data from FHIR resources</p>
+                                    <a href="?lesson=fhirpath-intro" class="text-sm text-green-600 hover:underline mt-2 inline-block">Start Learning →</a>
+                                </div>
+                                <div class="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                                    <h3 class="font-semibold text-blue-800">CQL</h3>
+                                    <p class="text-sm text-blue-700 mt-1">Clinical Quality Language for complex logic</p>
+                                    <a href="?lesson=cql-intro" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Start Learning →</a>
+                                </div>
+                                <div class="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                                    <h3 class="font-semibold text-purple-800">FHIR Server</h3>
+                                    <p class="text-sm text-purple-700 mt-1">Full REST API with synthetic data</p>
+                                    <a href="{{ request.url_for('ui_resource_types') }}" class="text-sm text-purple-600 hover:underline mt-2 inline-block">Explore Resources →</a>
+                                </div>
+                            </div>
+
+                            <h3 class="mt-6">Quick Links</h3>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><a href="{{ request.url_for('ui_fhirpath') }}" class="text-fhir-600 hover:underline">FHIRPath Playground</a> - Try FHIRPath expressions</li>
+                                <li><a href="{{ request.url_for('ui_cql') }}" class="text-fhir-600 hover:underline">CQL Workbench</a> - Write and execute CQL</li>
+                                <li><a href="{{ request.url_for('ui_measures') }}" class="text-fhir-600 hover:underline">Measures Dashboard</a> - Evaluate quality measures</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <a href="?lesson=fhirpath-intro" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Start with FHIRPath
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FHIRPath Intro Lesson -->
+                <div id="lesson-fhirpath-intro" class="lesson-panel {% if current_lesson != 'fhirpath-intro' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-green-600 uppercase tracking-wider">FHIRPath Basics</span>
+                                <h2 class="text-xl font-bold text-gray-900">Lesson 1: What is FHIRPath?</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">~5 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p><strong>FHIRPath</strong> is a path-based navigation and extraction language designed for FHIR resources. Think of it as a way to "point to" specific pieces of data within complex healthcare records.</p>
+
+                            <div class="bg-gray-50 rounded-lg p-4 my-4">
+                                <h4 class="font-semibold text-gray-900">Example: Getting a Patient's Name</h4>
+                                <p class="text-sm text-gray-600 mt-1">To get the family name from a Patient resource:</p>
+                                <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">Patient.name.family</pre>
+                                <p class="text-sm text-gray-500 mt-2">This navigates: Patient → name array → family field</p>
+                            </div>
+
+                            <h3>Key Concepts</h3>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li><strong>Paths</strong> - Use dots to navigate: <code>Patient.name.given</code></li>
+                                <li><strong>Collections</strong> - Many fields return lists, not single values</li>
+                                <li><strong>Functions</strong> - Transform data: <code>.first()</code>, <code>.where()</code>, <code>.exists()</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-900">Try It Yourself</h4>
+                            <p class="text-sm text-blue-700 mt-1">Go to the <a href="{{ request.url_for('ui_fhirpath') }}" class="underline">FHIRPath Playground</a> and try these expressions:</p>
+                            <ul class="list-disc pl-5 mt-2 text-sm text-blue-700 space-y-1">
+                                <li><code>name.given</code> - Get all given names</li>
+                                <li><code>name.family</code> - Get family name</li>
+                                <li><code>gender</code> - Get gender</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=welcome" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=fhirpath-navigation" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Next: Navigation
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FHIRPath Navigation Lesson -->
+                <div id="lesson-fhirpath-navigation" class="lesson-panel {% if current_lesson != 'fhirpath-navigation' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-green-600 uppercase tracking-wider">FHIRPath Basics</span>
+                                <h2 class="text-xl font-bold text-gray-900">Lesson 2: Navigation & Paths</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">~7 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p>FHIRPath uses <strong>dot notation</strong> to navigate through resource structures. Each dot moves one level deeper.</p>
+
+                            <h3>Basic Navigation</h3>
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">Expression</th>
+                                        <th class="px-3 py-2 text-left">Returns</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr><td class="px-3 py-2"><code>name</code></td><td class="px-3 py-2">All name objects</td></tr>
+                                    <tr><td class="px-3 py-2"><code>name.given</code></td><td class="px-3 py-2">All given names (flattened)</td></tr>
+                                    <tr><td class="px-3 py-2"><code>name.given.first()</code></td><td class="px-3 py-2">First given name only</td></tr>
+                                    <tr><td class="px-3 py-2"><code>telecom.where(system='phone')</code></td><td class="px-3 py-2">Phone contacts only</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h3 class="mt-6">Filtering with where()</h3>
+                            <p>The <code>where()</code> function filters collections based on conditions:</p>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Get only official names
+name.where(use = 'official')
+
+// Get home addresses
+address.where(use = 'home')
+
+// Get active phone numbers
+telecom.where(system = 'phone' and use = 'mobile')</pre>
+                        </div>
+
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-yellow-900">Exercise</h4>
+                            <p class="text-sm text-yellow-700 mt-1">In the <a href="{{ request.url_for('ui_fhirpath') }}" class="underline">FHIRPath Playground</a>, try to:</p>
+                            <ol class="list-decimal pl-5 mt-2 text-sm text-yellow-700 space-y-1">
+                                <li>Get all email addresses: <code>telecom.where(system='email').value</code></li>
+                                <li>Get the first identifier value</li>
+                                <li>Find addresses in a specific city</li>
+                            </ol>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=fhirpath-intro" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=fhirpath-functions" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Next: Functions
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FHIRPath Functions Lesson -->
+                <div id="lesson-fhirpath-functions" class="lesson-panel {% if current_lesson != 'fhirpath-functions' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-green-600 uppercase tracking-wider">FHIRPath Basics</span>
+                                <h2 class="text-xl font-bold text-gray-900">Lesson 3: Functions</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">~8 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p>FHIRPath provides many built-in functions for working with data.</p>
+
+                            <h3>Existence Functions</h3>
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">Function</th>
+                                        <th class="px-3 py-2 text-left">Description</th>
+                                        <th class="px-3 py-2 text-left">Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr><td class="px-3 py-2"><code>exists()</code></td><td class="px-3 py-2">True if collection has items</td><td class="px-3 py-2"><code>telecom.exists()</code></td></tr>
+                                    <tr><td class="px-3 py-2"><code>empty()</code></td><td class="px-3 py-2">True if collection is empty</td><td class="px-3 py-2"><code>address.empty()</code></td></tr>
+                                    <tr><td class="px-3 py-2"><code>count()</code></td><td class="px-3 py-2">Number of items</td><td class="px-3 py-2"><code>identifier.count()</code></td></tr>
+                                    <tr><td class="px-3 py-2"><code>first()</code></td><td class="px-3 py-2">First item</td><td class="px-3 py-2"><code>name.first()</code></td></tr>
+                                    <tr><td class="px-3 py-2"><code>last()</code></td><td class="px-3 py-2">Last item</td><td class="px-3 py-2"><code>name.last()</code></td></tr>
+                                </tbody>
+                            </table>
+
+                            <h3 class="mt-6">String Functions</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">name.family.upper()          // SMITH
+name.family.lower()          // smith
+name.family.substring(0, 3)  // Smi
+name.family.startsWith('S')  // true
+name.family.contains('mit')  // true
+name.family.length()         // 5</pre>
+
+                            <h3 class="mt-6">Type Functions</h3>
+                            <p>Use <code>ofType()</code> to filter by FHIR type:</p>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Get numeric value from Observation
+value.ofType(Quantity).value
+
+// Get coded value
+value.ofType(CodeableConcept).coding.display</pre>
+                        </div>
+
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-green-900">Congratulations!</h4>
+                            <p class="text-sm text-green-700 mt-1">You've completed the FHIRPath basics. Ready to learn CQL?</p>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=fhirpath-navigation" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=cql-intro" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Start CQL
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CQL Intro Lesson -->
+                <div id="lesson-cql-intro" class="lesson-panel {% if current_lesson != 'cql-intro' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-blue-600 uppercase tracking-wider">CQL Basics</span>
+                                <h2 class="text-xl font-bold text-gray-900">Lesson 1: What is CQL?</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">~5 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p><strong>CQL (Clinical Quality Language)</strong> is a high-level language for expressing clinical logic. It's used for:</p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>Quality Measures</strong> - Define and calculate quality metrics</li>
+                                <li><strong>Clinical Decision Support</strong> - Build alerts and recommendations</li>
+                                <li><strong>Data Extraction</strong> - Query patient records</li>
+                            </ul>
+
+                            <h3 class="mt-6">CQL vs FHIRPath</h3>
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">Feature</th>
+                                        <th class="px-3 py-2 text-left">FHIRPath</th>
+                                        <th class="px-3 py-2 text-left">CQL</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr><td class="px-3 py-2">Purpose</td><td class="px-3 py-2">Navigation</td><td class="px-3 py-2">Clinical logic</td></tr>
+                                    <tr><td class="px-3 py-2">Scope</td><td class="px-3 py-2">Single resource</td><td class="px-3 py-2">Full patient record</td></tr>
+                                    <tr><td class="px-3 py-2">Structure</td><td class="px-3 py-2">Expressions</td><td class="px-3 py-2">Libraries with definitions</td></tr>
+                                    <tr><td class="px-3 py-2">Data types</td><td class="px-3 py-2">Basic</td><td class="px-3 py-2">Rich (intervals, quantities)</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h3 class="mt-6">Basic CQL Structure</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">library Example version '1.0.0'
+
+// Simple definitions
+define "Greeting": 'Hello, CQL!'
+define "Sum": 1 + 2 + 3
+define "Today": Today()
+
+// With patient context
+using FHIR version '4.0.1'
+context Patient
+
+define "Patient Age": AgeInYears()</pre>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-900">Try It</h4>
+                            <p class="text-sm text-blue-700 mt-1">The default example in the <a href="{{ request.url_for('ui_cql') }}" class="underline">CQL Workbench</a> shows basic CQL without patient context.</p>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=fhirpath-functions" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=cql-expressions" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Next: Expressions
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CQL Expressions Lesson -->
+                <div id="lesson-cql-expressions" class="lesson-panel {% if current_lesson != 'cql-expressions' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-blue-600 uppercase tracking-wider">CQL Basics</span>
+                                <h2 class="text-xl font-bold text-gray-900">Lesson 2: Expressions & Types</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">~8 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <h3>Data Types</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Numbers
+define "Integer": 42
+define "Decimal": 3.14
+define "Arithmetic": 2 + 3 * 4  // Result: 14
+
+// Strings
+define "Text": 'Hello, World!'
+define "Upper": Upper('hello')  // 'HELLO'
+
+// Dates (use @ prefix)
+define "Today": Today()
+define "Date": @2024-01-15
+define "DateTime": @2024-01-15T10:30:00
+
+// Booleans
+define "True": true
+define "Compare": 5 > 3  // true</pre>
+
+                            <h3 class="mt-6">Lists</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">define "Numbers": { 1, 2, 3, 4, 5 }
+define "Sum": Sum({ 1, 2, 3, 4, 5 })     // 15
+define "First": First({ 1, 2, 3 })       // 1
+define "Count": Count({ 'a', 'b', 'c' }) // 3
+
+// Set operations
+define "Union": { 1, 2 } union { 2, 3 }       // {1,2,3}
+define "Intersect": { 1, 2, 3 } intersect { 2, 3, 4 }  // {2,3}</pre>
+
+                            <h3 class="mt-6">Intervals (Ranges)</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Numeric intervals
+define "Range": Interval[1, 10]
+define "InRange": 5 in Interval[1, 10]  // true
+
+// Date intervals (very common!)
+define "Last30Days": Interval[Today() - 30 days, Today()]
+define "ThisYear": Interval[@2024-01-01, @2024-12-31]</pre>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=cql-intro" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=cql-queries" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Next: Queries
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CQL Queries Lesson -->
+                <div id="lesson-cql-queries" class="lesson-panel {% if current_lesson != 'cql-queries' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-blue-600 uppercase tracking-wider">CQL Basics</span>
+                                <h2 class="text-xl font-bold text-gray-900">Lesson 3: Querying Patient Data</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">~10 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p>CQL's real power is querying patient clinical data using <strong>retrieve expressions</strong>.</p>
+
+                            <h3>Basic Retrieves</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Get all conditions for current patient
+define "All Conditions": [Condition]
+
+// Get all observations
+define "All Observations": [Observation]
+
+// Get medication requests
+define "Medications": [MedicationRequest]</pre>
+
+                            <h3 class="mt-6">Filtering with Where</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Active conditions only
+define "Active Conditions":
+  [Condition] C
+    where C.clinicalStatus.coding.code contains 'active'
+
+// Recent observations (last 30 days)
+define "Recent Obs":
+  [Observation] O
+    where O.effective in Interval[Today() - 30 days, Today()]
+
+// Specific code
+define "Blood Pressure":
+  [Observation] O
+    where O.code.coding.code contains '85354-9'</pre>
+
+                            <h3 class="mt-6">Checking Existence</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">// Does patient have diabetes?
+define "Has Diabetes":
+  exists ([Condition] C
+    where C.code.coding.code contains 'E11'
+      or C.code.coding.display contains 'diabetes')
+
+// Is patient on any medications?
+define "On Medications":
+  exists ([MedicationRequest] M
+    where M.status = 'active')</pre>
+                        </div>
+
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-yellow-900">Important</h4>
+                            <p class="text-sm text-yellow-700 mt-1">Patient queries require:</p>
+                            <ul class="list-disc pl-5 mt-2 text-sm text-yellow-700">
+                                <li><code>using FHIR version '4.0.1'</code></li>
+                                <li><code>context Patient</code></li>
+                                <li>A patient selected in the workbench</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=cql-expressions" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=quality-measures" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Advanced Topics
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quality Measures Lesson -->
+                <div id="lesson-quality-measures" class="lesson-panel {% if current_lesson != 'quality-measures' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-purple-600 uppercase tracking-wider">Advanced</span>
+                                <h2 class="text-xl font-bold text-gray-900">Quality Measures</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">~10 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p>Quality measures evaluate healthcare quality. A typical measure has these populations:</p>
+
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>Initial Population (IPP)</strong> - Who is eligible for the measure</li>
+                                <li><strong>Denominator</strong> - Subset of IPP that meets criteria</li>
+                                <li><strong>Numerator</strong> - Patients who met the quality goal</li>
+                                <li><strong>Exclusions</strong> - Valid reasons to exclude from measure</li>
+                            </ul>
+
+                            <h3 class="mt-6">Example: Diabetes HbA1c Control</h3>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">library DiabetesControl version '1.0.0'
+
+using FHIR version '4.0.1'
+context Patient
+
+// Initial Population: Adults with diabetes
+define "Initial Population":
+  AgeInYears() >= 18
+    and exists ([Condition] C
+      where C.code.coding.code contains 'E11')
+
+// Denominator: Same as IPP for this measure
+define "Denominator":
+  "Initial Population"
+
+// Numerator: HbA1c < 8% in measurement period
+define "Numerator":
+  exists ([Observation] O
+    where O.code.coding.code = '4548-4'  // HbA1c LOINC
+      and (O.value as Quantity).value < 8)
+
+// Exclusions: Hospice care
+define "Denominator Exclusion":
+  exists ([Encounter] E
+    where E.type.coding.display contains 'hospice')</pre>
+                        </div>
+
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-900">Try It</h4>
+                            <p class="text-sm text-purple-700 mt-1">See the <a href="{{ request.url_for('ui_measures') }}" class="underline">Measures Dashboard</a> to evaluate measures against patients.</p>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=cql-queries" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=cds-hooks" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                CDS Hooks
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CDS Hooks Lesson -->
+                <div id="lesson-cds-hooks" class="lesson-panel {% if current_lesson != 'cds-hooks' %}hidden{% endif %}">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-medium text-purple-600 uppercase tracking-wider">Advanced</span>
+                                <h2 class="text-xl font-bold text-gray-900">CDS Hooks</h2>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">~8 min</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="prose max-w-none">
+                            <p><strong>CDS Hooks</strong> is a standard for clinical decision support. It allows EHR systems to call external services at specific points in the workflow.</p>
+
+                            <h3>Common Hooks</h3>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><code>patient-view</code> - When opening a patient's chart</li>
+                                <li><code>order-select</code> - When selecting an order</li>
+                                <li><code>order-sign</code> - When signing an order</li>
+                            </ul>
+
+                            <h3 class="mt-6">Response Cards</h3>
+                            <p>CDS services return "cards" with recommendations:</p>
+                            <pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 text-sm overflow-x-auto">{
+  "cards": [{
+    "summary": "Consider ordering HbA1c",
+    "detail": "Patient has diabetes but no HbA1c in 3 months",
+    "indicator": "warning",
+    "source": { "label": "Diabetes Care Guidelines" }
+  }]
+}</pre>
+
+                            <h3 class="mt-6">Card Indicators</h3>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><span class="text-blue-600">info</span> - Informational</li>
+                                <li><span class="text-yellow-600">warning</span> - Needs attention</li>
+                                <li><span class="text-red-600">critical</span> - Urgent action required</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-900">Test It</h4>
+                            <p class="text-sm text-purple-700 mt-1">Use the <a href="{{ request.url_for('ui_cds_hooks') }}" class="underline">CDS Hooks Tester</a> to see how services respond.</p>
+                        </div>
+
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                            <h4 class="font-semibold text-green-900">Congratulations!</h4>
+                            <p class="text-sm text-green-700 mt-1">You've completed all the tutorials. Keep practicing in the playgrounds!</p>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="?lesson=quality-measures" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg class="mr-2 -ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                                </svg>
+                                Previous
+                            </a>
+                            <a href="?lesson=welcome" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-fhir-600 hover:bg-fhir-700">
+                                Back to Start
+                                <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
