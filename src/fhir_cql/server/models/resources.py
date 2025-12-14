@@ -157,7 +157,9 @@ class Organization(Resource):
     alias: list[str] = Field(default_factory=list, description="A list of alternate names")
     telecom: list[ContactPoint] = Field(default_factory=list, description="A contact detail for the organization")
     address: list[Address] = Field(default_factory=list, description="An address for the organization")
-    partOf: Reference | None = Field(default=None, description="The organization of which this organization forms a part")
+    partOf: Reference | None = Field(
+        default=None, description="The organization of which this organization forms a part"
+    )
 
 
 class Condition(Resource):
@@ -165,11 +167,17 @@ class Condition(Resource):
 
     resourceType: str = Field(default="Condition", description="Type of resource")
     identifier: list[Identifier] = Field(default_factory=list, description="External Ids for this condition")
-    clinicalStatus: CodeableConcept | None = Field(default=None, description="active | recurrence | relapse | inactive | remission | resolved")
-    verificationStatus: CodeableConcept | None = Field(default=None, description="unconfirmed | provisional | differential | confirmed | refuted | entered-in-error")
+    clinicalStatus: CodeableConcept | None = Field(
+        default=None, description="active | recurrence | relapse | inactive | remission | resolved"
+    )
+    verificationStatus: CodeableConcept | None = Field(
+        default=None, description="unconfirmed | provisional | differential | confirmed | refuted | entered-in-error"
+    )
     category: list[CodeableConcept] = Field(default_factory=list, description="problem-list-item | encounter-diagnosis")
     severity: CodeableConcept | None = Field(default=None, description="Subjective severity of condition")
-    code: CodeableConcept | None = Field(default=None, description="Identification of the condition, problem or diagnosis")
+    code: CodeableConcept | None = Field(
+        default=None, description="Identification of the condition, problem or diagnosis"
+    )
     bodySite: list[CodeableConcept] = Field(default_factory=list, description="Anatomical location, if relevant")
     subject: Reference | None = Field(default=None, description="Who has the condition?")
     encounter: Reference | None = Field(default=None, description="Encounter created as part of")
@@ -188,12 +196,19 @@ class Observation(Resource):
 
     resourceType: str = Field(default="Observation", description="Type of resource")
     identifier: list[Identifier] = Field(default_factory=list, description="Business Identifier for observation")
-    status: str = Field(..., description="registered | preliminary | final | amended | corrected | cancelled | entered-in-error | unknown")
+    status: str = Field(
+        ...,
+        description="registered | preliminary | final | amended | corrected | cancelled | entered-in-error | unknown",
+    )
     category: list[CodeableConcept] = Field(default_factory=list, description="Classification of type of observation")
     code: CodeableConcept = Field(..., description="Type of observation (code / type)")
     subject: Reference | None = Field(default=None, description="Who and/or what the observation is about")
-    encounter: Reference | None = Field(default=None, description="Healthcare event during which this observation is made")
-    effectiveDateTime: str | None = Field(default=None, description="Clinically relevant time/time-period for observation")
+    encounter: Reference | None = Field(
+        default=None, description="Healthcare event during which this observation is made"
+    )
+    effectiveDateTime: str | None = Field(
+        default=None, description="Clinically relevant time/time-period for observation"
+    )
     effectivePeriod: Period | None = Field(default=None, description="Clinically relevant time period")
     issued: str | None = Field(default=None, description="Date/Time this version was made available")
     performer: list[Reference] = Field(default_factory=list, description="Who is responsible for the observation")
@@ -211,17 +226,30 @@ class Encounter(Resource):
     """FHIR Encounter resource."""
 
     resourceType: str = Field(default="Encounter", description="Type of resource")
-    identifier: list[Identifier] = Field(default_factory=list, description="Identifier(s) by which this encounter is known")
-    status: str = Field(..., description="planned | arrived | triaged | in-progress | onleave | finished | cancelled | entered-in-error | unknown")
-    class_: CodeableConcept | None = Field(default=None, alias="class", description="Classification of patient encounter")
+    identifier: list[Identifier] = Field(
+        default_factory=list, description="Identifier(s) by which this encounter is known"
+    )
+    status: str = Field(
+        ...,
+        description="Encounter status (planned|arrived|triaged|in-progress|onleave|finished|cancelled)",
+    )
+    class_: CodeableConcept | None = Field(
+        default=None, alias="class", description="Classification of patient encounter"
+    )
     type: list[CodeableConcept] = Field(default_factory=list, description="Specific type of encounter")
     serviceType: CodeableConcept | None = Field(default=None, description="Specific type of service")
     priority: CodeableConcept | None = Field(default=None, description="Indicates the urgency of the encounter")
     subject: Reference | None = Field(default=None, description="The patient or group present at the encounter")
-    participant: list[dict[str, Any]] = Field(default_factory=list, description="List of participants involved in the encounter")
+    participant: list[dict[str, Any]] = Field(
+        default_factory=list, description="List of participants involved in the encounter"
+    )
     period: Period | None = Field(default=None, description="The start and end time of the encounter")
-    reasonCode: list[CodeableConcept] = Field(default_factory=list, description="Coded reason the encounter takes place")
-    reasonReference: list[Reference] = Field(default_factory=list, description="Reason the encounter takes place (reference)")
+    reasonCode: list[CodeableConcept] = Field(
+        default_factory=list, description="Coded reason the encounter takes place"
+    )
+    reasonReference: list[Reference] = Field(
+        default_factory=list, description="Reason the encounter takes place (reference)"
+    )
 
 
 class MedicationRequest(Resource):
@@ -229,21 +257,34 @@ class MedicationRequest(Resource):
 
     resourceType: str = Field(default="MedicationRequest", description="Type of resource")
     identifier: list[Identifier] = Field(default_factory=list, description="External ids for this request")
-    status: str = Field(..., description="active | on-hold | cancelled | completed | entered-in-error | stopped | draft | unknown")
+    status: str = Field(
+        ..., description="active | on-hold | cancelled | completed | entered-in-error | stopped | draft | unknown"
+    )
     statusReason: CodeableConcept | None = Field(default=None, description="Reason for current status")
-    intent: str = Field(..., description="proposal | plan | order | original-order | reflex-order | filler-order | instance-order | option")
+    intent: str = Field(
+        ...,
+        description="proposal | plan | order | original-order | reflex-order | filler-order | instance-order | option",
+    )
     category: list[CodeableConcept] = Field(default_factory=list, description="Type of medication usage")
     priority: str | None = Field(default=None, description="routine | urgent | asap | stat")
     medicationCodeableConcept: CodeableConcept | None = Field(default=None, description="Medication to be taken")
     medicationReference: Reference | None = Field(default=None, description="Medication to be taken (reference)")
     subject: Reference | None = Field(default=None, description="Who or group medication request is for")
-    encounter: Reference | None = Field(default=None, description="Encounter created as part of encounter/admission/stay")
+    encounter: Reference | None = Field(
+        default=None, description="Encounter created as part of encounter/admission/stay"
+    )
     authoredOn: str | None = Field(default=None, description="When request was initially authored")
     requester: Reference | None = Field(default=None, description="Who/What requested the Request")
     performer: Reference | None = Field(default=None, description="Intended performer of administration")
-    reasonCode: list[CodeableConcept] = Field(default_factory=list, description="Reason or indication for ordering or not ordering the medication")
-    reasonReference: list[Reference] = Field(default_factory=list, description="Condition or observation that supports why the prescription is being written")
-    dosageInstruction: list[dict[str, Any]] = Field(default_factory=list, description="How the medication should be taken")
+    reasonCode: list[CodeableConcept] = Field(
+        default_factory=list, description="Reason or indication for ordering or not ordering the medication"
+    )
+    reasonReference: list[Reference] = Field(
+        default_factory=list, description="Condition or observation that supports why the prescription is being written"
+    )
+    dosageInstruction: list[dict[str, Any]] = Field(
+        default_factory=list, description="How the medication should be taken"
+    )
 
 
 class Procedure(Resource):
@@ -251,7 +292,10 @@ class Procedure(Resource):
 
     resourceType: str = Field(default="Procedure", description="Type of resource")
     identifier: list[Identifier] = Field(default_factory=list, description="External Identifiers for this procedure")
-    status: str = Field(..., description="preparation | in-progress | not-done | on-hold | stopped | completed | entered-in-error | unknown")
+    status: str = Field(
+        ...,
+        description="preparation | in-progress | not-done | on-hold | stopped | completed | entered-in-error | unknown",
+    )
     statusReason: CodeableConcept | None = Field(default=None, description="Reason for current status")
     category: CodeableConcept | None = Field(default=None, description="Classification of the procedure")
     code: CodeableConcept | None = Field(default=None, description="Identification of the procedure")
@@ -263,7 +307,9 @@ class Procedure(Resource):
     asserter: Reference | None = Field(default=None, description="Person who asserts this procedure")
     performer: list[dict[str, Any]] = Field(default_factory=list, description="The people who performed the procedure")
     reasonCode: list[CodeableConcept] = Field(default_factory=list, description="Coded reason procedure performed")
-    reasonReference: list[Reference] = Field(default_factory=list, description="The justification that the procedure was performed")
+    reasonReference: list[Reference] = Field(
+        default_factory=list, description="The justification that the procedure was performed"
+    )
     bodySite: list[CodeableConcept] = Field(default_factory=list, description="Target body sites")
     outcome: CodeableConcept | None = Field(default=None, description="The result of procedure")
 

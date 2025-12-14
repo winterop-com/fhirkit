@@ -625,6 +625,86 @@ curl -X POST http://localhost:8080 \
   }'
 ```
 
+### Conditional Operations
+
+FHIR conditional operations allow creating, updating, and deleting resources based on search criteria instead of resource IDs.
+
+#### Conditional Create
+
+Prevent duplicate resources using the `If-None-Exist` header:
+
+```http
+POST /{ResourceType}
+If-None-Exist: identifier=MRN123
+Content-Type: application/fhir+json
+
+{resource body}
+```
+
+| Result | Status | Description |
+|--------|--------|-------------|
+| No match | 201 | Resource created |
+| 1 match | 200 | Existing resource returned (no change) |
+| >1 match | 412 | Precondition Failed |
+
+```bash
+curl -X POST http://localhost:8080/baseR4/Patient \
+  -H "Content-Type: application/fhir+json" \
+  -H "If-None-Exist: identifier=http://hospital.org|MRN123" \
+  -d '{
+    "resourceType": "Patient",
+    "identifier": [{"system": "http://hospital.org", "value": "MRN123"}],
+    "name": [{"family": "Smith"}]
+  }'
+```
+
+#### Conditional Update
+
+Update a resource by search criteria instead of ID:
+
+```http
+PUT /{ResourceType}?search-params
+Content-Type: application/fhir+json
+
+{resource body}
+```
+
+| Result | Status | Description |
+|--------|--------|-------------|
+| No match | 201 | Resource created |
+| 1 match | 200 | Resource updated |
+| >1 match | 412 | Precondition Failed |
+
+```bash
+curl -X PUT "http://localhost:8080/baseR4/Patient?identifier=http://hospital.org|MRN123" \
+  -H "Content-Type: application/fhir+json" \
+  -d '{
+    "resourceType": "Patient",
+    "identifier": [{"system": "http://hospital.org", "value": "MRN123"}],
+    "name": [{"family": "Smith", "given": ["John"]}]
+  }'
+```
+
+#### Conditional Delete
+
+Delete resources matching search criteria:
+
+```http
+DELETE /{ResourceType}?search-params
+```
+
+Deletes all matching resources and returns `204 No Content`.
+
+```bash
+# Delete all cancelled observations
+curl -X DELETE "http://localhost:8080/baseR4/Observation?status=cancelled"
+
+# Delete conditions for a specific patient
+curl -X DELETE "http://localhost:8080/baseR4/Condition?patient=Patient/123"
+```
+
+**Note**: Conditional delete requires at least one search parameter to prevent accidental deletion of all resources.
+
 ### Terminology Operations
 
 #### ValueSet $expand
@@ -1223,8 +1303,8 @@ For large datasets, consider:
 The server provides built-in API documentation:
 
 - **Swagger UI**: http://localhost:8080/docs
-- **ReDoc**: http://localhost:8080/baseR4/redoc
-- **OpenAPI JSON**: http://localhost:8080/baseR4/openapi.json
+- **ReDoc**: http://localhost:8080/redoc
+- **OpenAPI JSON**: http://localhost:8080/openapi.json
 
 To disable documentation:
 

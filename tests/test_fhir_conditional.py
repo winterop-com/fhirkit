@@ -3,13 +3,22 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.server import create_app
+from fhir_cql.server.api.app import create_app
+from fhir_cql.server.config.settings import FHIRServerSettings
+from fhir_cql.server.storage.fhir_store import FHIRStore
 
 
 @pytest.fixture
-def client():
+def store() -> FHIRStore:
+    """Create a fresh FHIR store."""
+    return FHIRStore()
+
+
+@pytest.fixture
+def client(store: FHIRStore) -> TestClient:
     """Create a test client."""
-    app = create_app()
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
+    app = create_app(settings=settings, store=store)
     return TestClient(app)
 
 
