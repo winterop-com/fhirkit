@@ -1,7 +1,7 @@
 """Tests for FHIRPath conformsTo function."""
 
-from fhir_cql.engine.context import EvaluationContext
-from fhir_cql.engine.fhirpath.functions.fhir import fn_conforms_to
+from fhirkit.engine.context import EvaluationContext
+from fhirkit.engine.fhirpath.functions.fhir import fn_conforms_to
 
 
 class TestConformsTo:

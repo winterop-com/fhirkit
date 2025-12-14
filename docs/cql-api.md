@@ -5,7 +5,7 @@ This document describes the Python API for evaluating CQL (Clinical Quality Lang
 ## Quick Start
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 # Create evaluator
 evaluator = CQLEvaluator()
@@ -33,7 +33,7 @@ The main class for CQL evaluation.
 ### Constructor
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 evaluator = CQLEvaluator(
     data_source=None,       # Optional DataSource for retrieve operations
@@ -201,7 +201,7 @@ code = lib.resolve_code("DiabetesCode")
 Quick way to compile a library.
 
 ```python
-from fhir_cql.engine.cql import compile_library
+from fhirkit.engine.cql import compile_library
 
 lib = compile_library("""
     library Test
@@ -214,7 +214,7 @@ lib = compile_library("""
 Quick way to evaluate an expression.
 
 ```python
-from fhir_cql.engine.cql import evaluate
+from fhirkit.engine.cql import evaluate
 
 result = evaluate("1 + 2 * 3")  # 7
 result = evaluate("Today()")    # Current date
@@ -290,7 +290,7 @@ result = evaluator.evaluate_definition(
 ### Intervals
 
 ```python
-from fhir_cql.engine.cql.types import CQLInterval
+from fhirkit.engine.cql.types import CQLInterval
 
 # Create interval
 interval = CQLInterval(low=1, high=10, low_closed=True, high_closed=True)
@@ -303,7 +303,7 @@ result = evaluator.evaluate_expression("5 in Interval[1, 10]")  # True
 ### Tuples
 
 ```python
-from fhir_cql.engine.cql.types import CQLTuple
+from fhirkit.engine.cql.types import CQLTuple
 
 # Evaluate tuple expression
 result = evaluator.evaluate_expression("""
@@ -318,7 +318,7 @@ print(result.elements['name'])  # 'John'
 ### Codes and Concepts
 
 ```python
-from fhir_cql.engine.cql.types import CQLCode, CQLConcept
+from fhirkit.engine.cql.types import CQLCode, CQLConcept
 
 # In CQL
 lib = evaluator.compile("""
@@ -378,7 +378,7 @@ results = evaluator.evaluate_all_definitions()
 ## Error Handling
 
 ```python
-from fhir_cql.engine.exceptions import CQLError
+from fhirkit.engine.exceptions import CQLError
 
 try:
     evaluator.compile("invalid cql syntax !!!")
@@ -394,7 +394,7 @@ except CQLError as e:
 ## Complete Example
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 import json
 
 # Load patient data
@@ -453,7 +453,7 @@ CQL evaluation can query FHIR resources using data sources. Three implementation
 Store resources in memory for testing and simple use cases:
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import CQLEvaluator, InMemoryDataSource
 
 # Create data source and add resources
 ds = InMemoryDataSource()
@@ -495,7 +495,7 @@ conditions = evaluator.evaluate_definition("Conditions", resource=patient)
 Load resources from a FHIR Bundle:
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, BundleDataSource
+from fhirkit.engine.cql import CQLEvaluator, BundleDataSource
 
 bundle = {
     "resourceType": "Bundle",
@@ -521,7 +521,7 @@ evaluator = CQLEvaluator(data_source=ds)
 For patient-centric bundles, automatically filters to the patient:
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, PatientBundleDataSource
+from fhirkit.engine.cql import CQLEvaluator, PatientBundleDataSource
 
 # Load patient bundle (e.g., from a FHIR server)
 with open("patient_bundle.json") as f:
@@ -565,7 +565,7 @@ define PatientObservations: [Observation]  // Filtered to current patient
 For code filtering with valuesets:
 
 ```python
-from fhir_cql.engine.cql import CQLCode, InMemoryDataSource
+from fhirkit.engine.cql import CQLCode, InMemoryDataSource
 
 ds = InMemoryDataSource()
 
@@ -586,7 +586,7 @@ ds.add_valueset(
 ### Batch Patient Processing
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import CQLEvaluator, InMemoryDataSource
 import json
 from pathlib import Path
 
@@ -651,7 +651,7 @@ for r in results:
 ### Dynamic CQL Generation
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 def create_age_filter_cql(min_age: int, max_age: int, condition_codes: list[str]) -> str:
     """Dynamically generate CQL for custom filtering."""
@@ -692,7 +692,7 @@ include = evaluator.evaluate_definition("IncludePatient", resource=patient)
 ### Caching and Performance
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, compile_library
+from fhirkit.engine.cql import CQLEvaluator, compile_library
 from functools import lru_cache
 import hashlib
 
@@ -737,8 +737,8 @@ result2 = cached_evaluator.evaluate("SomeDefinition", resource=patient2)
 ### Error Handling Patterns
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.exceptions import CQLError
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.exceptions import CQLError
 
 class SafeCQLEvaluator:
     """CQL evaluator with comprehensive error handling."""
@@ -796,7 +796,7 @@ else:
 ### Working with Complex Data
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import CQLEvaluator, InMemoryDataSource
 from datetime import datetime, timedelta
 import random
 
@@ -893,8 +893,8 @@ print(f"Average HbA1c: {sum(hba1c_values)/len(hba1c_values):.1f}%")
 ### Library Dependencies and Includes
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.library import InMemoryLibraryResolver
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.library import InMemoryLibraryResolver
 
 # Create library resolver for dependencies
 resolver = InMemoryLibraryResolver()
@@ -934,8 +934,8 @@ result = evaluator.evaluate_definition("PatientIsAdult", resource=patient)
 ### Custom Type Conversions
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.types import FHIRDate, FHIRDateTime, FHIRTime
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.types import FHIRDate, FHIRDateTime, FHIRTime
 from datetime import date, datetime, time
 
 def convert_cql_result(value):
@@ -1002,7 +1002,7 @@ print(f"Tuple: {tuple_val}")  # dict with name, age
 
 ```python
 from fastapi import FastAPI
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 app = FastAPI()
 evaluator = CQLEvaluator()
@@ -1022,7 +1022,7 @@ async def compile_library(source: str):
 
 ```python
 import pandas as pd
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 evaluator = CQLEvaluator()
 lib = evaluator.compile("""
@@ -1054,7 +1054,7 @@ The `MeasureEvaluator` class provides support for evaluating CQL-based clinical 
 ### Basic Usage
 
 ```python
-from fhir_cql.engine.cql import MeasureEvaluator
+from fhirkit.engine.cql import MeasureEvaluator
 
 # Create measure evaluator
 evaluator = MeasureEvaluator()
@@ -1112,7 +1112,7 @@ for group in report.groups:
 ### With Data Sources
 
 ```python
-from fhir_cql.engine.cql import MeasureEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import MeasureEvaluator, InMemoryDataSource
 
 # Create data source with conditions
 ds = InMemoryDataSource()
@@ -1242,7 +1242,7 @@ print(summary)
 ### Measure Scoring Types
 
 ```python
-from fhir_cql.engine.cql import MeasureScoring
+from fhirkit.engine.cql import MeasureScoring
 
 evaluator = MeasureEvaluator()
 evaluator.set_scoring(MeasureScoring.PROPORTION)  # Default
@@ -1278,7 +1278,7 @@ Score = (Numerator - Numerator Exclusion) /
 ### Complete Example
 
 ```python
-from fhir_cql.engine.cql import MeasureEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import MeasureEvaluator, InMemoryDataSource
 import json
 
 # Create data source with patient data

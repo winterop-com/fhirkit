@@ -118,7 +118,7 @@ The `GoalGenerator` creates synthetic Goal resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import GoalGenerator
+from fhirkit.server.generator import GoalGenerator
 
 generator = GoalGenerator(seed=42)
 

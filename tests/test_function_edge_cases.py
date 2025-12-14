@@ -2,10 +2,10 @@
 
 from decimal import Decimal
 
-from fhir_cql.engine.context import EvaluationContext
+from fhirkit.engine.context import EvaluationContext
 
 # Boolean functions
-from fhir_cql.engine.fhirpath.functions.boolean import (
+from fhirkit.engine.fhirpath.functions.boolean import (
     fn_converts_to_boolean,
     fn_converts_to_date,
     fn_converts_to_datetime,
@@ -28,7 +28,7 @@ from fhir_cql.engine.fhirpath.functions.boolean import (
 )
 
 # Math functions
-from fhir_cql.engine.fhirpath.functions.math import (
+from fhirkit.engine.fhirpath.functions.math import (
     fn_abs,
     fn_ceiling,
     fn_exp,
@@ -42,7 +42,7 @@ from fhir_cql.engine.fhirpath.functions.math import (
 )
 
 # String functions
-from fhir_cql.engine.fhirpath.functions.strings import (
+from fhirkit.engine.fhirpath.functions.strings import (
     fn_contains,
     fn_ends_with,
     fn_index_of,
@@ -58,7 +58,7 @@ from fhir_cql.engine.fhirpath.functions.strings import (
     fn_trim,
     fn_upper,
 )
-from fhir_cql.engine.types import Quantity
+from fhirkit.engine.types import Quantity
 
 
 class TestStringFunctionsEdgeCases:

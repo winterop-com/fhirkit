@@ -973,7 +973,7 @@ fhir cds test medication-safety --patient test_patient.json
 By default, CQL evaluation uses the prefetch data. You can extend this by creating custom data sources:
 
 ```python
-from fhir_cql.engine.cql.datasource import DataSource
+from fhirkit.engine.cql.datasource import DataSource
 
 class FHIRServerDataSource(DataSource):
     """Data source that fetches from a FHIR server."""
@@ -992,7 +992,7 @@ class FHIRServerDataSource(DataSource):
 The executor caches compiled CQL libraries. Clear the cache when libraries change:
 
 ```python
-from fhir_cql.cds_hooks.service.executor import CDSExecutor
+from fhirkit.cds_hooks.service.executor import CDSExecutor
 
 executor = CDSExecutor(settings)
 executor.clear_cache()  # Clear all
@@ -1004,7 +1004,7 @@ executor.clear_cache("medication-safety")  # Clear specific service
 Extend the card builder for custom logic:
 
 ```python
-from fhir_cql.cds_hooks.service.card_builder import CardBuilder
+from fhirkit.cds_hooks.service.card_builder import CardBuilder
 
 class CustomCardBuilder(CardBuilder):
     def _build_template_context(self, results):
@@ -1383,7 +1383,7 @@ Returns server health status.
 Use the CDS Hooks module programmatically:
 
 ```python
-from fhir_cql.cds_hooks import create_app, CDSHooksSettings
+from fhirkit.cds_hooks import create_app, CDSHooksSettings
 
 # Custom settings
 settings = CDSHooksSettings(

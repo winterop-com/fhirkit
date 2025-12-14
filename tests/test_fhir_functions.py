@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from fhir_cql.engine.context import EvaluationContext
-from fhir_cql.engine.fhirpath.functions.fhir import (
+from fhirkit.engine.context import EvaluationContext
+from fhirkit.engine.fhirpath.functions.fhir import (
     fn_check_modifiers,
     fn_conforms_to,
     fn_element_definition,

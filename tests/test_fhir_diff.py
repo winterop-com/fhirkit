@@ -3,9 +3,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.server.api.app import create_app
-from fhir_cql.server.api.diff import compute_diff, diff_to_parameters
-from fhir_cql.server.config.settings import FHIRServerSettings
+from fhirkit.server.api.app import create_app
+from fhirkit.server.api.diff import compute_diff, diff_to_parameters
+from fhirkit.server.config.settings import FHIRServerSettings
 
 
 @pytest.fixture

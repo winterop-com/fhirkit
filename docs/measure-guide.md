@@ -45,7 +45,7 @@ The library supports four measure scoring types:
 ### Basic Measure Evaluation
 
 ```python
-from fhir_cql.engine.cql import MeasureEvaluator
+from fhirkit.engine.cql import MeasureEvaluator
 
 # Create the evaluator
 evaluator = MeasureEvaluator()
@@ -383,7 +383,7 @@ define "Stratifier Disease Severity":
 Most common type - calculates a percentage:
 
 ```python
-from fhir_cql.engine.cql import MeasureEvaluator, MeasureScoring
+from fhirkit.engine.cql import MeasureEvaluator, MeasureScoring
 
 evaluator = MeasureEvaluator()
 evaluator.set_scoring(MeasureScoring.PROPORTION)  # Default
@@ -437,7 +437,7 @@ No score calculated - just population counts.
 The main class for measure evaluation:
 
 ```python
-from fhir_cql.engine.cql import (
+from fhirkit.engine.cql import (
     CQLEvaluator,
     InMemoryDataSource,
     MeasureEvaluator,
@@ -504,7 +504,7 @@ evaluator.add_stratifier(
 ### Setting Scoring Type
 
 ```python
-from fhir_cql.engine.cql import MeasureScoring
+from fhirkit.engine.cql import MeasureScoring
 
 evaluator.set_scoring(MeasureScoring.PROPORTION)  # Default
 evaluator.set_scoring(MeasureScoring.RATIO)
@@ -667,7 +667,7 @@ print(json.dumps(fhir_report, indent=2, default=str))
 ### PopulationType Enum
 
 ```python
-from fhir_cql.engine.cql import PopulationType
+from fhirkit.engine.cql import PopulationType
 
 PopulationType.INITIAL_POPULATION      # "initial-population"
 PopulationType.DENOMINATOR             # "denominator"
@@ -683,7 +683,7 @@ PopulationType.MEASURE_OBSERVATION     # "measure-observation"
 ### MeasureScoring Enum
 
 ```python
-from fhir_cql.engine.cql import MeasureScoring
+from fhirkit.engine.cql import MeasureScoring
 
 MeasureScoring.PROPORTION          # "proportion"
 MeasureScoring.RATIO               # "ratio"
@@ -696,7 +696,7 @@ MeasureScoring.COHORT              # "cohort"
 Result of evaluating a single patient:
 
 ```python
-from fhir_cql.engine.cql.measure import PatientResult
+from fhirkit.engine.cql.measure import PatientResult
 
 result = PatientResult(
     patient_id="p1",
@@ -715,7 +715,7 @@ result = PatientResult(
 Aggregated results for a population:
 
 ```python
-from fhir_cql.engine.cql.measure import MeasureReport
+from fhirkit.engine.cql.measure import MeasureReport
 
 report = MeasureReport(
     measure_id="DiabetesMeasure",
@@ -732,7 +732,7 @@ report = MeasureReport(
 Results for a measure group:
 
 ```python
-from fhir_cql.engine.cql.measure import GroupResult, PopulationCount
+from fhirkit.engine.cql.measure import GroupResult, PopulationCount
 
 group = GroupResult(
     id="default",
@@ -755,7 +755,7 @@ group = GroupResult(
 ### Using InMemoryDataSource
 
 ```python
-from fhir_cql.engine.cql import InMemoryDataSource, MeasureEvaluator
+from fhirkit.engine.cql import InMemoryDataSource, MeasureEvaluator
 
 # Create data source with test data
 data_source = InMemoryDataSource()
@@ -790,8 +790,8 @@ report = evaluator.evaluate_population(patients, data_source=data_source)
 ### Using with FHIR Server
 
 ```python
-from fhir_cql.server.storage import FHIRStore
-from fhir_cql.engine.cql import MeasureEvaluator
+from fhirkit.server.storage import FHIRStore
+from fhirkit.engine.cql import MeasureEvaluator
 
 # Get patients from FHIR store
 store = FHIRStore()

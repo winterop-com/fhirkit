@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 
-from fhir_cql.cds_hooks.config.settings import CardTemplate, CDSServiceConfig
-from fhir_cql.cds_hooks.service.card_builder import CardBuilder
+from fhirkit.cds_hooks.config.settings import CardTemplate, CDSServiceConfig
+from fhirkit.cds_hooks.service.card_builder import CardBuilder
 
 
 @pytest.fixture

@@ -2,8 +2,8 @@
 
 import pytest
 
-from fhir_cql.engine.context import EvaluationContext
-from fhir_cql.engine.fhirpath.functions.filtering import (
+from fhirkit.engine.context import EvaluationContext
+from fhirkit.engine.fhirpath.functions.filtering import (
     fn_of_type,
     fn_repeat,
     fn_select,

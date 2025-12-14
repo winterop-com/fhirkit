@@ -119,7 +119,7 @@ The `MedicationGenerator` creates synthetic Medication resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import MedicationGenerator
+from fhirkit.server.generator import MedicationGenerator
 
 generator = MedicationGenerator(seed=42)
 

@@ -8,7 +8,7 @@ import typer
 from rich import print as rprint
 from rich.table import Table
 
-from fhir_cql.server.generator import (
+from fhirkit.server.generator import (
     AdverseEventGenerator,
     AllergyIntoleranceGenerator,
     AppointmentGenerator,

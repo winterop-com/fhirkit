@@ -210,7 +210,7 @@ The `ObservationGenerator` creates synthetic Observation resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import ObservationGenerator
+from fhirkit.server.generator import ObservationGenerator
 
 generator = ObservationGenerator(seed=42)
 

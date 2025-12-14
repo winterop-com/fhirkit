@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from fhir_cql.engine.fhirpath import FHIRPathEvaluator
-from fhir_cql.engine.types import FHIRDate, FHIRDateTime, FHIRTime
+from fhirkit.engine.fhirpath import FHIRPathEvaluator
+from fhirkit.engine.types import FHIRDate, FHIRDateTime, FHIRTime
 
 # Load example FHIR resources
 EXAMPLES_DIR = Path(__file__).parent.parent / "examples" / "fhir"
@@ -739,7 +739,7 @@ class TestDateTimeFunctions:
         """today() returns the current date."""
         from datetime import datetime, timezone
 
-        from fhir_cql.engine.context import EvaluationContext
+        from fhirkit.engine.context import EvaluationContext
 
         fixed_time = datetime(2024, 6, 15, 10, 30, 0, tzinfo=timezone.utc)
         ctx = EvaluationContext(now=fixed_time)
@@ -750,7 +750,7 @@ class TestDateTimeFunctions:
         """now() returns the current datetime with timezone."""
         from datetime import datetime, timezone
 
-        from fhir_cql.engine.context import EvaluationContext
+        from fhirkit.engine.context import EvaluationContext
 
         fixed_time = datetime(2024, 6, 15, 10, 30, 45, 123000, tzinfo=timezone.utc)
         ctx = EvaluationContext(now=fixed_time)
@@ -763,7 +763,7 @@ class TestDateTimeFunctions:
         """timeOfDay() returns the current time."""
         from datetime import datetime, timezone
 
-        from fhir_cql.engine.context import EvaluationContext
+        from fhirkit.engine.context import EvaluationContext
 
         fixed_time = datetime(2024, 6, 15, 14, 45, 30, 500000, tzinfo=timezone.utc)
         ctx = EvaluationContext(now=fixed_time)
@@ -899,7 +899,7 @@ class TestFHIRFunctions:
 
     def test_resolve_with_resolver(self, evaluator, patient, bundle):
         """resolve() uses the reference_resolver callback."""
-        from fhir_cql.engine.context import EvaluationContext
+        from fhirkit.engine.context import EvaluationContext
 
         # Create a resolver that looks up resources in the bundle
         def resolve_reference(ref: str) -> dict | None:
@@ -940,7 +940,7 @@ class TestQuantity:
     def test_quantity_addition(self, evaluator):
         from decimal import Decimal
 
-        from fhir_cql.engine.types import Quantity
+        from fhirkit.engine.types import Quantity
 
         result = evaluator.evaluate("10 'kg' + 5 'kg'", None)
         assert result == [Quantity(value=Decimal("15"), unit="kg")]
@@ -948,7 +948,7 @@ class TestQuantity:
     def test_quantity_subtraction(self, evaluator):
         from decimal import Decimal
 
-        from fhir_cql.engine.types import Quantity
+        from fhirkit.engine.types import Quantity
 
         result = evaluator.evaluate("10 'kg' - 3 'kg'", None)
         assert result == [Quantity(value=Decimal("7"), unit="kg")]
@@ -1470,7 +1470,7 @@ class TestSubsettingFunctionsExtended:
 
     def test_single_multiple_elements(self, evaluator, patient):
         # Single with multiple elements raises FHIRPathError
-        from fhir_cql.engine.exceptions import FHIRPathError
+        from fhirkit.engine.exceptions import FHIRPathError
 
         with pytest.raises(FHIRPathError):
             evaluator.evaluate("Patient.name.single()", patient)

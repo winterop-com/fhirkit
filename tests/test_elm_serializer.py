@@ -2,8 +2,8 @@
 
 import json
 
-from fhir_cql.engine.cql.evaluator import CQLEvaluator
-from fhir_cql.engine.elm import ELMEvaluator, ELMSerializer, serialize_to_elm, serialize_to_elm_json
+from fhirkit.engine.cql.evaluator import CQLEvaluator
+from fhirkit.engine.elm import ELMEvaluator, ELMSerializer, serialize_to_elm, serialize_to_elm_json
 
 
 class TestELMSerializerBasics:

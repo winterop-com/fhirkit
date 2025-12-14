@@ -7,14 +7,14 @@ from datetime import datetime
 
 import pytest
 
-from fhir_cql.engine.cql import (
+from fhirkit.engine.cql import (
     CQLEvaluator,
     InMemoryDataSource,
     MeasureEvaluator,
     MeasureScoring,
     PopulationType,
 )
-from fhir_cql.engine.cql.measure import (
+from fhirkit.engine.cql.measure import (
     GroupResult,
     MeasureGroup,
     MeasurePopulation,

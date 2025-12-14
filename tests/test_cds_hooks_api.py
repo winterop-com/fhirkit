@@ -6,8 +6,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.cds_hooks.api.app import create_app
-from fhir_cql.cds_hooks.config.settings import CDSHooksSettings
+from fhirkit.cds_hooks.api.app import create_app
+from fhirkit.cds_hooks.config.settings import CDSHooksSettings
 
 
 @pytest.fixture

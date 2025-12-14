@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from fhir_cql.cds_hooks.config.settings import (
+from fhirkit.cds_hooks.config.settings import (
     CardTemplate,
     CDSHooksSettings,
     CDSServiceConfig,
 )
-from fhir_cql.cds_hooks.service.registry import ServiceRegistry
+from fhirkit.cds_hooks.service.registry import ServiceRegistry
 
 
 @pytest.fixture

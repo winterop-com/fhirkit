@@ -9,12 +9,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fhir_cql.engine.cql.context import CQLContext, DataSource
-from fhir_cql.engine.cql.library import LibraryManager
-from fhir_cql.engine.elm.exceptions import ELMExecutionError, ELMReferenceError, ELMValidationError
-from fhir_cql.engine.elm.loader import ELMLoader
-from fhir_cql.engine.elm.models.library import ELMDefinition, ELMFunctionDef, ELMLibrary
-from fhir_cql.engine.elm.visitor import ELMExpressionVisitor
+from fhirkit.engine.cql.context import CQLContext, DataSource
+from fhirkit.engine.cql.library import LibraryManager
+from fhirkit.engine.elm.exceptions import ELMExecutionError, ELMReferenceError, ELMValidationError
+from fhirkit.engine.elm.loader import ELMLoader
+from fhirkit.engine.elm.models.library import ELMDefinition, ELMFunctionDef, ELMLibrary
+from fhirkit.engine.elm.visitor import ELMExpressionVisitor
 
 
 class ELMEvaluator:

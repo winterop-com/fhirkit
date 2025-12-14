@@ -21,8 +21,8 @@ from antlr4.error.ErrorListener import ErrorListener
 from cqlLexer import cqlLexer
 from cqlParser import cqlParser
 
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.exceptions import CQLError
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.exceptions import CQLError
 
 app = typer.Typer(
     name="cql",
@@ -560,7 +560,7 @@ def measure(
         cql measure measure.cql --patients ./patients/
         cql measure measure.cql --data bundle.json --output report.json
     """
-    from fhir_cql.engine.cql.measure import MeasureEvaluator
+    from fhirkit.engine.cql.measure import MeasureEvaluator
 
     if not file.exists():
         rprint(f"[red]Error:[/red] File not found: {file}")

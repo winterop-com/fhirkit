@@ -10,8 +10,8 @@ Tests for:
 
 from decimal import Decimal
 
-from fhir_cql.engine.cql import evaluate
-from fhir_cql.engine.types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
+from fhirkit.engine.cql import evaluate
+from fhirkit.engine.types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
 
 # =============================================================================
 # Precision Tests

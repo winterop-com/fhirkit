@@ -1,4 +1,4 @@
-# python-fhir-cql
+# fhirkit
 
 FHIRPath, CQL (Clinical Quality Language), ELM, and CDS Hooks for Python using ANTLR4.
 
@@ -44,7 +44,7 @@ fhir cql run library.cql --definition "Initial Population" --data patient.json
 ### Python API
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 evaluator = CQLEvaluator()
 
@@ -176,7 +176,7 @@ The `examples/` directory contains:
 
 ## Links
 
-- [GitHub Repository](https://github.com/mortenoh/python-fhir-cql)
+- [GitHub Repository](https://github.com/winterop-com/fhirkit)
 - [CQL Specification](https://cql.hl7.org/)
 - [FHIRPath Specification](http://hl7.org/fhirpath/)
 - [FHIR R4](https://hl7.org/fhir/R4/)

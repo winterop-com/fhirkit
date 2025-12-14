@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from fhir_cql.engine.elm.models.types import ELMTypeSpecifier
+from fhirkit.engine.elm.models.types import ELMTypeSpecifier
 
 if TYPE_CHECKING:
     pass

@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from fhir_cql.engine.elm.exceptions import ELMValidationError
-from fhir_cql.engine.elm.models.library import ELMLibrary
+from fhirkit.engine.elm.exceptions import ELMValidationError
+from fhirkit.engine.elm.models.library import ELMLibrary
 
 
 class ELMLoader:

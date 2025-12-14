@@ -1141,7 +1141,7 @@ fhir cql run library.cql --output results.json
 ### Using the Python API
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 # Create evaluator
 evaluator = CQLEvaluator()

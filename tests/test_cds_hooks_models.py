@@ -6,15 +6,15 @@ from uuid import UUID, uuid4
 import pytest
 from pydantic import ValidationError
 
-from fhir_cql.cds_hooks.models.discovery import CDSServiceDescriptor, DiscoveryResponse
-from fhir_cql.cds_hooks.models.feedback import (
+from fhirkit.cds_hooks.models.discovery import CDSServiceDescriptor, DiscoveryResponse
+from fhirkit.cds_hooks.models.feedback import (
     AcceptedSuggestion,
     FeedbackEntry,
     FeedbackRequest,
     OverrideReason,
 )
-from fhir_cql.cds_hooks.models.request import CDSRequest, FHIRAuthorization
-from fhir_cql.cds_hooks.models.response import (
+from fhirkit.cds_hooks.models.request import CDSRequest, FHIRAuthorization
+from fhirkit.cds_hooks.models.response import (
     Action,
     Card,
     CDSResponse,

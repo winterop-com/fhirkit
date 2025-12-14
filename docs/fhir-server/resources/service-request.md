@@ -108,7 +108,7 @@ The `ServiceRequestGenerator` creates synthetic ServiceRequest resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import ServiceRequestGenerator
+from fhirkit.server.generator import ServiceRequestGenerator
 
 generator = ServiceRequestGenerator(seed=42)
 

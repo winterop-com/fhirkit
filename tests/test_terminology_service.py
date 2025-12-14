@@ -2,7 +2,7 @@
 
 import pytest
 
-from fhir_cql.terminology import (
+from fhirkit.terminology import (
     InMemoryTerminologyService,
     MemberOfRequest,
     SubsumesRequest,
@@ -219,7 +219,7 @@ class TestCodingValidation:
 
     def test_validate_with_coding(self, service):
         """Test validate code with Coding input."""
-        from fhir_cql.terminology import Coding
+        from fhirkit.terminology import Coding
 
         request = ValidateCodeRequest(
             url="http://hl7.org/fhir/ValueSet/observation-status",
@@ -234,7 +234,7 @@ class TestCodingValidation:
 
     def test_validate_with_coding_invalid(self, service):
         """Test validate code with invalid Coding."""
-        from fhir_cql.terminology import Coding
+        from fhirkit.terminology import Coding
 
         request = ValidateCodeRequest(
             url="http://hl7.org/fhir/ValueSet/observation-status",
@@ -252,7 +252,7 @@ class TestCodeableConceptValidation:
 
     def test_validate_with_codeable_concept(self, service):
         """Test validate code with CodeableConcept input."""
-        from fhir_cql.terminology import CodeableConcept, Coding
+        from fhirkit.terminology import CodeableConcept, Coding
 
         request = ValidateCodeRequest(
             url="http://hl7.org/fhir/ValueSet/observation-status",
@@ -270,7 +270,7 @@ class TestCodeableConceptValidation:
 
     def test_validate_with_codeable_concept_multiple_codings(self, service):
         """Test validate code with CodeableConcept with multiple codings."""
-        from fhir_cql.terminology import CodeableConcept, Coding
+        from fhirkit.terminology import CodeableConcept, Coding
 
         request = ValidateCodeRequest(
             url="http://hl7.org/fhir/ValueSet/observation-status",
@@ -289,7 +289,7 @@ class TestCodeableConceptValidation:
 
     def test_validate_with_codeable_concept_none_match(self, service):
         """Test validate code with CodeableConcept where no codings match."""
-        from fhir_cql.terminology import CodeableConcept, Coding
+        from fhirkit.terminology import CodeableConcept, Coding
 
         request = ValidateCodeRequest(
             url="http://hl7.org/fhir/ValueSet/observation-status",

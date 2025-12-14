@@ -267,8 +267,8 @@ def eval(
     output_json: Annotated[bool, typer.Option("--json-output", help="Output result as JSON")] = False,
 ) -> None:
     """Evaluate a FHIRPath expression against a FHIR resource."""
-    from fhir_cql.engine.exceptions import FHIRPathError
-    from fhir_cql.engine.fhirpath import FHIRPathEvaluator
+    from fhirkit.engine.exceptions import FHIRPathError
+    from fhirkit.engine.fhirpath import FHIRPathEvaluator
 
     # Load resource
     fhir_resource = None
@@ -317,8 +317,8 @@ def eval_file(
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Only show errors")] = False,
 ) -> None:
     """Evaluate FHIRPath expressions from a file against a FHIR resource."""
-    from fhir_cql.engine.exceptions import FHIRPathError
-    from fhir_cql.engine.fhirpath import FHIRPathEvaluator
+    from fhirkit.engine.exceptions import FHIRPathError
+    from fhirkit.engine.fhirpath import FHIRPathEvaluator
 
     if not expressions_file.exists():
         rprint(f"[red]Error:[/red] File not found: {expressions_file}")

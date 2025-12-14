@@ -1,8 +1,8 @@
-site_name: FHIR CQL
-site_description: FHIRPath and CQL evaluators for Python
-site_url: https://mortenoh.github.io/python-fhir-cql
-repo_url: https://github.com/mortenoh/python-fhir-cql
-repo_name: mortenoh/python-fhir-cql
+site_name: FHIRKit
+site_description: FHIR toolkit with FHIRPath, CQL, CDS Hooks, and FHIR Server for Python
+site_url: https://winterop-com.github.io/fhirkit
+repo_url: https://github.com/winterop-com/fhirkit
+repo_name: winterop-com/fhirkit
 
 theme:
   name: material

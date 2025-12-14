@@ -6,11 +6,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.cds_hooks.api.app import create_app
-from fhir_cql.cds_hooks.config.settings import CDSHooksSettings
-from fhir_cql.cds_hooks.service.card_builder import CardBuilder
-from fhir_cql.cds_hooks.service.executor import CDSExecutor
-from fhir_cql.cds_hooks.service.registry import ServiceRegistry
+from fhirkit.cds_hooks.api.app import create_app
+from fhirkit.cds_hooks.config.settings import CDSHooksSettings
+from fhirkit.cds_hooks.service.card_builder import CardBuilder
+from fhirkit.cds_hooks.service.executor import CDSExecutor
+from fhirkit.cds_hooks.service.registry import ServiceRegistry
 
 
 @pytest.fixture
@@ -328,7 +328,7 @@ class TestComponentIntegration:
         settings: CDSHooksSettings,
     ) -> None:
         """Test that registry, executor, and card builder work together."""
-        from fhir_cql.cds_hooks.models.request import CDSRequest
+        from fhirkit.cds_hooks.models.request import CDSRequest
 
         registry = ServiceRegistry(settings)
         executor = CDSExecutor(settings)

@@ -4,7 +4,7 @@ This module provides validation of FHIR R4 resources against structure rules,
 required fields, code bindings, and reference validity.
 
 Example:
-    from fhir_cql.server.validation import FHIRValidator
+    from fhirkit.server.validation import FHIRValidator
 
     validator = FHIRValidator()
     result = validator.validate({

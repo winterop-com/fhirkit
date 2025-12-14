@@ -186,7 +186,7 @@ The `ProcedureGenerator` creates synthetic Procedure resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import ProcedureGenerator
+from fhirkit.server.generator import ProcedureGenerator
 
 generator = ProcedureGenerator(seed=42)
 

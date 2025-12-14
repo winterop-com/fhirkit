@@ -16,7 +16,7 @@ feat(fhirpath): add replaceMatches function
 
 ## Project Overview
 
-FHIRPath and CQL (Clinical Quality Language) parsers for Python using ANTLR4.
+FHIRKit - FHIR toolkit with FHIRPath, CQL (Clinical Quality Language), CDS Hooks, and FHIR R4 Server for Python using ANTLR4.
 
 ## Build Commands
 

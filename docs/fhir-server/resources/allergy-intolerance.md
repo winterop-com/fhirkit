@@ -154,7 +154,7 @@ The `AllergyIntoleranceGenerator` creates synthetic AllergyIntolerance resources
 ### Usage
 
 ```python
-from fhir_cql.server.generator import AllergyIntoleranceGenerator
+from fhirkit.server.generator import AllergyIntoleranceGenerator
 
 generator = AllergyIntoleranceGenerator(seed=42)
 

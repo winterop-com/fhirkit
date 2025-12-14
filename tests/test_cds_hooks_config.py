@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from fhir_cql.cds_hooks.config.settings import (
+from fhirkit.cds_hooks.config.settings import (
     CardTemplate,
     CDSHooksSettings,
     CDSServiceConfig,

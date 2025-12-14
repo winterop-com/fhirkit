@@ -4,8 +4,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/mortenoh/python-fhir-cql.git
-cd python-fhir-cql
+git clone https://github.com/winterop-com/fhirkit.git
+cd fhirkit
 
 # Install dependencies
 make install
@@ -242,7 +242,7 @@ fhir server info
 ### FHIRPath
 
 ```python
-from fhir_cql.engine.fhirpath import FHIRPathEvaluator
+from fhirkit.engine.fhirpath import FHIRPathEvaluator
 
 # Create evaluator
 evaluator = FHIRPathEvaluator()
@@ -265,7 +265,7 @@ print(is_male)  # True
 ### CQL
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 # Create evaluator
 evaluator = CQLEvaluator()
@@ -307,7 +307,7 @@ age = evaluator.evaluate_expression(
 ## Project Structure
 
 ```
-python-fhir-cql/
+fhirkit/
 ├── grammars/              # ANTLR grammar files
 │   ├── cql.g4
 │   └── fhirpath.g4
@@ -318,7 +318,7 @@ python-fhir-cql/
 │   ├── cql/              # 17 CQL example files
 │   ├── fhir/             # 14 FHIR JSON resources
 │   └── fhirpath/         # FHIRPath expressions
-├── src/fhir_cql/         # Python source
+├── src/fhirkit/         # Python source
 │   ├── engine/
 │   │   ├── cql/          # CQL evaluator
 │   │   └── fhirpath/     # FHIRPath evaluator

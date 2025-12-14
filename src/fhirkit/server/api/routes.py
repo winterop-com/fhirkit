@@ -317,7 +317,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         """
         import time
 
-        from fhir_cql.engine.fhirpath import FHIRPathEvaluator
+        from fhirkit.engine.fhirpath import FHIRPathEvaluator
 
         try:
             body = await request.json()
@@ -408,7 +408,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         import base64
         import time
 
-        from fhir_cql.engine.cql import CQLEvaluator
+        from fhirkit.engine.cql import CQLEvaluator
 
         try:
             body = await request.json()
@@ -1104,8 +1104,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         """
         import base64
 
-        from fhir_cql.engine.cql.evaluator import CQLEvaluator
-        from fhir_cql.engine.cql.measure import MeasureEvaluator, MeasureScoring
+        from fhirkit.engine.cql.evaluator import CQLEvaluator
+        from fhirkit.engine.cql.measure import MeasureEvaluator, MeasureScoring
 
         # Get the Measure resource
         measure = store.read("Measure", measure_id)

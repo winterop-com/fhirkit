@@ -299,7 +299,7 @@ The `QuestionnaireResponseGenerator` creates synthetic QuestionnaireResponse res
 ### Usage
 
 ```python
-from fhir_cql.server.generator import QuestionnaireResponseGenerator
+from fhirkit.server.generator import QuestionnaireResponseGenerator
 
 generator = QuestionnaireResponseGenerator(seed=42)
 

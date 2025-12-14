@@ -12,9 +12,9 @@ Tests cover:
 
 import pytest
 
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
-from fhir_cql.engine.exceptions import CQLError
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.exceptions import CQLError
 
 
 class TestExternalFunctions:

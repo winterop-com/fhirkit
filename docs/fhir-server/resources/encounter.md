@@ -158,7 +158,7 @@ The `EncounterGenerator` creates synthetic Encounter resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import EncounterGenerator
+from fhirkit.server.generator import EncounterGenerator
 
 generator = EncounterGenerator(seed=42)
 

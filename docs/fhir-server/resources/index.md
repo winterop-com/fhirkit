@@ -1,6 +1,6 @@
 # Supported FHIR Resources
 
-This page provides an overview of all FHIR R4 resource types supported by the python-fhir-cql server.
+This page provides an overview of all FHIR R4 resource types supported by the fhirkit server.
 
 ## Resource Categories
 

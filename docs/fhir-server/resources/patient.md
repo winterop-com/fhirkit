@@ -141,7 +141,7 @@ The `PatientGenerator` creates synthetic Patient resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import PatientGenerator
+from fhirkit.server.generator import PatientGenerator
 
 generator = PatientGenerator(seed=42)
 

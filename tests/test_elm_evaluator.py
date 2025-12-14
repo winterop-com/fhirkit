@@ -5,11 +5,11 @@ from decimal import Decimal
 
 import pytest
 
-from fhir_cql.engine.cql.context import CQLContext
-from fhir_cql.engine.cql.types import CQLInterval
-from fhir_cql.engine.elm.evaluator import ELMEvaluator
-from fhir_cql.engine.elm.exceptions import ELMExecutionError, ELMReferenceError
-from fhir_cql.engine.elm.visitor import ELMExpressionVisitor
+from fhirkit.engine.cql.context import CQLContext
+from fhirkit.engine.cql.types import CQLInterval
+from fhirkit.engine.elm.evaluator import ELMEvaluator
+from fhirkit.engine.elm.exceptions import ELMExecutionError, ELMReferenceError
+from fhirkit.engine.elm.visitor import ELMExpressionVisitor
 
 
 class TestELMExpressionVisitor:

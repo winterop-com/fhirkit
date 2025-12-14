@@ -10,7 +10,7 @@ Tests cover:
 
 import pytest
 
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 
 @pytest.fixture

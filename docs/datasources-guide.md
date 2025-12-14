@@ -29,7 +29,7 @@ Data sources are abstractions that provide FHIR resources to the CQL evaluator d
 ### Basic Usage
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import CQLEvaluator, InMemoryDataSource
 
 # Create and populate data source
 data_source = InMemoryDataSource()
@@ -68,7 +68,7 @@ print(result)  # True
 ### Using Bundle Data Source
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, BundleDataSource
+from fhirkit.engine.cql import CQLEvaluator, BundleDataSource
 
 # Load from a FHIR Bundle
 bundle = {
@@ -92,7 +92,7 @@ The most flexible data source, storing resources in memory with full filtering s
 ### Creating and Populating
 
 ```python
-from fhir_cql.engine.cql import InMemoryDataSource
+from fhirkit.engine.cql import InMemoryDataSource
 
 ds = InMemoryDataSource()
 
@@ -118,7 +118,7 @@ patients = ds.retrieve("Patient")
 print(f"Found {len(patients)} patients")
 
 # Retrieve with patient context
-from fhir_cql.engine.cql import PatientContext
+from fhirkit.engine.cql import PatientContext
 
 context = PatientContext(resource={"resourceType": "Patient", "id": "p1"})
 conditions = ds.retrieve("Condition", context=context)
@@ -139,7 +139,7 @@ else:
 ### Working with ValueSets
 
 ```python
-from fhir_cql.engine.cql import CQLCode
+from fhirkit.engine.cql import CQLCode
 
 # Add expanded valueset
 ds.add_valueset(
@@ -174,7 +174,7 @@ Load FHIR resources from a Bundle for evaluation.
 ### Creating from Bundle
 
 ```python
-from fhir_cql.engine.cql import BundleDataSource
+from fhirkit.engine.cql import BundleDataSource
 
 bundle = {
     "resourceType": "Bundle",
@@ -212,7 +212,7 @@ for resource_type, resources in ds.resources.items():
 ### Adding ValueSets
 
 ```python
-from fhir_cql.engine.cql import CQLCode
+from fhirkit.engine.cql import CQLCode
 
 ds.add_valueset(
     "http://example.org/valueset/labs",
@@ -229,7 +229,7 @@ Specialized for patient-centric bundles with automatic patient context.
 ### Usage
 
 ```python
-from fhir_cql.engine.cql import PatientBundleDataSource
+from fhirkit.engine.cql import PatientBundleDataSource
 
 # Patient bundle (like Synthea output)
 bundle = {
@@ -268,7 +268,7 @@ print(len(conditions))  # 1 (only c1, which belongs to p1)
 Filter resources by code values:
 
 ```python
-from fhir_cql.engine.cql import CQLCode
+from fhirkit.engine.cql import CQLCode
 
 # Using CQLCode
 diabetes_code = CQLCode(code="44054006", system="http://snomed.info/sct")
@@ -320,8 +320,8 @@ conditions = ds.retrieve(
 Filter resources by date:
 
 ```python
-from fhir_cql.engine.cql import CQLInterval
-from fhir_cql.engine.types import FHIRDateTime
+from fhirkit.engine.cql import CQLInterval
+from fhirkit.engine.types import FHIRDateTime
 
 date_range = CQLInterval(
     low=FHIRDateTime.parse("2024-01-01T00:00:00"),
@@ -424,8 +424,8 @@ Implement your own data source for specific needs.
 ### Interface
 
 ```python
-from fhir_cql.engine.cql.datasource import FHIRDataSource
-from fhir_cql.engine.cql import CQLInterval
+from fhirkit.engine.cql.datasource import FHIRDataSource
+from fhirkit.engine.cql import CQLInterval
 from typing import Any
 
 class MyDataSource(FHIRDataSource):
@@ -476,7 +476,7 @@ class MyDataSource(FHIRDataSource):
 
 ```python
 import requests
-from fhir_cql.engine.cql.datasource import FHIRDataSource
+from fhirkit.engine.cql.datasource import FHIRDataSource
 
 class FHIRServerDataSource(FHIRDataSource):
     """Data source backed by a FHIR server."""
@@ -532,7 +532,7 @@ class FHIRServerDataSource(FHIRDataSource):
 ### Example: Database Data Source
 
 ```python
-from fhir_cql.engine.cql.datasource import FHIRDataSource
+from fhirkit.engine.cql.datasource import FHIRDataSource
 import json
 
 class SQLiteDataSource(FHIRDataSource):
@@ -594,7 +594,7 @@ class SQLiteDataSource(FHIRDataSource):
 ### Setting Data Source
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import CQLEvaluator, InMemoryDataSource
 
 # Method 1: Pass to constructor
 data_source = InMemoryDataSource()
@@ -651,7 +651,7 @@ print(f"Has diabetes: {has_diabetes}")  # True
 ### Using with Measure Evaluation
 
 ```python
-from fhir_cql.engine.cql import MeasureEvaluator, InMemoryDataSource
+from fhirkit.engine.cql import MeasureEvaluator, InMemoryDataSource
 
 # Set up data
 data_source = InMemoryDataSource()
@@ -721,7 +721,7 @@ patient_conditions = [c for c in all_conditions if matches_patient(c)]
 ```python
 import json
 from pathlib import Path
-from fhir_cql.engine.cql import PatientBundleDataSource, CQLEvaluator
+from fhirkit.engine.cql import PatientBundleDataSource, CQLEvaluator
 
 def load_synthea_patient(patient_file: Path):
     """Load a Synthea patient bundle."""
@@ -746,7 +746,7 @@ result = evaluator.evaluate_definition("HasCondition", resource=ds.patient)
 ### Multi-Patient Evaluation
 
 ```python
-from fhir_cql.engine.cql import InMemoryDataSource, CQLEvaluator, PatientContext
+from fhirkit.engine.cql import InMemoryDataSource, CQLEvaluator, PatientContext
 
 # Load all patients and resources into one data source
 ds = InMemoryDataSource()
@@ -769,7 +769,7 @@ for patient in ds.retrieve("Patient"):
 
 ```python
 import pytest
-from fhir_cql.engine.cql import InMemoryDataSource, CQLEvaluator
+from fhirkit.engine.cql import InMemoryDataSource, CQLEvaluator
 
 @pytest.fixture
 def test_data_source():

@@ -2,7 +2,7 @@
 
 import pytest
 
-from fhir_cql.server.generator.patient import PatientGenerator
+from fhirkit.server.generator.patient import PatientGenerator
 
 
 class TestPatientGenerator:

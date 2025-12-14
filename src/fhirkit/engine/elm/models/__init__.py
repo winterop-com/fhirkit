@@ -6,7 +6,7 @@ Pydantic models for ELM (Expression Logical Model) structures including:
 - Type specifiers
 """
 
-from fhir_cql.engine.elm.models.expressions import (
+from fhirkit.engine.elm.models.expressions import (
     ELMAbs,
     # Arithmetic
     ELMAdd,
@@ -209,7 +209,7 @@ from fhir_cql.engine.elm.models.expressions import (
     ELMWithout,
     ELMXor,
 )
-from fhir_cql.engine.elm.models.library import (
+from fhirkit.engine.elm.models.library import (
     ELMCodeDef,
     ELMCodeSystem,
     ELMConceptDef,
@@ -225,13 +225,13 @@ from fhir_cql.engine.elm.models.library import (
     ELMUsing,
     ELMValueSet,
 )
-from fhir_cql.engine.elm.models.library import (
+from fhirkit.engine.elm.models.library import (
     ELMCodeRef as ELMLibraryCodeRef,
 )
-from fhir_cql.engine.elm.models.library import (
+from fhirkit.engine.elm.models.library import (
     ELMCodeSystemRef as ELMLibraryCodeSystemRef,
 )
-from fhir_cql.engine.elm.models.types import (
+from fhirkit.engine.elm.models.types import (
     AnyTypeSpecifier,
     ELMChoiceTypeSpecifier,
     ELMIntervalTypeSpecifier,

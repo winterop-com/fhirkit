@@ -3,9 +3,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.server.api.app import create_app
-from fhir_cql.server.config.settings import FHIRServerSettings
-from fhir_cql.server.storage.fhir_store import FHIRStore
+from fhirkit.server.api.app import create_app
+from fhirkit.server.config.settings import FHIRServerSettings
+from fhirkit.server.storage.fhir_store import FHIRStore
 
 
 @pytest.fixture
@@ -449,7 +449,7 @@ class TestIncludeHandler:
 
     def test_parse_include_param_full(self) -> None:
         """Test parsing full _include parameter."""
-        from fhir_cql.server.api.include_handler import IncludeHandler
+        from fhirkit.server.api.include_handler import IncludeHandler
 
         store = FHIRStore()
         handler = IncludeHandler(store)
@@ -461,7 +461,7 @@ class TestIncludeHandler:
 
     def test_parse_include_param_no_target(self) -> None:
         """Test parsing _include without target type."""
-        from fhir_cql.server.api.include_handler import IncludeHandler
+        from fhirkit.server.api.include_handler import IncludeHandler
 
         store = FHIRStore()
         handler = IncludeHandler(store)
@@ -473,14 +473,14 @@ class TestIncludeHandler:
 
     def test_get_patient_reference_paths(self) -> None:
         """Test getting patient reference paths."""
-        from fhir_cql.server.api.compartments import get_patient_reference_paths
+        from fhirkit.server.api.compartments import get_patient_reference_paths
 
         paths = get_patient_reference_paths("Condition")
         assert "subject.reference" in paths
 
     def test_get_reference_from_path(self) -> None:
         """Test extracting reference from path."""
-        from fhir_cql.server.api.compartments import get_reference_from_path
+        from fhirkit.server.api.compartments import get_reference_from_path
 
         resource = {"subject": {"reference": "Patient/123"}}
         ref = get_reference_from_path(resource, "subject.reference")
@@ -488,7 +488,7 @@ class TestIncludeHandler:
 
     def test_get_reference_from_nested_path(self) -> None:
         """Test extracting reference from deeply nested path."""
-        from fhir_cql.server.api.compartments import get_reference_from_path
+        from fhirkit.server.api.compartments import get_reference_from_path
 
         resource = {"performer": [{"actor": {"reference": "Practitioner/456"}}]}
         ref = get_reference_from_path(resource, "performer.actor.reference")
@@ -496,7 +496,7 @@ class TestIncludeHandler:
 
     def test_is_in_patient_compartment(self) -> None:
         """Test checking if resource type is in Patient compartment."""
-        from fhir_cql.server.api.compartments import is_in_patient_compartment
+        from fhirkit.server.api.compartments import is_in_patient_compartment
 
         assert is_in_patient_compartment("Condition") is True
         assert is_in_patient_compartment("Observation") is True

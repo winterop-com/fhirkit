@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fhir_cql.engine.cql.datasource import InMemoryDataSource
+from fhirkit.engine.cql.datasource import InMemoryDataSource
 
 
 class FHIRStore(InMemoryDataSource):

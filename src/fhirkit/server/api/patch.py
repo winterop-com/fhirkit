@@ -12,7 +12,7 @@ Supported operations:
 - test: Test that a value equals the expected value
 
 Example:
-    from fhir_cql.server.api.patch import apply_json_patch, PatchError
+    from fhirkit.server.api.patch import apply_json_patch, PatchError
 
     resource = {"resourceType": "Patient", "active": True, "name": [{"family": "Smith"}]}
     operations = [

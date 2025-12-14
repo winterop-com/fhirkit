@@ -9,8 +9,8 @@ Tests cover:
 - Cross join with FHIR Retrieve
 """
 
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.context import DataSource
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.context import DataSource
 
 
 class MockDataSource(DataSource):

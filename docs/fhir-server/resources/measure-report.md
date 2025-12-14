@@ -188,7 +188,7 @@ The `MeasureReportGenerator` creates synthetic MeasureReport resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import MeasureReportGenerator
+from fhirkit.server.generator import MeasureReportGenerator
 
 generator = MeasureReportGenerator(seed=42)
 

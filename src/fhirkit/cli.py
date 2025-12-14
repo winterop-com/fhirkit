@@ -3,12 +3,12 @@
 import typer
 from rich import print as rprint
 
-from fhir_cql.cds_cli import app as cds_app
-from fhir_cql.cql_cli import app as cql_app
-from fhir_cql.elm_cli import app as elm_app
-from fhir_cql.fhirpath_cli import app as fhirpath_app
-from fhir_cql.server_cli import app as server_app
-from fhir_cql.terminology_cli import app as terminology_app
+from fhirkit.cds_cli import app as cds_app
+from fhirkit.cql_cli import app as cql_app
+from fhirkit.elm_cli import app as elm_app
+from fhirkit.fhirpath_cli import app as fhirpath_app
+from fhirkit.server_cli import app as server_app
+from fhirkit.terminology_cli import app as terminology_app
 
 app = typer.Typer(
     name="fhir",
@@ -56,10 +56,10 @@ def serve(
     """
     import uvicorn
 
-    from fhir_cql.server.api.app import create_app
-    from fhir_cql.server.config.settings import FHIRServerSettings
-    from fhir_cql.server.preload import load_cql_directory, load_fhir_directory, load_single_file
-    from fhir_cql.server.storage.fhir_store import FHIRStore
+    from fhirkit.server.api.app import create_app
+    from fhirkit.server.config.settings import FHIRServerSettings
+    from fhirkit.server.preload import load_cql_directory, load_fhir_directory, load_single_file
+    from fhirkit.server.storage.fhir_store import FHIRStore
 
     settings = FHIRServerSettings(
         host=host,

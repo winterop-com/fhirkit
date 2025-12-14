@@ -150,7 +150,7 @@ The `ConditionGenerator` creates synthetic Condition resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import ConditionGenerator
+from fhirkit.server.generator import ConditionGenerator
 
 generator = ConditionGenerator(seed=42)
 

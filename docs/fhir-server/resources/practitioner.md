@@ -127,7 +127,7 @@ The `PractitionerGenerator` creates synthetic Practitioner resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import PractitionerGenerator
+from fhirkit.server.generator import PractitionerGenerator
 
 generator = PractitionerGenerator(seed=42)
 

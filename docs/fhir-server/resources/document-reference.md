@@ -113,7 +113,7 @@ The `DocumentReferenceGenerator` creates synthetic DocumentReference resources w
 ### Usage
 
 ```python
-from fhir_cql.server.generator import DocumentReferenceGenerator
+from fhirkit.server.generator import DocumentReferenceGenerator
 
 generator = DocumentReferenceGenerator(seed=42)
 

@@ -3,10 +3,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.server.api.app import create_app
-from fhir_cql.server.api.patch import PatchError, apply_json_patch
-from fhir_cql.server.config.settings import FHIRServerSettings
-from fhir_cql.server.storage.fhir_store import FHIRStore
+from fhirkit.server.api.app import create_app
+from fhirkit.server.api.patch import PatchError, apply_json_patch
+from fhirkit.server.config.settings import FHIRServerSettings
+from fhirkit.server.storage.fhir_store import FHIRStore
 
 # =============================================================================
 # Unit Tests for apply_json_patch

@@ -3,11 +3,11 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.server.api.app import create_app
-from fhir_cql.server.config.settings import FHIRServerSettings
-from fhir_cql.server.generator import CompositionGenerator, ConceptMapGenerator
-from fhir_cql.server.operations import ConceptMapTranslator, DocumentGenerator, PatientMatcher
-from fhir_cql.server.storage.fhir_store import FHIRStore
+from fhirkit.server.api.app import create_app
+from fhirkit.server.config.settings import FHIRServerSettings
+from fhirkit.server.generator import CompositionGenerator, ConceptMapGenerator
+from fhirkit.server.operations import ConceptMapTranslator, DocumentGenerator, PatientMatcher
+from fhirkit.server.storage.fhir_store import FHIRStore
 
 
 @pytest.fixture

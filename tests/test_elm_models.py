@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from fhir_cql.engine.elm.exceptions import ELMValidationError
-from fhir_cql.engine.elm.loader import ELMLoader
-from fhir_cql.engine.elm.models.expressions import (
+from fhirkit.engine.elm.exceptions import ELMValidationError
+from fhirkit.engine.elm.loader import ELMLoader
+from fhirkit.engine.elm.models.expressions import (
     ELMAdd,
     ELMAnd,
     ELMEqual,
@@ -19,7 +19,7 @@ from fhir_cql.engine.elm.models.expressions import (
     ELMSubtract,
     ELMTuple,
 )
-from fhir_cql.engine.elm.models.library import (
+from fhirkit.engine.elm.models.library import (
     ELMCodeDef,
     ELMCodeSystem,
     ELMDefinition,
@@ -33,7 +33,7 @@ from fhir_cql.engine.elm.models.library import (
     ELMUsing,
     ELMValueSet,
 )
-from fhir_cql.engine.elm.models.types import (
+from fhirkit.engine.elm.models.types import (
     ELMListTypeSpecifier,
     ELMNamedTypeSpecifier,
     ELMTupleTypeSpecifier,
@@ -116,7 +116,7 @@ class TestELMValueSet:
 
 class TestELMCodeDef:
     def test_code_definition(self):
-        from fhir_cql.engine.elm.models.library import ELMCodeSystemRef
+        from fhirkit.engine.elm.models.library import ELMCodeSystemRef
 
         code = ELMCodeDef(
             name="Systolic BP",
@@ -174,7 +174,7 @@ class TestELMTypeSpecifiers:
         assert ts.elementType.name == "String"
 
     def test_tuple_type_specifier(self):
-        from fhir_cql.engine.elm.models.types import ELMTupleElementDefinition
+        from fhirkit.engine.elm.models.types import ELMTupleElementDefinition
 
         ts = ELMTupleTypeSpecifier(
             element=[

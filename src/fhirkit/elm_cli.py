@@ -11,8 +11,8 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
 
-from fhir_cql.engine.elm import ELMEvaluator, ELMSerializer
-from fhir_cql.engine.elm.exceptions import ELMError, ELMExecutionError, ELMValidationError
+from fhirkit.engine.elm import ELMEvaluator, ELMSerializer
+from fhirkit.engine.elm.exceptions import ELMError, ELMExecutionError, ELMValidationError
 
 app = typer.Typer(
     name="elm",

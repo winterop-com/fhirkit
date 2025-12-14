@@ -5,9 +5,9 @@ from uuid import uuid4
 
 import pytest
 
-from fhir_cql.cds_hooks.config.settings import CDSHooksSettings, CDSServiceConfig
-from fhir_cql.cds_hooks.models.request import CDSRequest
-from fhir_cql.cds_hooks.service.executor import CDSExecutor
+from fhirkit.cds_hooks.config.settings import CDSHooksSettings, CDSServiceConfig
+from fhirkit.cds_hooks.models.request import CDSRequest
+from fhirkit.cds_hooks.service.executor import CDSExecutor
 
 
 @pytest.fixture

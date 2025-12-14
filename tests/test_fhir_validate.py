@@ -2,8 +2,8 @@
 
 import pytest
 
-from fhir_cql.server.validation import FHIRValidator, ValidationIssue, ValidationResult
-from fhir_cql.server.validation.rules import RESOURCE_RULES, VALID_RESOURCE_TYPES
+from fhirkit.server.validation import FHIRValidator, ValidationIssue, ValidationResult
+from fhirkit.server.validation.rules import RESOURCE_RULES, VALID_RESOURCE_TYPES
 
 # =============================================================================
 # Unit Tests for FHIRValidator
@@ -291,7 +291,7 @@ class TestReferenceValidation:
 
     def test_reference_validation_with_store(self):
         """Test reference validation checks references exist."""
-        from fhir_cql.server.storage.fhir_store import FHIRStore
+        from fhirkit.server.storage.fhir_store import FHIRStore
 
         store = FHIRStore()
         # Create a patient for reference
@@ -308,7 +308,7 @@ class TestReferenceValidation:
 
     def test_reference_validation_nonexistent(self):
         """Test reference validation warns for nonexistent references."""
-        from fhir_cql.server.storage.fhir_store import FHIRStore
+        from fhirkit.server.storage.fhir_store import FHIRStore
 
         store = FHIRStore()
         validator = FHIRValidator(store)
@@ -325,7 +325,7 @@ class TestReferenceValidation:
 
     def test_external_references_not_validated(self):
         """Test external URLs are not validated against store."""
-        from fhir_cql.server.storage.fhir_store import FHIRStore
+        from fhirkit.server.storage.fhir_store import FHIRStore
 
         store = FHIRStore()
         validator = FHIRValidator(store)
@@ -345,7 +345,7 @@ class TestResourceRules:
 
     def test_all_supported_types_have_rules(self):
         """Test that all supported types have validation rules defined."""
-        from fhir_cql.server.api.routes import SUPPORTED_TYPES
+        from fhirkit.server.api.routes import SUPPORTED_TYPES
 
         for resource_type in SUPPORTED_TYPES:
             # All types should be in VALID_RESOURCE_TYPES or have rules
@@ -392,8 +392,8 @@ def client():
     """Create a test client."""
     from fastapi.testclient import TestClient
 
-    from fhir_cql.server.api.app import create_app
-    from fhir_cql.server.config.settings import FHIRServerSettings
+    from fhirkit.server.api.app import create_app
+    from fhirkit.server.config.settings import FHIRServerSettings
 
     settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings)

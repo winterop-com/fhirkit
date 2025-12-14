@@ -23,9 +23,9 @@ class CQLTerminologyAdapter:
     provider.
 
     Example:
-        from fhir_cql.server.storage.fhir_store import FHIRStore
-        from fhir_cql.engine.cql.terminology import CQLTerminologyAdapter
-        from fhir_cql.engine.cql.datasource import InMemoryDataSource
+        from fhirkit.server.storage.fhir_store import FHIRStore
+        from fhirkit.engine.cql.terminology import CQLTerminologyAdapter
+        from fhirkit.engine.cql.datasource import InMemoryDataSource
 
         store = FHIRStore()
         # ... populate store with terminology resources ...

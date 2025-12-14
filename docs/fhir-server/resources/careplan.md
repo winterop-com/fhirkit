@@ -106,7 +106,7 @@ The `CarePlanGenerator` creates synthetic CarePlan resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import CarePlanGenerator
+from fhirkit.server.generator import CarePlanGenerator
 
 generator = CarePlanGenerator(seed=42)
 

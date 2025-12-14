@@ -33,8 +33,8 @@ The plugin system consists of:
 The simplest way to register a custom function:
 
 ```python
-from fhir_cql.engine.cql.plugins import register_function
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import register_function
+from fhirkit.engine.cql import CQLEvaluator
 
 # Register a custom function
 @register_function("MyOrg.Double", description="Doubles a number")
@@ -55,8 +55,8 @@ print(result)  # 42
 ### Using the Registry Directly
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 # Create a registry
 registry = CQLPluginRegistry()
@@ -91,7 +91,7 @@ The central class for managing custom functions.
 ### Creating a Registry
 
 ```python
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 # Create empty registry
 registry = CQLPluginRegistry()
@@ -239,7 +239,7 @@ Use the `@register_function` decorator for convenient registration.
 ### Basic Usage
 
 ```python
-from fhir_cql.engine.cql.plugins import register_function
+from fhirkit.engine.cql.plugins import register_function
 
 @register_function("MyFunc")
 def my_func(x):
@@ -295,7 +295,7 @@ The decorator uses a global registry shared across the application.
 ### Accessing the Global Registry
 
 ```python
-from fhir_cql.engine.cql.plugins import get_global_registry
+from fhirkit.engine.cql.plugins import get_global_registry
 
 registry = get_global_registry()
 
@@ -310,8 +310,8 @@ if registry.has("MyOrg.Calculate"):
 ### Using with Evaluator
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import get_global_registry
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import get_global_registry
 
 # Register functions with decorator (uses global registry)
 @register_function("Double")
@@ -332,7 +332,7 @@ The library includes pre-built plugin registries for common operations.
 ### Math Plugins
 
 ```python
-from fhir_cql.engine.cql.plugins import create_math_plugins
+from fhirkit.engine.cql.plugins import create_math_plugins
 
 registry = create_math_plugins()
 
@@ -357,7 +357,7 @@ print(registry.call("Math.Sqrt", -1))      # None (invalid input)
 ### String Plugins
 
 ```python
-from fhir_cql.engine.cql.plugins import create_string_plugins
+from fhirkit.engine.cql.plugins import create_string_plugins
 
 registry = create_string_plugins()
 
@@ -381,7 +381,7 @@ print(registry.call("String.IsBlank", None))         # True
 ### Combining Built-in Plugins
 
 ```python
-from fhir_cql.engine.cql.plugins import (
+from fhirkit.engine.cql.plugins import (
     CQLPluginRegistry,
     create_math_plugins,
     create_string_plugins
@@ -406,8 +406,8 @@ evaluator = CQLEvaluator(plugin_registry=registry)
 ### Setting Plugin Registry
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 # Method 1: Constructor
 registry = CQLPluginRegistry()
@@ -463,7 +463,7 @@ print(result)  # 15
 ### Single Function Plugin
 
 ```python
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 def create_bmi_plugin() -> CQLPluginRegistry:
     """Create a plugin for BMI calculation."""
@@ -509,7 +509,7 @@ def create_bmi_plugin() -> CQLPluginRegistry:
 
 ```python
 # my_plugins.py
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 def create_cardio_plugins() -> CQLPluginRegistry:
     """Create cardiovascular risk calculation plugins."""
@@ -567,8 +567,8 @@ def create_cardio_plugins() -> CQLPluginRegistry:
 ### Using Your Custom Plugins
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 from my_plugins import create_cardio_plugins, create_bmi_plugin
 
 # Combine plugins
@@ -665,7 +665,7 @@ registry.register("StrictDivide", strict_divide)
 
 ```python
 import pytest
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 def test_custom_function():
     registry = CQLPluginRegistry()
@@ -699,8 +699,8 @@ def test_metadata():
 ### Integration Testing with Evaluator
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 def test_plugin_in_cql():
     registry = CQLPluginRegistry()
@@ -795,7 +795,7 @@ def create_clinical_plugins() -> CQLPluginRegistry:
 ### Clinical Risk Score Plugin
 
 ```python
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 def create_risk_score_plugins() -> CQLPluginRegistry:
     """Create clinical risk score calculation plugins."""
@@ -871,7 +871,7 @@ def create_risk_score_plugins() -> CQLPluginRegistry:
 ### Data Transformation Plugin
 
 ```python
-from fhir_cql.engine.cql.plugins import CQLPluginRegistry
+from fhirkit.engine.cql.plugins import CQLPluginRegistry
 
 def create_transform_plugins() -> CQLPluginRegistry:
     """Create data transformation plugins."""

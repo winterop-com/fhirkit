@@ -5,7 +5,7 @@ This guide covers using the FHIRPath evaluator as a Python library. Whether you'
 ## Quick Start
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 # Load a FHIR resource (dict or JSON)
 patient = {
@@ -46,7 +46,7 @@ The main function for evaluating FHIRPath expressions.
 **Example:**
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 observation = {
     "resourceType": "Observation",
@@ -88,7 +88,7 @@ Parses a FHIRPath expression and returns the AST (Abstract Syntax Tree).
 **Example:**
 
 ```python
-from fhir_cql import parse_fhirpath
+from fhirkit import parse_fhirpath
 
 # Parse an expression
 ast = parse_fhirpath("Patient.name.given.first()")
@@ -104,7 +104,7 @@ FHIRPath always returns collections (lists). Here are common patterns:
 ### Getting Single Values
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {"resourceType": "Patient", "gender": "male"}
 
@@ -124,7 +124,7 @@ result = evaluate_fhirpath("Patient.gender.single()", patient)
 ### Checking Existence
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -147,7 +147,7 @@ print(count)  # [1]
 ### Boolean Results
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -179,7 +179,7 @@ if get_bool(evaluate_fhirpath("Patient.active", patient)):
 ### Using `where()`
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -208,7 +208,7 @@ print(mobile)  # ['555-5678']
 ### Using `select()`
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -235,7 +235,7 @@ print(formatted)  # ['John Smith', 'Johnny Jones']
 ### Patient
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -272,7 +272,7 @@ address = evaluate_fhirpath(
 ### Observation (Vitals)
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 bp_observation = {
     "resourceType": "Observation",
@@ -317,7 +317,7 @@ print(elevated)  # [False]
 ### Bundle Processing
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 bundle = {
     "resourceType": "Bundle",
@@ -352,7 +352,7 @@ patients = evaluate_fhirpath(
 Pass external variables into expressions:
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -373,7 +373,7 @@ print(result)  # [True]
 ## String Manipulation
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 patient = {
     "resourceType": "Patient",
@@ -417,7 +417,7 @@ print(area_code)  # ['555']
 ## Math Operations
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 observation = {
     "resourceType": "Observation",
@@ -450,7 +450,7 @@ print(floor)  # [3]
 ## Type Conversion
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 # String to integer
 result = evaluate_fhirpath("'42'.toInteger()", {})
@@ -475,7 +475,7 @@ print(result)  # [True]
 ## Collection Operations
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 # Union
 result = evaluate_fhirpath("(1 | 2 | 3) | (3 | 4 | 5)", {})
@@ -504,7 +504,7 @@ print(result)  # [True]
 ## Date/Time Operations
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 # Date literals
 result = evaluate_fhirpath("@2024-06-15", {})
@@ -534,7 +534,7 @@ print(result)  # [<current datetime>]
 ## Error Handling
 
 ```python
-from fhir_cql import evaluate_fhirpath, parse_fhirpath
+from fhirkit import evaluate_fhirpath, parse_fhirpath
 
 # Parse errors
 try:
@@ -565,7 +565,7 @@ except Exception as e:
 ### 1. Always Handle Empty Results
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 def get_patient_gender(patient):
     result = evaluate_fhirpath("Patient.gender", patient)
@@ -575,7 +575,7 @@ def get_patient_gender(patient):
 ### 2. Use exists() for Conditional Logic
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 def has_email(patient):
     result = evaluate_fhirpath(
@@ -588,7 +588,7 @@ def has_email(patient):
 ### 3. Validate Before Complex Operations
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 
 def get_blood_pressure(observation):
     # First check it's a BP observation
@@ -617,7 +617,7 @@ def get_blood_pressure(observation):
 ### 4. Cache Parsed Expressions for Performance
 
 ```python
-from fhir_cql import parse_fhirpath, evaluate_fhirpath
+from fhirkit import parse_fhirpath, evaluate_fhirpath
 
 # If evaluating the same expression many times,
 # consider caching the parsed AST
@@ -627,7 +627,7 @@ from fhir_cql import parse_fhirpath, evaluate_fhirpath
 ## Complete Example: Patient Data Extraction
 
 ```python
-from fhir_cql import evaluate_fhirpath
+from fhirkit import evaluate_fhirpath
 import json
 
 def extract_patient_summary(patient: dict) -> dict:

@@ -7,7 +7,7 @@ to validate codes, check membership, and work with value sets.
 
 from pathlib import Path
 
-from fhir_cql.terminology import (
+from fhirkit.terminology import (
     InMemoryTerminologyService,
     MemberOfRequest,
     SubsumesRequest,

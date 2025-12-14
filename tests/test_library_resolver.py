@@ -1,6 +1,6 @@
 """Tests for CQL library resolution."""
 
-from fhir_cql.engine.cql import (
+from fhirkit.engine.cql import (
     CompositeLibraryResolver,
     CQLEvaluator,
     FileLibraryResolver,

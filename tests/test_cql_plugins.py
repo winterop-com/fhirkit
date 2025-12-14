@@ -4,8 +4,8 @@ import math
 
 import pytest
 
-from fhir_cql.engine.cql import CQLEvaluator
-from fhir_cql.engine.cql.plugins import (
+from fhirkit.engine.cql import CQLEvaluator
+from fhirkit.engine.cql.plugins import (
     CQLPluginRegistry,
     create_math_plugins,
     create_string_plugins,

@@ -133,7 +133,7 @@ The `DiagnosticReportGenerator` creates synthetic DiagnosticReport resources wit
 ### Usage
 
 ```python
-from fhir_cql.server.generator import DiagnosticReportGenerator
+from fhirkit.server.generator import DiagnosticReportGenerator
 
 generator = DiagnosticReportGenerator(seed=42)
 

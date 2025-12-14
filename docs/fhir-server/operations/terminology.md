@@ -35,7 +35,7 @@ uv run fhir serve
 uv run fhir serve --port 8000 --patients 100
 
 # Or with uvicorn directly
-uvicorn fhir_cql.server.api.app:create_app --factory --reload --port 8000
+uvicorn fhirkit.server.api.app:create_app --factory --reload --port 8000
 ```
 
 ### Create a CodeSystem
@@ -425,8 +425,8 @@ With this structure:
 For CQL evaluation, use the `CQLTerminologyAdapter` which integrates with the FHIR server's terminology provider:
 
 ```python
-from fhir_cql.server.storage.fhir_store import FHIRStore
-from fhir_cql.engine.cql import (
+from fhirkit.server.storage.fhir_store import FHIRStore
+from fhirkit.engine.cql import (
     CQLEvaluator,
     CQLTerminologyAdapter,
     InMemoryDataSource,
@@ -477,7 +477,7 @@ evaluator = CQLEvaluator(data_source=data_source)
 ### Convenience Function
 
 ```python
-from fhir_cql.engine.cql import create_terminology_datasource
+from fhirkit.engine.cql import create_terminology_datasource
 
 # Create data source with preloaded ValueSets
 data_source, adapter = create_terminology_datasource(
@@ -521,8 +521,8 @@ define DiabetesConditions:
 ### Using the Terminology Provider Directly
 
 ```python
-from fhir_cql.server.storage.fhir_store import FHIRStore
-from fhir_cql.server.terminology import FHIRStoreTerminologyProvider
+from fhirkit.server.storage.fhir_store import FHIRStore
+from fhirkit.server.terminology import FHIRStoreTerminologyProvider
 
 # Create store and provider
 store = FHIRStore()
@@ -571,7 +571,7 @@ result = provider.subsumes(
 ```python
 import json
 from pathlib import Path
-from fhir_cql.server.storage.fhir_store import FHIRStore
+from fhirkit.server.storage.fhir_store import FHIRStore
 
 def load_terminology_directory(store: FHIRStore, directory: Path):
     """Load all CodeSystem and ValueSet files from a directory."""

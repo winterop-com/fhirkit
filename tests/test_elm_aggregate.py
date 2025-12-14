@@ -1,7 +1,7 @@
 """Tests for ELM Query Aggregate Clause."""
 
-from fhir_cql.engine.cql.context import CQLContext
-from fhir_cql.engine.elm.visitor import ELMExpressionVisitor
+from fhirkit.engine.cql.context import CQLContext
+from fhirkit.engine.elm.visitor import ELMExpressionVisitor
 
 
 class TestAggregateClause:

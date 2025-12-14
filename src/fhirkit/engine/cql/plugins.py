@@ -5,7 +5,7 @@ from CQL expressions. Plugins allow extending CQL functionality with
 organization-specific or domain-specific operations.
 
 Usage:
-    from fhir_cql.engine.cql.plugins import CQLPluginRegistry, register_function
+    from fhirkit.engine.cql.plugins import CQLPluginRegistry, register_function
 
     # Using decorator
     @register_function("MyOrg.CustomCalc")

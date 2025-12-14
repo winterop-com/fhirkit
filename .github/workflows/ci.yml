@@ -48,7 +48,7 @@ jobs:
         run: uv sync --all-groups
 
       - name: Run tests with coverage
-        run: uv run pytest tests/ --cov=src/fhir_cql --cov-report=xml --cov-report=term-missing
+        run: uv run pytest tests/ --cov=src/fhirkit --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

@@ -201,7 +201,7 @@ The `QuestionnaireGenerator` creates synthetic Questionnaire resources with pre-
 ### Usage
 
 ```python
-from fhir_cql.server.generator import QuestionnaireGenerator
+from fhirkit.server.generator import QuestionnaireGenerator
 
 generator = QuestionnaireGenerator(seed=42)
 

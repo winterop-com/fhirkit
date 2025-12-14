@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from fhir_cql.cds_cli import app
+from fhirkit.cds_cli import app
 
 runner = CliRunner()
 

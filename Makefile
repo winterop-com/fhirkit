@@ -60,7 +60,7 @@ test:
 
 coverage:
 	@echo ">>> Running tests with coverage"
-	@uv run pytest tests/ --cov=src/fhir_cql --cov-report=term-missing --cov-report=html
+	@uv run pytest tests/ --cov=src/fhirkit --cov-report=term-missing --cov-report=html
 	@echo ">>> HTML report generated in htmlcov/"
 
 docs:

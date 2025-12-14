@@ -3,9 +3,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.server.api.app import create_app
-from fhir_cql.server.config.settings import FHIRServerSettings
-from fhir_cql.server.storage.fhir_store import FHIRStore
+from fhirkit.server.api.app import create_app
+from fhirkit.server.config.settings import FHIRServerSettings
+from fhirkit.server.storage.fhir_store import FHIRStore
 
 
 @pytest.fixture
@@ -346,7 +346,7 @@ class TestTerminologyProvider:
 
     def test_provider_expand_codes_from_codesystem(self, store_with_terminology):
         """Test that provider expands codes from CodeSystem correctly."""
-        from fhir_cql.server.terminology import FHIRStoreTerminologyProvider
+        from fhirkit.server.terminology import FHIRStoreTerminologyProvider
 
         provider = FHIRStoreTerminologyProvider(store_with_terminology)
         result = provider.expand_valueset(url="http://example.org/fhir/ValueSet/test-full")
@@ -360,7 +360,7 @@ class TestTerminologyProvider:
 
     def test_provider_hierarchy_building(self, store_with_terminology):
         """Test that hierarchy is built correctly."""
-        from fhir_cql.server.terminology import FHIRStoreTerminologyProvider
+        from fhirkit.server.terminology import FHIRStoreTerminologyProvider
 
         provider = FHIRStoreTerminologyProvider(store_with_terminology)
 

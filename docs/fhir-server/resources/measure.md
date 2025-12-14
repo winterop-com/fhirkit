@@ -161,7 +161,7 @@ The `MeasureGenerator` creates synthetic Measure resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import MeasureGenerator
+from fhirkit.server.generator import MeasureGenerator
 
 generator = MeasureGenerator(seed=42)
 

@@ -29,8 +29,8 @@ def serve(
     """
     import uvicorn
 
-    from fhir_cql.cds_hooks.api.app import create_app
-    from fhir_cql.cds_hooks.config.settings import CDSHooksSettings
+    from fhirkit.cds_hooks.api.app import create_app
+    from fhirkit.cds_hooks.config.settings import CDSHooksSettings
 
     settings = CDSHooksSettings(
         host=host,
@@ -69,7 +69,7 @@ def validate(
     Example:
         fhir cds validate cds_services.yaml
     """
-    from fhir_cql.cds_hooks.config.settings import CDSServiceConfig
+    from fhirkit.cds_hooks.config.settings import CDSServiceConfig
 
     if not config.exists():
         rprint(f"[red]Error:[/red] Config file not found: {config}")
@@ -145,7 +145,7 @@ def list_services(
             rprint("No services configured.")
             raise typer.Exit(0)
 
-        from fhir_cql.cds_hooks.config.settings import CDSServiceConfig
+        from fhirkit.cds_hooks.config.settings import CDSServiceConfig
 
         table = Table(title=f"CDS Services from {config}")
         table.add_column("ID", style="cyan")
@@ -188,11 +188,11 @@ def test_service(
     import json
     from uuid import uuid4
 
-    from fhir_cql.cds_hooks.config.settings import CDSHooksSettings
-    from fhir_cql.cds_hooks.models.request import CDSRequest
-    from fhir_cql.cds_hooks.service.card_builder import CardBuilder
-    from fhir_cql.cds_hooks.service.executor import CDSExecutor
-    from fhir_cql.cds_hooks.service.registry import ServiceRegistry
+    from fhirkit.cds_hooks.config.settings import CDSHooksSettings
+    from fhirkit.cds_hooks.models.request import CDSRequest
+    from fhirkit.cds_hooks.service.card_builder import CardBuilder
+    from fhirkit.cds_hooks.service.executor import CDSExecutor
+    from fhirkit.cds_hooks.service.registry import ServiceRegistry
 
     settings = CDSHooksSettings(services_config_path=config)
     registry = ServiceRegistry(settings)

@@ -314,7 +314,7 @@ fhir server info
 # FHIR Server Information
 #
 #   Name:         FHIR R4 Server
-#   Publisher:    python-fhir-cql
+#   Publisher:    fhirkit
 #   FHIR Version: 4.0.1
 #   Status:       active
 #
@@ -994,7 +994,7 @@ Supports:
 ### FHIRStore Class
 
 ```python
-from fhir_cql.server.storage import FHIRStore
+from fhirkit.server.storage import FHIRStore
 
 # Create store
 store = FHIRStore()
@@ -1036,7 +1036,7 @@ versions = store.history("Patient", "abc123")
 ### PatientRecordGenerator
 
 ```python
-from fhir_cql.server.generator import PatientRecordGenerator
+from fhirkit.server.generator import PatientRecordGenerator
 
 # Create generator with seed for reproducibility
 generator = PatientRecordGenerator(seed=42)
@@ -1062,7 +1062,7 @@ print(f"Total: {len(all_resources)} resources")
 ### Individual Resource Generators
 
 ```python
-from fhir_cql.server.generator import (
+from fhirkit.server.generator import (
     PatientGenerator,
     ConditionGenerator,
     ObservationGenerator,
@@ -1089,9 +1089,9 @@ print(condition["code"]["coding"][0]["display"])
 ### Creating Custom Server
 
 ```python
-from fhir_cql.server.api import create_app
-from fhir_cql.server.config import FHIRServerSettings
-from fhir_cql.server.storage import FHIRStore
+from fhirkit.server.api import create_app
+from fhirkit.server.config import FHIRServerSettings
+from fhirkit.server.storage import FHIRStore
 
 # Custom settings
 settings = FHIRServerSettings(
@@ -1158,7 +1158,7 @@ fhir serve
 ### FHIRServerSettings Class
 
 ```python
-from fhir_cql.server.config import FHIRServerSettings
+from fhirkit.server.config import FHIRServerSettings
 
 settings = FHIRServerSettings(
     # Server

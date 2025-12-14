@@ -15,7 +15,7 @@ This library supports loading and executing pre-compiled ELM JSON from any CQL c
 ## Quick Start
 
 ```python
-from fhir_cql.engine.elm import ELMEvaluator
+from fhirkit.engine.elm import ELMEvaluator
 
 # Create evaluator
 evaluator = ELMEvaluator()
@@ -51,7 +51,7 @@ print(result)  # 3
 ### From a File
 
 ```python
-from fhir_cql.engine.elm import ELMEvaluator
+from fhirkit.engine.elm import ELMEvaluator
 
 evaluator = ELMEvaluator()
 
@@ -213,7 +213,7 @@ if not is_valid:
 ### Using the Loader Directly
 
 ```python
-from fhir_cql.engine.elm import ELMLoader
+from fhirkit.engine.elm import ELMLoader
 
 # Validate structure
 errors = ELMLoader.validate(elm_dict)
@@ -405,8 +405,8 @@ print(f"Definitions: {info['definitions']}")
 ## Using with Data Sources
 
 ```python
-from fhir_cql.engine.cql import InMemoryDataSource
-from fhir_cql.engine.elm import ELMEvaluator
+from fhirkit.engine.cql import InMemoryDataSource
+from fhirkit.engine.elm import ELMEvaluator
 
 # Create data source with FHIR resources
 data_source = InMemoryDataSource()
@@ -426,8 +426,8 @@ result = evaluator.evaluate_definition("PatientConditions", resource=patient)
 ## Error Handling
 
 ```python
-from fhir_cql.engine.elm import ELMEvaluator
-from fhir_cql.engine.elm.exceptions import (
+from fhirkit.engine.elm import ELMEvaluator
+from fhirkit.engine.elm.exceptions import (
     ELMError,
     ELMValidationError,
     ELMExecutionError,
@@ -489,7 +489,7 @@ fhir cql export library.cql -o library.elm.json
 ### Using the Python API
 
 ```python
-from fhir_cql.engine.cql import CQLEvaluator
+from fhirkit.engine.cql import CQLEvaluator
 
 evaluator = CQLEvaluator()
 
@@ -514,7 +514,7 @@ elm_dict = evaluator.to_elm_dict()
 ### Using the Serializer Directly
 
 ```python
-from fhir_cql.engine.elm import ELMSerializer
+from fhirkit.engine.elm import ELMSerializer
 
 serializer = ELMSerializer()
 

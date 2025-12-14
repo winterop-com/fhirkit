@@ -1,9 +1,23 @@
 [project]
-name = "python-fhir-cql"
+name = "fhirkit"
 version = "0.1.0"
-description = "FHIRPath and CQL parsers for Python using ANTLR4"
+description = "FHIR toolkit with FHIRPath, CQL, CDS Hooks, and FHIR Server for Python"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.13"
+keywords = ["fhir", "fhirpath", "cql", "hl7", "healthcare", "clinical", "cds-hooks", "elm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
 dependencies = [
     "antlr4-python3-runtime>=4.13.2",
     "typer>=0.15.0",
@@ -19,14 +33,20 @@ dependencies = [
 ]
 
 [project.scripts]
-fhir = "fhir_cql.cli:app"
+fhir = "fhirkit.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/winterop-com/fhirkit"
+Documentation = "https://winterop-com.github.io/fhirkit"
+Repository = "https://github.com/winterop-com/fhirkit"
+Issues = "https://github.com/winterop-com/fhirkit/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fhir_cql"]
+packages = ["src/fhirkit"]
 
 [dependency-groups]
 dev = [

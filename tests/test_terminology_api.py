@@ -3,14 +3,14 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from fhir_cql.terminology import (
+from fhirkit.terminology import (
     InMemoryTerminologyService,
     ValueSet,
     ValueSetCompose,
     ValueSetComposeInclude,
     ValueSetComposeIncludeConcept,
 )
-from fhir_cql.terminology.api import create_app
+from fhirkit.terminology.api import create_app
 
 
 @pytest.fixture

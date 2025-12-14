@@ -4,10 +4,10 @@ from decimal import Decimal
 
 import pytest
 
-from fhir_cql.engine.cql.context import CQLContext
-from fhir_cql.engine.elm.exceptions import ELMExecutionError
-from fhir_cql.engine.elm.visitor import ELMExpressionVisitor
-from fhir_cql.engine.types import FHIRDate, FHIRDateTime
+from fhirkit.engine.cql.context import CQLContext
+from fhirkit.engine.elm.exceptions import ELMExecutionError
+from fhirkit.engine.elm.visitor import ELMExpressionVisitor
+from fhirkit.engine.types import FHIRDate, FHIRDateTime
 
 
 class TestAsExpression:

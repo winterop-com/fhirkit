@@ -1,7 +1,7 @@
 """Tests for collection and existence function edge cases."""
 
-from fhir_cql.engine.context import EvaluationContext
-from fhir_cql.engine.fhirpath.functions.collections import (
+from fhirkit.engine.context import EvaluationContext
+from fhirkit.engine.fhirpath.functions.collections import (
     _deep_equals,
     _ensure_list,
     fn_combine,
@@ -14,7 +14,7 @@ from fhir_cql.engine.fhirpath.functions.collections import (
     fn_superset_of,
     fn_union,
 )
-from fhir_cql.engine.fhirpath.functions.existence import (
+from fhirkit.engine.fhirpath.functions.existence import (
     fn_all,
     fn_all_false,
     fn_all_true,

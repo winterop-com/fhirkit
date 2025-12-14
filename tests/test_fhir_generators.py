@@ -1,6 +1,6 @@
 """Tests for FHIR synthetic data generators."""
 
-from fhir_cql.server.generator import (
+from fhirkit.server.generator import (
     AdverseEventGenerator,
     AuditEventGenerator,
     ClinicalImpressionGenerator,
@@ -27,7 +27,7 @@ from fhir_cql.server.generator import (
     RiskAssessmentGenerator,
     SpecimenGenerator,
 )
-from fhir_cql.server.generator.clinical_codes import (
+from fhirkit.server.generator.clinical_codes import (
     CONDITIONS_SNOMED,
     LAB_TESTS,
     MEDICATIONS_RXNORM,

@@ -1,8 +1,8 @@
-# python-fhir-cql
+# fhirkit
 
-[![CI](https://github.com/mortenoh/python-fhir-cql/actions/workflows/ci.yml/badge.svg)](https://github.com/mortenoh/python-fhir-cql/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/mortenoh/python-fhir-cql/branch/main/graph/badge.svg)](https://codecov.io/gh/mortenoh/python-fhir-cql)
-[![Docs](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://mortenoh.github.io/python-fhir-cql)
+[![CI](https://github.com/winterop-com/fhirkit/actions/workflows/ci.yml/badge.svg)](https://github.com/winterop-com/fhirkit/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/winterop-com/fhirkit/branch/main/graph/badge.svg)](https://codecov.io/gh/winterop-com/fhirkit)
+[![Docs](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://winterop-com.github.io/fhirkit)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -33,8 +33,8 @@ This project provides complete implementations of:
 
 ```bash
 # Clone the repository
-git clone https://github.com/mortenoh/python-fhir-cql.git
-cd python-fhir-cql
+git clone https://github.com/winterop-com/fhirkit.git
+cd fhirkit
 
 # Install dependencies
 make install

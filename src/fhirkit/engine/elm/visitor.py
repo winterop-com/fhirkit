@@ -10,13 +10,13 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable
 
-from fhir_cql.engine.cql.context import CQLContext
-from fhir_cql.engine.cql.types import CQLCode, CQLConcept, CQLInterval, CQLTuple
-from fhir_cql.engine.elm.exceptions import ELMExecutionError, ELMReferenceError
-from fhir_cql.engine.types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
+from fhirkit.engine.cql.context import CQLContext
+from fhirkit.engine.cql.types import CQLCode, CQLConcept, CQLInterval, CQLTuple
+from fhirkit.engine.elm.exceptions import ELMExecutionError, ELMReferenceError
+from fhirkit.engine.types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
 
 if TYPE_CHECKING:
-    from fhir_cql.engine.elm.models.library import ELMLibrary
+    from fhirkit.engine.elm.models.library import ELMLibrary
 
 
 class ELMExpressionVisitor:

@@ -154,7 +154,7 @@ The `ImmunizationGenerator` creates synthetic Immunization resources with:
 ### Usage
 
 ```python
-from fhir_cql.server.generator import ImmunizationGenerator
+from fhirkit.server.generator import ImmunizationGenerator
 
 generator = ImmunizationGenerator(seed=42)
 

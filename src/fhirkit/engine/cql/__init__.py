@@ -8,7 +8,7 @@ This module provides comprehensive CQL evaluation capabilities including:
 - Retrieve operations (with data source integration)
 
 Basic Usage:
-    from fhir_cql.engine.cql import CQLEvaluator, evaluate
+    from fhirkit.engine.cql import CQLEvaluator, evaluate
 
     # Quick expression evaluation
     result = evaluate("1 + 2 * 3")  # Returns 7

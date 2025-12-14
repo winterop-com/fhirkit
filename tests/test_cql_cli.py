@@ -4,7 +4,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from fhir_cql.cql_cli import app
+from fhirkit.cql_cli import app
 
 runner = CliRunner()
 

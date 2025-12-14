@@ -7,13 +7,13 @@ This module provides terminology operations for CQL and FHIRPath:
 
 Usage:
     # Create in-memory service
-    from fhir_cql.terminology import InMemoryTerminologyService
+    from fhirkit.terminology import InMemoryTerminologyService
 
     service = InMemoryTerminologyService()
     service.load_value_sets_from_directory("path/to/valuesets")
 
     # Validate a code
-    from fhir_cql.terminology import ValidateCodeRequest
+    from fhirkit.terminology import ValidateCodeRequest
 
     request = ValidateCodeRequest(
         url="http://hl7.org/fhir/ValueSet/observation-status",
@@ -24,7 +24,7 @@ Usage:
     print(f"Valid: {result.result}")
 
     # Run FastAPI server
-    from fhir_cql.terminology.api import create_app
+    from fhirkit.terminology.api import create_app
 
     app = create_app(value_set_directory="path/to/valuesets")
 """
