@@ -70,12 +70,6 @@ class FHIRServerSettings(BaseSettings):
     enable_cors: bool = True
     cors_origins: list[str] = Field(default=["*"])
 
-    # Demo mode
-    demo_mode: bool = Field(
-        default=False,
-        description="Enable demo mode with pre-populated data and expanded help",
-    )
-
     # Logging
     log_level: str = "INFO"
     log_requests: bool = True

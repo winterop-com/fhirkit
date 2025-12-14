@@ -41,7 +41,6 @@ def create_ui_router(
             "server_name": settings.server_name,
             "ui_mount_path": settings.ui_mount_path,
             "api_base_path": settings.api_base_path,
-            "demo_mode": getattr(settings, "demo_mode", False),
             "format_date": format_date,
             "get_resource_display": get_resource_display,
             "messages": [],

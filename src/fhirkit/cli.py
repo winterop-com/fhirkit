@@ -38,14 +38,10 @@ def serve(
     preload_data: str = typer.Option(None, "--preload-data", help="FHIR Bundle JSON file to preload"),
     reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for development"),
     log_level: str = typer.Option("INFO", "--log-level", "-l", help="Logging level"),
-    demo: bool = typer.Option(False, "--demo", "-d", help="Demo mode: pre-populate sample data, show expanded help"),
 ) -> None:
     """Start the FHIR R4 server.
 
     Examples:
-        # Quick start with demo data
-        fhir serve --demo
-
         # Start with 100 synthetic patients
         fhir serve --patients 100
 
@@ -65,14 +61,6 @@ def serve(
     from fhirkit.server.preload import load_cql_directory, load_fhir_directory, load_single_file
     from fhirkit.server.storage.fhir_store import FHIRStore
 
-    # Demo mode defaults: 100 patients, fixed seed, demo_mode=True
-    if demo:
-        if patients == 0:
-            patients = 100
-        if seed is None:
-            seed = 42
-        rprint("[bold cyan]Demo mode enabled[/bold cyan] - generating sample data...")
-
     settings = FHIRServerSettings(
         host=host,
         port=port,
@@ -81,7 +69,6 @@ def serve(
         preload_cql=preload_cql,
         preload_valuesets=preload_valuesets,
         log_level=log_level.upper(),
-        demo_mode=demo,
     )
 
     # Create store and preload data
