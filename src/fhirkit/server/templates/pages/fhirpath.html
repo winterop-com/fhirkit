@@ -16,6 +16,42 @@
         </div>
     </div>
 
+    <!-- Getting Started Banner (collapsible) -->
+    <div id="getting-started" class="bg-gradient-to-r from-fhir-50 to-indigo-50 border border-fhir-200 rounded-lg p-4">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-fhir-900 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-fhir-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Getting Started with FHIRPath
+                </h3>
+                <div id="getting-started-content" class="mt-2 text-sm text-gray-700 space-y-2">
+                    <p><strong>FHIRPath</strong> is the standard language for navigating and extracting data from FHIR resources.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                        <div class="bg-white/60 rounded p-2">
+                            <span class="text-xs font-medium text-green-700">1. Load Resource</span>
+                            <p class="text-xs text-gray-600 mt-1">Paste JSON in Resource panel or use Search mode to query server.</p>
+                        </div>
+                        <div class="bg-white/60 rounded p-2">
+                            <span class="text-xs font-medium text-yellow-700">2. Try Examples</span>
+                            <p class="text-xs text-gray-600 mt-1">Select from Examples dropdown - expressions match resource type.</p>
+                        </div>
+                        <div class="bg-white/60 rounded p-2">
+                            <span class="text-xs font-medium text-blue-700">3. Write & Execute</span>
+                            <p class="text-xs text-gray-600 mt-1">Type expression and press Ctrl+Enter or click Evaluate.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="toggleGettingStarted()" class="ml-4 text-gray-400 hover:text-gray-600">
+                <svg id="getting-started-icon" class="w-5 h-5 transform rotate-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Left Panel: Expression & Resource -->
@@ -30,7 +66,7 @@
                     <div class="flex space-x-2">
                         <select id="example-select" onchange="loadExample()" class="text-sm border-gray-300 rounded-md">
                             <option value="">-- Examples --</option>
-                            <optgroup label="Patient - Basic">
+                            <optgroup label="🟢 Patient - Basic">
                                 <option value="name.given">Given names</option>
                                 <option value="name.family">Family names</option>
                                 <option value="name.text">Full name text</option>
@@ -39,7 +75,7 @@
                                 <option value="identifier.value">Identifier values</option>
                                 <option value="identifier.system">Identifier systems</option>
                             </optgroup>
-                            <optgroup label="Patient - Contact">
+                            <optgroup label="🟢 Patient - Contact">
                                 <option value="telecom.value">All contact values</option>
                                 <option value="telecom.where(system='phone').value">Phone numbers</option>
                                 <option value="telecom.where(system='email').value">Email addresses</option>
@@ -49,7 +85,7 @@
                                 <option value="address.postalCode">Postal codes</option>
                                 <option value="address.country">Countries</option>
                             </optgroup>
-                            <optgroup label="Patient - Advanced">
+                            <optgroup label="🟡 Patient - Advanced">
                                 <option value="name.where(use='official').given.first()">Official given name (first)</option>
                                 <option value="name.where(use='nickname').given">Nicknames</option>
                                 <option value="contact.name.text">Emergency contact names</option>
@@ -58,7 +94,7 @@
                                 <option value="maritalStatus.coding.display">Marital status</option>
                                 <option value="generalPractitioner.reference">General practitioners</option>
                             </optgroup>
-                            <optgroup label="Observation">
+                            <optgroup label="🟡 Observation">
                                 <option value="code.coding.display">Observation name</option>
                                 <option value="code.coding.code">Observation code</option>
                                 <option value="value.ofType(Quantity).value">Numeric value</option>
@@ -74,7 +110,7 @@
                                 <option value="component.code.coding.display">Component names</option>
                                 <option value="component.value.ofType(Quantity).value">Component values</option>
                             </optgroup>
-                            <optgroup label="Condition">
+                            <optgroup label="🟡 Condition">
                                 <option value="code.coding.display">Condition name</option>
                                 <option value="code.coding.code">Condition code</option>
                                 <option value="clinicalStatus.coding.code">Clinical status</option>
@@ -85,7 +121,7 @@
                                 <option value="abatementDateTime">Abatement date</option>
                                 <option value="bodySite.coding.display">Body site</option>
                             </optgroup>
-                            <optgroup label="MedicationRequest">
+                            <optgroup label="🟡 MedicationRequest">
                                 <option value="medication.ofType(CodeableConcept).coding.display">Medication name</option>
                                 <option value="dosageInstruction.text">Dosage instructions</option>
                                 <option value="dosageInstruction.timing.repeat.frequency">Frequency</option>
@@ -94,7 +130,7 @@
                                 <option value="intent">Intent</option>
                                 <option value="authoredOn">Authored date</option>
                             </optgroup>
-                            <optgroup label="Encounter">
+                            <optgroup label="🟡 Encounter">
                                 <option value="type.coding.display">Encounter type</option>
                                 <option value="class.display">Encounter class</option>
                                 <option value="status">Status</option>
@@ -104,7 +140,7 @@
                                 <option value="diagnosis.condition.reference">Diagnoses</option>
                                 <option value="participant.individual.reference">Participants</option>
                             </optgroup>
-                            <optgroup label="Procedure">
+                            <optgroup label="🟡 Procedure">
                                 <option value="code.coding.display">Procedure name</option>
                                 <option value="status">Status</option>
                                 <option value="performed.ofType(DateTime)">Performed date</option>
@@ -112,7 +148,7 @@
                                 <option value="outcome.coding.display">Outcome</option>
                                 <option value="performer.actor.reference">Performers</option>
                             </optgroup>
-                            <optgroup label="Functions - Existence">
+                            <optgroup label="🟢 Functions - Existence">
                                 <option value="name.exists()">Has name?</option>
                                 <option value="telecom.empty()">No telecom?</option>
                                 <option value="address.count()">Address count</option>
@@ -120,7 +156,7 @@
                                 <option value="identifier.last()">Last identifier</option>
                                 <option value="name.single()">Single name (error if multiple)</option>
                             </optgroup>
-                            <optgroup label="Functions - Filtering">
+                            <optgroup label="🟡 Functions - Filtering">
                                 <option value="name.where(use='official')">Official names only</option>
                                 <option value="telecom.where(system='phone' and use='mobile')">Mobile phones</option>
                                 <option value="address.where(use='home').first()">Home address</option>
@@ -128,7 +164,7 @@
                                 <option value="name.select(given.first() + ' ' + family)">Formatted names</option>
                                 <option value="telecom.all(system='phone')">All are phones?</option>
                             </optgroup>
-                            <optgroup label="Functions - String">
+                            <optgroup label="🟢 Functions - String">
                                 <option value="name.family.upper()">Family name uppercase</option>
                                 <option value="name.family.lower()">Family name lowercase</option>
                                 <option value="name.given.first().substring(0,1)">First initial</option>
@@ -312,6 +348,27 @@
     var resourceEditor = null;
     var currentResults = null;
     var currentMode = 'single';
+    var gettingStartedVisible = true;
+
+    function toggleGettingStarted() {
+        var content = document.getElementById('getting-started-content');
+        var icon = document.getElementById('getting-started-icon');
+        gettingStartedVisible = !gettingStartedVisible;
+        if (gettingStartedVisible) {
+            content.classList.remove('hidden');
+            icon.classList.remove('rotate-180');
+        } else {
+            content.classList.add('hidden');
+            icon.classList.add('rotate-180');
+        }
+        localStorage.setItem('fhirpathGettingStartedHidden', !gettingStartedVisible);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (localStorage.getItem('fhirpathGettingStartedHidden') === 'true') {
+            toggleGettingStarted();
+        }
+    });
 
     require.config({
         paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' }
