@@ -318,6 +318,7 @@
     });
 
     require(['vs/editor/editor.main'], function() {
+        try {
         // Expression editor
         expressionEditor = monaco.editor.create(document.getElementById('expression-editor'), {
             value: 'name.given',
@@ -364,6 +365,11 @@
             scrollBeyondLastLine: false,
             wordWrap: 'on',
         });
+        } catch (e) {
+            console.error('Failed to initialize Monaco editor:', e);
+        }
+    }, function(err) {
+        console.error('Failed to load Monaco editor:', err);
     });
 
     function setMode(mode) {
@@ -431,7 +437,10 @@
     }
 
     async function evaluate() {
-        if (!expressionEditor) return;
+        if (!expressionEditor) {
+            console.warn('Editor not ready yet');
+            return;
+        }
 
         var expression = expressionEditor.getValue().trim();
         if (!expression) {

@@ -1497,27 +1497,33 @@ define "Readmissions Within 30 Days":
     });
 
     require(['vs/editor/editor.main'], function() {
-        cqlEditor = monaco.editor.create(document.getElementById('cql-editor'), {
-            value: defaultCQL,
-            language: 'plaintext',
-            theme: 'vs',
-            minimap: { enabled: false },
-            lineNumbers: 'on',
-            glyphMargin: false,
-            folding: true,
-            lineDecorationsWidth: 10,
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            automaticLayout: true,
-            fontSize: 13,
-            fontFamily: 'monospace',
-            tabSize: 2,
-        });
+        try {
+            cqlEditor = monaco.editor.create(document.getElementById('cql-editor'), {
+                value: defaultCQL,
+                language: 'plaintext',
+                theme: 'vs',
+                minimap: { enabled: false },
+                lineNumbers: 'on',
+                glyphMargin: false,
+                folding: true,
+                lineDecorationsWidth: 10,
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                automaticLayout: true,
+                fontSize: 13,
+                fontFamily: 'monospace',
+                tabSize: 2,
+            });
 
-        // Ctrl+Enter to execute
-        cqlEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
-            execute();
-        });
+            // Ctrl+Enter to execute
+            cqlEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+                execute();
+            });
+        } catch (e) {
+            console.error('Failed to initialize Monaco editor:', e);
+        }
+    }, function(err) {
+        console.error('Failed to load Monaco editor:', err);
     });
 
     // Load patients for context selection
@@ -1580,7 +1586,10 @@ define "Readmissions Within 30 Days":
     }
 
     async function execute() {
-        if (!cqlEditor) return;
+        if (!cqlEditor) {
+            console.warn('Editor not ready yet');
+            return;
+        }
 
         var code = cqlEditor.getValue().trim();
         if (!code) {
