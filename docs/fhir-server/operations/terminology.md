@@ -1,10 +1,8 @@
-# Terminology Guide
+# Terminology Operations
 
-A comprehensive guide to terminology operations in the FHIR server.
+Full terminology support through standard FHIR operations on CodeSystem and ValueSet resources.
 
 ## Overview
-
-The FHIR server provides full terminology support through standard FHIR operations on CodeSystem and ValueSet resources. All terminology operations are available at:
 
 | Operation | Endpoint | Description |
 |-----------|----------|-------------|
@@ -31,10 +29,13 @@ The FHIR server provides full terminology support through standard FHIR operatio
 
 ```bash
 # Start the FHIR server
-uv run fhir-server
+uv run fhir server serve
 
-# Or with uvicorn
-uvicorn fhir_cql.server.api.app:create_app --factory --reload
+# With options
+uv run fhir server serve --port 8000 --patients 100
+
+# Or with uvicorn directly
+uvicorn fhir_cql.server.api.app:create_app --factory --reload --port 8000
 ```
 
 ### Create a CodeSystem

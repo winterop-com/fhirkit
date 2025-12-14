@@ -1,12 +1,14 @@
 # CLI Reference
 
-The unified `fhir` CLI provides access to CQL, FHIRPath, ELM, and CDS Hooks functionality:
+The unified `fhir` CLI provides access to CQL, FHIRPath, ELM, CDS Hooks, FHIR Server, and Terminology functionality:
 
 ```bash
-fhir cql <command>      # CQL commands
-fhir elm <command>      # ELM commands
-fhir fhirpath <command> # FHIRPath commands
-fhir cds <command>      # CDS Hooks commands
+fhir cql <command>         # CQL commands
+fhir elm <command>         # ELM commands
+fhir fhirpath <command>    # FHIRPath commands
+fhir cds <command>         # CDS Hooks commands
+fhir server <command>      # FHIR R4 server commands
+fhir terminology <command> # Terminology service commands
 ```
 
 ---
@@ -667,6 +669,153 @@ Cards generated: 1
 
 ---
 
+## FHIR Server CLI
+
+### serve
+
+Start the FHIR R4 server.
+
+```bash
+fhir server serve [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-h, --host` | Host to bind to (default: 0.0.0.0) |
+| `-p, --port` | Port to bind to (default: 8080) |
+| `-n, --patients` | Number of synthetic patients to generate |
+| `-s, --seed` | Random seed for reproducible data |
+| `--preload-cql` | Directory of CQL files to preload |
+| `--preload-valuesets` | Directory of ValueSet/CodeSystem JSON files |
+| `--preload-data` | FHIR Bundle JSON file to preload |
+| `-r, --reload` | Enable auto-reload for development |
+| `-l, --log-level` | Logging level (default: INFO) |
+
+**Examples:**
+
+```bash
+# Start with synthetic patients
+fhir server serve --patients 100
+
+# With reproducible seed
+fhir server serve --patients 50 --seed 42
+
+# Preload terminology and CQL
+fhir server serve --preload-cql ./cql --preload-valuesets ./valuesets
+
+# Development mode
+fhir server serve --patients 10 --reload
+```
+
+### generate
+
+Generate synthetic FHIR data to a file.
+
+```bash
+fhir server generate OUTPUT [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-n, --patients` | Number of patients to generate (default: 10) |
+| `-s, --seed` | Random seed for reproducible data |
+| `-f, --format` | Output format: bundle, ndjson, or files |
+| `--pretty/--no-pretty` | Pretty-print JSON output |
+
+**Examples:**
+
+```bash
+# Generate as FHIR Bundle
+fhir server generate ./data.json --patients 100
+
+# Generate as NDJSON
+fhir server generate ./data.ndjson --patients 100 --format ndjson
+
+# With reproducible seed
+fhir server generate ./data.json --patients 50 --seed 42
+```
+
+### load
+
+Load FHIR resources from a file into a running server.
+
+```bash
+fhir server load INPUT_FILE [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-u, --url` | FHIR server base URL (default: http://localhost:8080) |
+| `--batch/--no-batch` | Use batch transaction for loading |
+
+**Examples:**
+
+```bash
+# Load a bundle
+fhir server load ./data.json
+
+# Load to specific server
+fhir server load ./data.json --url http://fhir.example.com
+```
+
+### stats
+
+Show statistics for a running FHIR server.
+
+```bash
+fhir server stats [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-u, --url` | FHIR server base URL (default: http://localhost:8080) |
+
+### info
+
+Show server capability statement information.
+
+```bash
+fhir server info [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-u, --url` | FHIR server base URL (default: http://localhost:8080) |
+
+---
+
+## Terminology CLI
+
+### serve
+
+Start the standalone terminology server.
+
+```bash
+fhir terminology serve [OPTIONS]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-h, --host` | Host to bind to (default: 0.0.0.0) |
+| `-p, --port` | Port to bind to (default: 8080) |
+| `--valueset-dir` | Directory of ValueSet JSON files |
+
+**Note:** The FHIR server includes full terminology support. Use `fhir server serve` with `--preload-valuesets` for integrated terminology operations.
+
+---
+
 ## Quick Reference
 
 ### FHIRPath Commands
@@ -717,6 +866,22 @@ Cards generated: 1
 | `fhir cds validate` | Validate configuration file |
 | `fhir cds list` | List configured services |
 | `fhir cds test` | Test a service with sample data |
+
+### FHIR Server Commands
+
+| Command | Description |
+|---------|-------------|
+| `fhir server serve` | Start the FHIR R4 server |
+| `fhir server generate` | Generate synthetic FHIR data to file |
+| `fhir server load` | Load FHIR resources into running server |
+| `fhir server stats` | Show server resource statistics |
+| `fhir server info` | Show server capability statement |
+
+### Terminology Commands
+
+| Command | Description |
+|---------|-------------|
+| `fhir terminology serve` | Start standalone terminology server |
 
 ---
 

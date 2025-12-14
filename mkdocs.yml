@@ -53,8 +53,8 @@ nav:
       - Guide: elm-guide.md
   - FHIR Server:
       - Guide: fhir-server-guide.md
-  - Terminology:
-      - Guide: terminology-guide.md
+      - Operations:
+          - Terminology: fhir-server/operations/terminology.md
   - CDS Hooks:
       - Guide: cds-hooks-guide.md
   - Advanced:
