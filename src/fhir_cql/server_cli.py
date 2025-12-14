@@ -16,6 +16,7 @@ from fhir_cql.server.generator import (
     ClaimGenerator,
     CodeSystemGenerator,
     ConditionGenerator,
+    ConsentGenerator,
     CoverageGenerator,
     DeviceGenerator,
     DiagnosticReportGenerator,
@@ -37,6 +38,8 @@ from fhir_cql.server.generator import (
     PractitionerGenerator,
     PractitionerRoleGenerator,
     ProcedureGenerator,
+    QuestionnaireGenerator,
+    QuestionnaireResponseGenerator,
     RelatedPersonGenerator,
     ScheduleGenerator,
     ServiceRequestGenerator,
@@ -98,6 +101,10 @@ GENERATORS: dict[str, type] = {
     "CodeSystem": CodeSystemGenerator,
     # Groups
     "Group": GroupGenerator,
+    # Forms & Consent
+    "Questionnaire": QuestionnaireGenerator,
+    "QuestionnaireResponse": QuestionnaireResponseGenerator,
+    "Consent": ConsentGenerator,
 }
 
 
@@ -635,6 +642,13 @@ def populate(
     track(vs_gen.generate())
     track(cs_gen.generate())
 
+    # Questionnaires (standalone forms)
+    quest_gen = QuestionnaireGenerator(faker, seed)
+    questionnaires = [
+        track(quest_gen.generate(template="phq-9")),
+        track(quest_gen.generate(template="gad-7")),
+    ]
+
     # ============================================================
     # TIER 2: Administrative (depend on Tier 1)
     # ============================================================
@@ -643,15 +657,17 @@ def populate(
     # PractitionerRoles
     pr_gen = PractitionerRoleGenerator(faker, seed)
     for prac in practitioners:
-        track(pr_gen.generate(
-            practitioner_ref=ref(prac),
-            organization_ref=ref(hospital_org),
-            location_ref=ref(clinic_location) if clinic_location else None,
-        ))
+        track(
+            pr_gen.generate(
+                practitioner_ref=ref(prac),
+                organization_ref=ref(hospital_org),
+                location_ref=ref(clinic_location) if clinic_location else None,
+            )
+        )
 
     # Devices
     dev_gen = DeviceGenerator(faker, seed)
-    device = track(dev_gen.generate())
+    track(dev_gen.generate())
 
     # ============================================================
     # TIER 3: Scheduling (depend on Tier 1, 2)
@@ -660,10 +676,12 @@ def populate(
 
     # Schedule
     sched_gen = ScheduleGenerator(faker, seed)
-    schedule = track(sched_gen.generate(
-        practitioner_ref=ref(practitioners[0]),
-        location_ref=ref(clinic_location) if clinic_location else None,
-    ))
+    schedule = track(
+        sched_gen.generate(
+            practitioner_ref=ref(practitioners[0]),
+            location_ref=ref(clinic_location) if clinic_location else None,
+        )
+    )
 
     # Slots
     slot_gen = SlotGenerator(faker, seed)
@@ -693,22 +711,35 @@ def populate(
     cov_gen = CoverageGenerator(faker, seed)
     claim_gen = ClaimGenerator(faker, seed)
     eob_gen = ExplanationOfBenefitGenerator(faker, seed)
+    consent_gen = ConsentGenerator(faker, seed)
+    quest_resp_gen = QuestionnaireResponseGenerator(faker, seed)
 
     patient_refs: list[str] = []
 
     for i in range(patients):
-        rprint(f"  [cyan]Patient {i+1}/{patients}:[/cyan] Generating clinical data")
+        rprint(f"  [cyan]Patient {i + 1}/{patients}:[/cyan] Generating clinical data")
 
         # Patient
-        patient = track(pat_gen.generate(
-            practitioner_ref=ref(practitioners[0]),
-            organization_ref=ref(hospital_org),
-        ))
+        patient = track(
+            pat_gen.generate(
+                practitioner_ref=ref(practitioners[0]),
+                organization_ref=ref(hospital_org),
+            )
+        )
         patient_ref = ref(patient)
         patient_refs.append(patient_ref)
 
         # RelatedPerson
         track(rel_gen.generate(patient_ref=patient_ref))
+
+        # Consent (privacy consent for patient)
+        track(
+            consent_gen.generate(
+                patient_ref=patient_ref,
+                organization_ref=ref(hospital_org),
+                scope="patient-privacy",
+            )
+        )
 
         # ============================================================
         # TIER 4: Clinical Core
@@ -717,11 +748,13 @@ def populate(
         # Encounters
         encounters = []
         for _ in range(faker.random_int(1, 3)):
-            enc = track(enc_gen.generate(
-                patient_ref=patient_ref,
-                practitioner_ref=ref(faker.random_element(practitioners)),
-                organization_ref=ref(hospital_org),
-            ))
+            enc = track(
+                enc_gen.generate(
+                    patient_ref=patient_ref,
+                    practitioner_ref=ref(faker.random_element(practitioners)),
+                    organization_ref=ref(hospital_org),
+                )
+            )
             encounters.append(enc)
 
         # Per-encounter resources
@@ -733,135 +766,177 @@ def populate(
 
             # Conditions
             for _ in range(faker.random_int(1, 2)):
-                cond = track(cond_gen.generate(
-                    patient_ref=patient_ref,
-                    encounter_ref=enc_ref,
-                ))
+                cond = track(
+                    cond_gen.generate(
+                        patient_ref=patient_ref,
+                        encounter_ref=enc_ref,
+                    )
+                )
                 conditions_for_patient.append(cond)
 
             # Observations
             for _ in range(faker.random_int(2, 4)):
-                obs = track(obs_gen.generate(
-                    patient_ref=patient_ref,
-                    encounter_ref=enc_ref,
-                ))
+                obs = track(
+                    obs_gen.generate(
+                        patient_ref=patient_ref,
+                        encounter_ref=enc_ref,
+                    )
+                )
                 observations_for_patient.append(obs)
 
         # AllergyIntolerance
-        track(allergy_gen.generate(
-            patient_ref=patient_ref,
-            encounter_ref=ref(encounters[0]) if encounters else None,
-            recorder_ref=ref(practitioners[0]),
-        ))
+        track(
+            allergy_gen.generate(
+                patient_ref=patient_ref,
+                encounter_ref=ref(encounters[0]) if encounters else None,
+                recorder_ref=ref(practitioners[0]),
+            )
+        )
 
         # Immunization
-        track(imm_gen.generate(
-            patient_ref=patient_ref,
-            encounter_ref=ref(encounters[0]) if encounters else None,
-            performer_ref=ref(practitioners[0]),
-        ))
+        track(
+            imm_gen.generate(
+                patient_ref=patient_ref,
+                encounter_ref=ref(encounters[0]) if encounters else None,
+                performer_ref=ref(practitioners[0]),
+            )
+        )
 
         # ============================================================
         # TIER 5: Care Management
         # ============================================================
 
         # CareTeam
-        track(care_team_gen.generate(
-            patient_ref=patient_ref,
-            practitioner_refs=[ref(p) for p in practitioners[:2]],
-            encounter_ref=ref(encounters[0]) if encounters else None,
-        ))
+        track(
+            care_team_gen.generate(
+                patient_ref=patient_ref,
+                practitioner_refs=[ref(p) for p in practitioners[:2]],
+                encounter_ref=ref(encounters[0]) if encounters else None,
+            )
+        )
 
         # CarePlan (linked to conditions)
-        track(care_plan_gen.generate(
-            patient_ref=patient_ref,
-            encounter_ref=ref(encounters[0]) if encounters else None,
-            author_ref=ref(practitioners[0]),
-            condition_refs=[ref(c) for c in conditions_for_patient[:2]],
-        ))
+        track(
+            care_plan_gen.generate(
+                patient_ref=patient_ref,
+                encounter_ref=ref(encounters[0]) if encounters else None,
+                author_ref=ref(practitioners[0]),
+                condition_refs=[ref(c) for c in conditions_for_patient[:2]],
+            )
+        )
 
         # Goal
         track(goal_gen.generate(patient_ref=patient_ref))
 
         # Task
-        track(task_gen.generate(
-            patient_ref=patient_ref,
-            owner_ref=ref(practitioners[0]),
-        ))
+        track(
+            task_gen.generate(
+                patient_ref=patient_ref,
+                owner_ref=ref(practitioners[0]),
+            )
+        )
+
+        # QuestionnaireResponses (completed forms)
+        for quest in questionnaires:
+            track(
+                quest_resp_gen.generate(
+                    questionnaire_ref=f"Questionnaire/{quest['id']}",
+                    questionnaire_template=quest.get("name", "").replace("_", "-"),
+                    patient_ref=patient_ref,
+                    encounter_ref=ref(encounters[0]) if encounters else None,
+                    author_ref=patient_ref,
+                )
+            )
 
         # ============================================================
         # TIER 6: Treatment
         # ============================================================
 
         # Medication
-        medication = track(med_gen.generate())
+        track(med_gen.generate())
 
         # MedicationRequest
-        track(med_req_gen.generate(
-            patient_ref=patient_ref,
-            practitioner_ref=ref(practitioners[0]),
-            encounter_ref=ref(encounters[0]) if encounters else None,
-        ))
+        track(
+            med_req_gen.generate(
+                patient_ref=patient_ref,
+                practitioner_ref=ref(practitioners[0]),
+                encounter_ref=ref(encounters[0]) if encounters else None,
+            )
+        )
 
         # Procedure
-        track(proc_gen.generate(
-            patient_ref=patient_ref,
-            practitioner_ref=ref(practitioners[0]),
-            encounter_ref=ref(encounters[0]) if encounters else None,
-        ))
+        track(
+            proc_gen.generate(
+                patient_ref=patient_ref,
+                practitioner_ref=ref(practitioners[0]),
+                encounter_ref=ref(encounters[0]) if encounters else None,
+            )
+        )
 
         # ServiceRequest
-        track(svc_req_gen.generate(
-            patient_ref=patient_ref,
-            requester_ref=ref(practitioners[0]),
-            encounter_ref=ref(encounters[0]) if encounters else None,
-        ))
+        track(
+            svc_req_gen.generate(
+                patient_ref=patient_ref,
+                requester_ref=ref(practitioners[0]),
+                encounter_ref=ref(encounters[0]) if encounters else None,
+            )
+        )
 
         # DiagnosticReport (linked to observations)
-        track(diag_gen.generate(
-            patient_ref=patient_ref,
-            encounter_ref=ref(encounters[0]) if encounters else None,
-            performer_ref=ref(practitioners[0]),
-            result_refs=[ref(o) for o in observations_for_patient[:3]],
-        ))
+        track(
+            diag_gen.generate(
+                patient_ref=patient_ref,
+                encounter_ref=ref(encounters[0]) if encounters else None,
+                performer_ref=ref(practitioners[0]),
+                result_refs=[ref(o) for o in observations_for_patient[:3]],
+            )
+        )
 
         # DocumentReference
         track(doc_gen.generate(patient_ref=patient_ref))
 
         # Appointment (linked to slot)
-        track(appt_gen.generate(
-            patient_ref=patient_ref,
-            practitioner_ref=ref(practitioners[0]),
-            location_ref=ref(clinic_location) if clinic_location else None,
-            slot_ref=ref(slots[i % len(slots)]) if slots else None,
-        ))
+        track(
+            appt_gen.generate(
+                patient_ref=patient_ref,
+                practitioner_ref=ref(practitioners[0]),
+                location_ref=ref(clinic_location) if clinic_location else None,
+                slot_ref=ref(slots[i % len(slots)]) if slots else None,
+            )
+        )
 
         # ============================================================
         # TIER 7: Financial
         # ============================================================
 
         # Coverage
-        coverage = track(cov_gen.generate(
-            patient_ref=patient_ref,
-            payor_ref=ref(insurance_org),
-        ))
+        coverage = track(
+            cov_gen.generate(
+                patient_ref=patient_ref,
+                payor_ref=ref(insurance_org),
+            )
+        )
 
         # Claim
-        claim = track(claim_gen.generate(
-            patient_ref=patient_ref,
-            provider_ref=ref(practitioners[0]),
-            insurer_ref=ref(insurance_org),
-            coverage_ref=ref(coverage),
-        ))
+        claim = track(
+            claim_gen.generate(
+                patient_ref=patient_ref,
+                provider_ref=ref(practitioners[0]),
+                insurer_ref=ref(insurance_org),
+                coverage_ref=ref(coverage),
+            )
+        )
 
         # ExplanationOfBenefit
-        track(eob_gen.generate(
-            patient_ref=patient_ref,
-            provider_ref=ref(practitioners[0]),
-            insurer_ref=ref(insurance_org),
-            coverage_ref=ref(coverage),
-            claim_ref=ref(claim),
-        ))
+        track(
+            eob_gen.generate(
+                patient_ref=patient_ref,
+                provider_ref=ref(practitioners[0]),
+                insurer_ref=ref(insurance_org),
+                coverage_ref=ref(coverage),
+                claim_ref=ref(claim),
+            )
+        )
 
     # ============================================================
     # TIER 8: Quality Measures
@@ -870,47 +945,57 @@ def populate(
 
     # Group (with patient members)
     grp_gen = GroupGenerator(faker, seed)
-    track(grp_gen.generate(
-        name="Diabetes Patient Cohort",
-        group_type="person",
-        actual=True,
-        member_refs=patient_refs,
-        managing_entity_ref=ref(hospital_org),
-    ))
+    track(
+        grp_gen.generate(
+            name="Diabetes Patient Cohort",
+            group_type="person",
+            actual=True,
+            member_refs=patient_refs,
+            managing_entity_ref=ref(hospital_org),
+        )
+    )
 
     # Library
     lib_gen = LibraryGenerator(faker, seed)
-    library = track(lib_gen.generate(
-        name="DiabetesMeasuresLibrary",
-        include_cql=True,
-    ))
+    library = track(
+        lib_gen.generate(
+            name="DiabetesMeasuresLibrary",
+            include_cql=True,
+        )
+    )
 
     # Measure (linked to library)
     measure_gen = MeasureGenerator(faker, seed)
-    measure = track(measure_gen.generate(
-        name="DiabetesHbA1cControl",
-        title="Diabetes: HbA1c Poor Control",
-        library_ref=f"Library/{library['id']}",
-    ))
+    measure = track(
+        measure_gen.generate(
+            name="DiabetesHbA1cControl",
+            title="Diabetes: HbA1c Poor Control",
+            library_ref=f"Library/{library['id']}",
+        )
+    )
 
     # MeasureReport (one per patient + summary)
     mr_gen = MeasureReportGenerator(faker, seed)
 
     # Individual reports
     for patient_ref in patient_refs:
-        track(mr_gen.generate(
-            measure_ref=f"Measure/{measure['id']}",
-            patient_ref=patient_ref,
-            reporter_ref=ref(hospital_org),
-            report_type="individual",
-        ))
+        track(
+            mr_gen.generate(
+                measure_ref=f"Measure/{measure['id']}",
+                patient_ref=patient_ref,
+                reporter_ref=ref(hospital_org),
+                report_type="individual",
+            )
+        )
 
     # Summary report
-    track(mr_gen.generate(
-        measure_ref=f"Measure/{measure['id']}",
-        reporter_ref=ref(hospital_org),
-        report_type="summary",
-    ))
+    track(
+        mr_gen.generate(
+            measure_ref=f"Measure/{measure['id']}",
+            reporter_ref=ref(hospital_org),
+            report_type="summary",
+        )
+    )
 
     # ============================================================
     # Summary

@@ -14,10 +14,26 @@ class PractitionerRoleGenerator(FHIRResourceGenerator):
     ROLE_CODES = [
         {"code": "doctor", "display": "Doctor", "system": "http://terminology.hl7.org/CodeSystem/practitioner-role"},
         {"code": "nurse", "display": "Nurse", "system": "http://terminology.hl7.org/CodeSystem/practitioner-role"},
-        {"code": "pharmacist", "display": "Pharmacist", "system": "http://terminology.hl7.org/CodeSystem/practitioner-role"},
-        {"code": "researcher", "display": "Researcher", "system": "http://terminology.hl7.org/CodeSystem/practitioner-role"},
-        {"code": "teacher", "display": "Teacher/Educator", "system": "http://terminology.hl7.org/CodeSystem/practitioner-role"},
-        {"code": "ict", "display": "ICT Professional", "system": "http://terminology.hl7.org/CodeSystem/practitioner-role"},
+        {
+            "code": "pharmacist",
+            "display": "Pharmacist",
+            "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
+        },
+        {
+            "code": "researcher",
+            "display": "Researcher",
+            "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
+        },
+        {
+            "code": "teacher",
+            "display": "Teacher/Educator",
+            "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
+        },
+        {
+            "code": "ict",
+            "display": "ICT Professional",
+            "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
+        },
     ]
 
     # Specialty codes (SNOMED CT)

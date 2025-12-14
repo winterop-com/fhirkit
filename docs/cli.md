@@ -711,7 +711,7 @@ fhir serve --patients 10 --reload
 
 ### generate
 
-Generate FHIR resources of a specific type. Supports all 34 resource types.
+Generate FHIR resources of a specific type. Supports all 37 resource types.
 
 ```bash
 fhir server generate RESOURCE_TYPE [OUTPUT] [OPTIONS]
@@ -774,7 +774,7 @@ fhir server generate Patient -n 5 -f ndjson
 
 ### populate
 
-Populate a FHIR server with linked examples of all 34 resource types. Creates a complete, realistic dataset with proper references between resources.
+Populate a FHIR server with linked examples of all 37 resource types. Creates a complete, realistic dataset with proper references between resources.
 
 ```bash
 fhir server populate [OPTIONS]

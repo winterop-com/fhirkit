@@ -16,6 +16,7 @@ from .careplan import CarePlanGenerator
 from .claim import ClaimGenerator
 from .code_system import CodeSystemGenerator
 from .condition import ConditionGenerator
+from .consent import ConsentGenerator
 from .coverage import CoverageGenerator
 from .device import DeviceGenerator
 from .diagnostic_report import DiagnosticReportGenerator
@@ -37,6 +38,8 @@ from .patient import PatientGenerator
 from .practitioner import PractitionerGenerator
 from .practitioner_role import PractitionerRoleGenerator
 from .procedure import ProcedureGenerator
+from .questionnaire import QuestionnaireGenerator
+from .questionnaire_response import QuestionnaireResponseGenerator
 from .related_person import RelatedPersonGenerator
 from .schedule import ScheduleGenerator
 from .service_request import ServiceRequestGenerator
@@ -233,4 +236,8 @@ __all__ = [
     "CodeSystemGenerator",
     # Groups
     "GroupGenerator",
+    # Forms & Consent
+    "QuestionnaireGenerator",
+    "QuestionnaireResponseGenerator",
+    "ConsentGenerator",
 ]

@@ -206,7 +206,7 @@ fhir server generate --list
 
 ### Populate Server with Linked Data
 
-Create a complete dataset with all 34 resource types properly linked together:
+Create a complete dataset with all 37 resource types properly linked together:
 
 ```bash
 # Populate with linked resources (3 patients by default)
@@ -350,7 +350,7 @@ fhir cql show examples/cql/08_quality_measure.cql
 
 - Explore the [CLI Reference](cli.md) for all commands
 - Read the [FHIR Server Guide](fhir-server-guide.md) for full server documentation
-- Check the [Supported Resources](fhir-server/resources/index.md) for all 34 resource types with examples
+- Check the [Supported Resources](fhir-server/resources/index.md) for all 37 resource types with examples
 - Read the [FHIRPath Guide](fhirpath-guide.md) for comprehensive FHIRPath documentation
 - Check the [CQL API](cql-api.md) for Python integration
 - Work through the [Tutorial](fhirpath-cql-tutorial.md) for in-depth examples

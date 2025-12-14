@@ -13,10 +13,26 @@ class LibraryGenerator(FHIRResourceGenerator):
 
     # Library types
     LIBRARY_TYPES = [
-        {"code": "logic-library", "display": "Logic Library", "system": "http://terminology.hl7.org/CodeSystem/library-type"},
-        {"code": "model-definition", "display": "Model Definition", "system": "http://terminology.hl7.org/CodeSystem/library-type"},
-        {"code": "asset-collection", "display": "Asset Collection", "system": "http://terminology.hl7.org/CodeSystem/library-type"},
-        {"code": "module-definition", "display": "Module Definition", "system": "http://terminology.hl7.org/CodeSystem/library-type"},
+        {
+            "code": "logic-library",
+            "display": "Logic Library",
+            "system": "http://terminology.hl7.org/CodeSystem/library-type",
+        },
+        {
+            "code": "model-definition",
+            "display": "Model Definition",
+            "system": "http://terminology.hl7.org/CodeSystem/library-type",
+        },
+        {
+            "code": "asset-collection",
+            "display": "Asset Collection",
+            "system": "http://terminology.hl7.org/CodeSystem/library-type",
+        },
+        {
+            "code": "module-definition",
+            "display": "Module Definition",
+            "system": "http://terminology.hl7.org/CodeSystem/library-type",
+        },
     ]
 
     # Common library name patterns
@@ -100,7 +116,9 @@ class LibraryGenerator(FHIRResourceGenerator):
             "type": {"coding": [type_coding], "text": type_coding["display"]},
             "date": self._generate_date(),
             "publisher": self.faker.company(),
-            "description": f"CQL library for {topic['display'].lower()} quality measures and clinical decision support.",
+            "description": (
+                f"CQL library for {topic['display'].lower()} quality measures and clinical decision support."
+            ),
             "topic": [{"coding": [topic], "text": topic["display"]}],
             "relatedArtifact": [
                 {

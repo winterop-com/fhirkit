@@ -11,10 +11,33 @@ class TaskGenerator(FHIRResourceGenerator):
     """Generator for FHIR Task resources."""
 
     # Task status codes
-    STATUS_CODES = ["draft", "requested", "received", "accepted", "rejected", "ready", "cancelled", "in-progress", "on-hold", "failed", "completed", "entered-in-error"]
+    STATUS_CODES = [
+        "draft",
+        "requested",
+        "received",
+        "accepted",
+        "rejected",
+        "ready",
+        "cancelled",
+        "in-progress",
+        "on-hold",
+        "failed",
+        "completed",
+        "entered-in-error",
+    ]
 
     # Task intent codes
-    INTENT_CODES = ["unknown", "proposal", "plan", "order", "original-order", "reflex-order", "filler-order", "instance-order", "option"]
+    INTENT_CODES = [
+        "unknown",
+        "proposal",
+        "plan",
+        "order",
+        "original-order",
+        "reflex-order",
+        "filler-order",
+        "instance-order",
+        "option",
+    ]
 
     # Task priority codes
     PRIORITY_CODES = ["routine", "urgent", "asap", "stat"]

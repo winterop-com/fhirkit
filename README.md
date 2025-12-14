@@ -269,7 +269,7 @@ fhir terminology <command> # Terminology Service commands
 
 ### FHIR Resources (45 files)
 
-**34 supported resource types** with example JSON files in `examples/fhir/`:
+**37 supported resource types** with example JSON files in `examples/fhir/`:
 
 | Category | Example Resources |
 |----------|-------------------|
@@ -281,6 +281,7 @@ fhir terminology <command> # Terminology Service commands
 | Financial | Coverage, Claim, ExplanationOfBenefit |
 | Devices | Device |
 | Documents | ServiceRequest, DocumentReference |
+| Forms & Consent | Questionnaire, QuestionnaireResponse, Consent |
 | Quality Measures | Measure, MeasureReport, Library |
 | Terminology | ValueSet, CodeSystem |
 | Groups | Group |

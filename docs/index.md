@@ -157,8 +157,8 @@ greeting = evaluator.evaluate_definition("Greeting")  # 'Hello, CQL!'
 - [FHIRPath & CQL Reference](fhirpath-cql-tutorial.md) - Deep dive reference with examples
 
 ### Server & Services
-- [FHIR Server Guide](fhir-server-guide.md) - Built-in FHIR server with synthetic data generation, 34 resource types
-- [Supported Resources](fhir-server/resources/index.md) - All 34 supported FHIR resource types with examples
+- [FHIR Server Guide](fhir-server-guide.md) - Built-in FHIR server with synthetic data generation, 37 resource types
+- [Supported Resources](fhir-server/resources/index.md) - All 37 supported FHIR resource types with examples
 - [Terminology Operations](fhir-server/operations/terminology.md) - $expand, $lookup, $validate-code operations
 
 ### Advanced Topics

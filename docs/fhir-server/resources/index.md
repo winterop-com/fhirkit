@@ -4,7 +4,7 @@ This page provides an overview of all FHIR R4 resource types supported by the py
 
 ## Resource Categories
 
-The server supports **34 resource types** organized into the following categories:
+The server supports **37 resource types** organized into the following categories:
 
 | Category | Resources | Count |
 |----------|-----------|-------|
@@ -16,6 +16,7 @@ The server supports **34 resource types** organized into the following categorie
 | [Financial](#financial-resources) | Coverage, Claim, ExplanationOfBenefit | 3 |
 | [Devices](#device-resources) | Device | 1 |
 | [Documents](#document-resources) | ServiceRequest, DocumentReference | 2 |
+| [Forms & Consent](#forms--consent-resources) | Questionnaire, QuestionnaireResponse, Consent | 3 |
 | [Quality Measures](#quality-measure-resources) | Measure, MeasureReport, Library | 3 |
 | [Terminology](#terminology-resources) | ValueSet, CodeSystem | 2 |
 | [Groups](#group-resources) | Group | 1 |

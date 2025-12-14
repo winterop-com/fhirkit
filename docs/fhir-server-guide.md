@@ -109,7 +109,7 @@ fhir serve --patients 10 --reload
 
 ### fhir server generate
 
-Generate FHIR resources of a specific type. Supports all 34 resource types.
+Generate FHIR resources of a specific type. Supports all 37 resource types.
 
 ```bash
 fhir server generate RESOURCE_TYPE [OUTPUT] [OPTIONS]
@@ -172,7 +172,7 @@ fhir server generate Patient -n 5 -f ndjson
 
 ### fhir server populate
 
-Populate a FHIR server with linked examples of all 34 resource types. Creates a complete, realistic dataset with proper references between resources.
+Populate a FHIR server with linked examples of all 37 resource types. Creates a complete, realistic dataset with proper references between resources.
 
 ```bash
 fhir server populate [OPTIONS]
@@ -675,7 +675,7 @@ curl "http://localhost:8080/ValueSet/\$validate-code?url=http://example.com/vs&c
 
 ### Supported Resource Types
 
-The server supports **34 FHIR R4 resource types** organized by category:
+The server supports **37 FHIR R4 resource types** organized by category:
 
 #### Administrative Resources
 | Resource Type | Description |
@@ -736,6 +736,13 @@ The server supports **34 FHIR R4 resource types** organized by category:
 |---------------|-------------|
 | ServiceRequest | Orders and referrals |
 | DocumentReference | Clinical documents and attachments |
+
+#### Forms & Consent Resources
+| Resource Type | Description |
+|---------------|-------------|
+| Questionnaire | Form definitions (PHQ-9, GAD-7, intake forms) |
+| QuestionnaireResponse | Completed form responses |
+| Consent | Privacy and research consent records |
 
 #### Quality Measure Resources
 | Resource Type | Description |

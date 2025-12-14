@@ -20,10 +20,26 @@ class CareTeamGenerator(FHIRResourceGenerator):
 
     # Participant roles
     PARTICIPANT_ROLES = [
-        {"code": "primary", "display": "Primary Care Provider", "system": "http://terminology.hl7.org/CodeSystem/participant-role"},
-        {"code": "secondary", "display": "Secondary Care Provider", "system": "http://terminology.hl7.org/CodeSystem/participant-role"},
-        {"code": "specialist", "display": "Specialist", "system": "http://terminology.hl7.org/CodeSystem/participant-role"},
-        {"code": "coordinator", "display": "Care Coordinator", "system": "http://terminology.hl7.org/CodeSystem/participant-role"},
+        {
+            "code": "primary",
+            "display": "Primary Care Provider",
+            "system": "http://terminology.hl7.org/CodeSystem/participant-role",
+        },
+        {
+            "code": "secondary",
+            "display": "Secondary Care Provider",
+            "system": "http://terminology.hl7.org/CodeSystem/participant-role",
+        },
+        {
+            "code": "specialist",
+            "display": "Specialist",
+            "system": "http://terminology.hl7.org/CodeSystem/participant-role",
+        },
+        {
+            "code": "coordinator",
+            "display": "Care Coordinator",
+            "system": "http://terminology.hl7.org/CodeSystem/participant-role",
+        },
     ]
 
     # Care team name patterns
@@ -105,10 +121,12 @@ class CareTeamGenerator(FHIRResourceGenerator):
             participants = []
             for i, prac_ref in enumerate(practitioner_refs):
                 role = self.PARTICIPANT_ROLES[i % len(self.PARTICIPANT_ROLES)]
-                participants.append({
-                    "role": [{"coding": [role], "text": role["display"]}],
-                    "member": {"reference": prac_ref},
-                })
+                participants.append(
+                    {
+                        "role": [{"coding": [role], "text": role["display"]}],
+                        "member": {"reference": prac_ref},
+                    }
+                )
             care_team["participant"] = participants
         else:
             # Generate at least one participant placeholder

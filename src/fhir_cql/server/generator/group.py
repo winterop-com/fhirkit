@@ -16,10 +16,22 @@ class GroupGenerator(FHIRResourceGenerator):
     # Group codes
     GROUP_CODES = [
         {"code": "diabetes-cohort", "display": "Diabetes Patient Cohort", "system": "http://example.org/group-types"},
-        {"code": "hypertension-cohort", "display": "Hypertension Patient Cohort", "system": "http://example.org/group-types"},
-        {"code": "research-study", "display": "Research Study Participants", "system": "http://example.org/group-types"},
+        {
+            "code": "hypertension-cohort",
+            "display": "Hypertension Patient Cohort",
+            "system": "http://example.org/group-types",
+        },
+        {
+            "code": "research-study",
+            "display": "Research Study Participants",
+            "system": "http://example.org/group-types",
+        },
         {"code": "care-team", "display": "Care Team Members", "system": "http://example.org/group-types"},
-        {"code": "measure-population", "display": "Quality Measure Population", "system": "http://example.org/group-types"},
+        {
+            "code": "measure-population",
+            "display": "Quality Measure Population",
+            "system": "http://example.org/group-types",
+        },
     ]
 
     # Characteristic codes

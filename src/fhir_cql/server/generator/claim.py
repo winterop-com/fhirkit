@@ -12,10 +12,18 @@ class ClaimGenerator(FHIRResourceGenerator):
 
     # Claim types
     CLAIM_TYPES = [
-        {"code": "institutional", "display": "Institutional", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
+        {
+            "code": "institutional",
+            "display": "Institutional",
+            "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+        },
         {"code": "oral", "display": "Oral", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
         {"code": "pharmacy", "display": "Pharmacy", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
-        {"code": "professional", "display": "Professional", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
+        {
+            "code": "professional",
+            "display": "Professional",
+            "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+        },
         {"code": "vision", "display": "Vision", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
     ]
 
@@ -32,7 +40,11 @@ class ClaimGenerator(FHIRResourceGenerator):
     # CPT procedure codes
     CPT_CODES = [
         {"code": "99213", "display": "Office visit, established patient", "system": "http://www.ama-assn.org/go/cpt"},
-        {"code": "99214", "display": "Office visit, established patient, moderate", "system": "http://www.ama-assn.org/go/cpt"},
+        {
+            "code": "99214",
+            "display": "Office visit, established patient, moderate",
+            "system": "http://www.ama-assn.org/go/cpt",
+        },
         {"code": "99203", "display": "Office visit, new patient", "system": "http://www.ama-assn.org/go/cpt"},
         {"code": "99385", "display": "Preventive visit, 18-39 years", "system": "http://www.ama-assn.org/go/cpt"},
         {"code": "90471", "display": "Immunization administration", "system": "http://www.ama-assn.org/go/cpt"},
@@ -41,10 +53,22 @@ class ClaimGenerator(FHIRResourceGenerator):
 
     # ICD-10 diagnosis codes
     ICD10_CODES = [
-        {"code": "Z00.00", "display": "General adult medical examination", "system": "http://hl7.org/fhir/sid/icd-10-cm"},
-        {"code": "E11.9", "display": "Type 2 diabetes mellitus without complications", "system": "http://hl7.org/fhir/sid/icd-10-cm"},
+        {
+            "code": "Z00.00",
+            "display": "General adult medical examination",
+            "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        },
+        {
+            "code": "E11.9",
+            "display": "Type 2 diabetes mellitus without complications",
+            "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        },
         {"code": "I10", "display": "Essential hypertension", "system": "http://hl7.org/fhir/sid/icd-10-cm"},
-        {"code": "J06.9", "display": "Acute upper respiratory infection", "system": "http://hl7.org/fhir/sid/icd-10-cm"},
+        {
+            "code": "J06.9",
+            "display": "Acute upper respiratory infection",
+            "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        },
     ]
 
     def __init__(self, faker: Faker | None = None, seed: int | None = None):

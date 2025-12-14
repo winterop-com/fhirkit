@@ -102,12 +102,16 @@ class DeviceGenerator(FHIRResourceGenerator):
             "udiCarrier": [
                 {
                     "deviceIdentifier": self.faker.numerify("##############"),
-                    "carrierHRF": f"(01){self.faker.numerify('##############')}(17){manufacture_year}0101(10){lot_number}",
+                    "carrierHRF": (
+                        f"(01){self.faker.numerify('##############')}(17){manufacture_year}0101(10){lot_number}"
+                    ),
                 }
             ],
             "status": status,
             "manufacturer": manufacturer,
-            "manufactureDate": f"{manufacture_year}-{self.faker.numerify('##')}-{self.faker.numerify('##')}".replace("-0", "-1"),
+            "manufactureDate": f"{manufacture_year}-{self.faker.numerify('##')}-{self.faker.numerify('##')}".replace(
+                "-0", "-1"
+            ),
             "expirationDate": f"{expiration_year}-12-31",
             "lotNumber": lot_number,
             "serialNumber": serial_number,

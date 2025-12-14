@@ -13,8 +13,16 @@ class ScheduleGenerator(FHIRResourceGenerator):
 
     # Service categories
     SERVICE_CATEGORIES = [
-        {"code": "17", "display": "General Practice", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
-        {"code": "27", "display": "Specialist Medical", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
+        {
+            "code": "17",
+            "display": "General Practice",
+            "system": "http://terminology.hl7.org/CodeSystem/service-category",
+        },
+        {
+            "code": "27",
+            "display": "Specialist Medical",
+            "system": "http://terminology.hl7.org/CodeSystem/service-category",
+        },
         {"code": "2", "display": "Aged Care", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
         {"code": "4", "display": "Allied Health", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
     ]

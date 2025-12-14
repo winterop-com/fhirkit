@@ -12,12 +12,31 @@ class AppointmentGenerator(FHIRResourceGenerator):
     """Generator for FHIR Appointment resources."""
 
     # Appointment status codes
-    STATUS_CODES = ["proposed", "pending", "booked", "arrived", "fulfilled", "cancelled", "noshow", "entered-in-error", "checked-in", "waitlist"]
+    STATUS_CODES = [
+        "proposed",
+        "pending",
+        "booked",
+        "arrived",
+        "fulfilled",
+        "cancelled",
+        "noshow",
+        "entered-in-error",
+        "checked-in",
+        "waitlist",
+    ]
 
     # Service categories
     SERVICE_CATEGORIES = [
-        {"code": "17", "display": "General Practice", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
-        {"code": "27", "display": "Specialist Medical", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
+        {
+            "code": "17",
+            "display": "General Practice",
+            "system": "http://terminology.hl7.org/CodeSystem/service-category",
+        },
+        {
+            "code": "27",
+            "display": "Specialist Medical",
+            "system": "http://terminology.hl7.org/CodeSystem/service-category",
+        },
         {"code": "2", "display": "Aged Care", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
         {"code": "4", "display": "Allied Health", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
     ]
@@ -32,11 +51,23 @@ class AppointmentGenerator(FHIRResourceGenerator):
 
     # Appointment types
     APPOINTMENT_TYPES = [
-        {"code": "ROUTINE", "display": "Routine appointment", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
-        {"code": "WALKIN", "display": "A walk-in appointment", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
+        {
+            "code": "ROUTINE",
+            "display": "Routine appointment",
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0276",
+        },
+        {
+            "code": "WALKIN",
+            "display": "A walk-in appointment",
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0276",
+        },
         {"code": "CHECKUP", "display": "A routine check-up", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
         {"code": "FOLLOWUP", "display": "A follow-up visit", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
-        {"code": "EMERGENCY", "display": "Emergency appointment", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
+        {
+            "code": "EMERGENCY",
+            "display": "Emergency appointment",
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0276",
+        },
     ]
 
     # Participant statuses
@@ -118,33 +149,41 @@ class AppointmentGenerator(FHIRResourceGenerator):
 
         # Add patient participant
         if patient_ref:
-            appointment["participant"].append({
-                "actor": {"reference": patient_ref},
-                "required": "required",
-                "status": "accepted",
-            })
+            appointment["participant"].append(
+                {
+                    "actor": {"reference": patient_ref},
+                    "required": "required",
+                    "status": "accepted",
+                }
+            )
 
         # Add practitioner participant
         if practitioner_ref:
-            appointment["participant"].append({
-                "actor": {"reference": practitioner_ref},
-                "required": "required",
-                "status": "accepted",
-            })
+            appointment["participant"].append(
+                {
+                    "actor": {"reference": practitioner_ref},
+                    "required": "required",
+                    "status": "accepted",
+                }
+            )
 
         # Add location participant
         if location_ref:
-            appointment["participant"].append({
-                "actor": {"reference": location_ref},
-                "required": "required",
-                "status": "accepted",
-            })
+            appointment["participant"].append(
+                {
+                    "actor": {"reference": location_ref},
+                    "required": "required",
+                    "status": "accepted",
+                }
+            )
 
         # Ensure at least one participant
         if not appointment["participant"]:
-            appointment["participant"].append({
-                "required": "required",
-                "status": "needs-action",
-            })
+            appointment["participant"].append(
+                {
+                    "required": "required",
+                    "status": "needs-action",
+                }
+            )
 
         return appointment

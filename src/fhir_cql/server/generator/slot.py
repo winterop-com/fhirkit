@@ -16,8 +16,16 @@ class SlotGenerator(FHIRResourceGenerator):
 
     # Service categories
     SERVICE_CATEGORIES = [
-        {"code": "17", "display": "General Practice", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
-        {"code": "27", "display": "Specialist Medical", "system": "http://terminology.hl7.org/CodeSystem/service-category"},
+        {
+            "code": "17",
+            "display": "General Practice",
+            "system": "http://terminology.hl7.org/CodeSystem/service-category",
+        },
+        {
+            "code": "27",
+            "display": "Specialist Medical",
+            "system": "http://terminology.hl7.org/CodeSystem/service-category",
+        },
     ]
 
     # Service types
@@ -28,8 +36,16 @@ class SlotGenerator(FHIRResourceGenerator):
 
     # Appointment types
     APPOINTMENT_TYPES = [
-        {"code": "ROUTINE", "display": "Routine appointment", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
-        {"code": "WALKIN", "display": "A walk-in appointment", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
+        {
+            "code": "ROUTINE",
+            "display": "Routine appointment",
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0276",
+        },
+        {
+            "code": "WALKIN",
+            "display": "A walk-in appointment",
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0276",
+        },
         {"code": "CHECKUP", "display": "A routine check-up", "system": "http://terminology.hl7.org/CodeSystem/v2-0276"},
     ]
 

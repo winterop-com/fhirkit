@@ -12,23 +12,63 @@ class CoverageGenerator(FHIRResourceGenerator):
 
     # Coverage types
     COVERAGE_TYPES = [
-        {"code": "HIP", "display": "Health insurance plan policy", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
-        {"code": "EHCPOL", "display": "Extended healthcare", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
-        {"code": "HSAPOL", "display": "Health spending account", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
+        {
+            "code": "HIP",
+            "display": "Health insurance plan policy",
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        },
+        {
+            "code": "EHCPOL",
+            "display": "Extended healthcare",
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        },
+        {
+            "code": "HSAPOL",
+            "display": "Health spending account",
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        },
         {"code": "DENTPRG", "display": "Dental program", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
         {"code": "DRUGPOL", "display": "Drug policy", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
-        {"code": "MCPOL", "display": "Managed care policy", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
-        {"code": "MENTPOL", "display": "Mental health policy", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
-        {"code": "VISPOL", "display": "Vision care policy", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
+        {
+            "code": "MCPOL",
+            "display": "Managed care policy",
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        },
+        {
+            "code": "MENTPOL",
+            "display": "Mental health policy",
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        },
+        {
+            "code": "VISPOL",
+            "display": "Vision care policy",
+            "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        },
     ]
 
     # Subscriber relationships
     RELATIONSHIPS = [
         {"code": "self", "display": "Self", "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship"},
-        {"code": "spouse", "display": "Spouse", "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship"},
-        {"code": "child", "display": "Child", "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship"},
-        {"code": "parent", "display": "Parent", "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship"},
-        {"code": "other", "display": "Other", "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship"},
+        {
+            "code": "spouse",
+            "display": "Spouse",
+            "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
+        },
+        {
+            "code": "child",
+            "display": "Child",
+            "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
+        },
+        {
+            "code": "parent",
+            "display": "Parent",
+            "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
+        },
+        {
+            "code": "other",
+            "display": "Other",
+            "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
+        },
     ]
 
     # Insurance company names
@@ -109,20 +149,24 @@ class CoverageGenerator(FHIRResourceGenerator):
             "class": [
                 {
                     "type": {
-                        "coding": [{
-                            "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
-                            "code": "group",
-                        }],
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                                "code": "group",
+                            }
+                        ],
                     },
                     "value": f"GRP-{self.faker.numerify('####')}",
                     "name": "Employer Group Plan",
                 },
                 {
                     "type": {
-                        "coding": [{
-                            "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
-                            "code": "plan",
-                        }],
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                                "code": "plan",
+                            }
+                        ],
                     },
                     "value": self.faker.random_element(["GOLD", "SILVER", "BRONZE", "PLATINUM"]),
                     "name": f"{type_coding['display']} Plan",

@@ -52,7 +52,11 @@ class ValueSetGenerator(FHIRResourceGenerator):
                 {"code": "AMB", "display": "Ambulatory", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
                 {"code": "EMER", "display": "Emergency", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
                 {"code": "IMP", "display": "Inpatient", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
-                {"code": "OBSENC", "display": "Observation", "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode"},
+                {
+                    "code": "OBSENC",
+                    "display": "Observation",
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                },
             ],
         },
     ]

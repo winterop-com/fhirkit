@@ -12,8 +12,16 @@ class ExplanationOfBenefitGenerator(FHIRResourceGenerator):
 
     # Claim types
     CLAIM_TYPES = [
-        {"code": "institutional", "display": "Institutional", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
-        {"code": "professional", "display": "Professional", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
+        {
+            "code": "institutional",
+            "display": "Institutional",
+            "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+        },
+        {
+            "code": "professional",
+            "display": "Professional",
+            "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+        },
         {"code": "pharmacy", "display": "Pharmacy", "system": "http://terminology.hl7.org/CodeSystem/claim-type"},
     ]
 
@@ -22,11 +30,23 @@ class ExplanationOfBenefitGenerator(FHIRResourceGenerator):
 
     # Adjudication categories
     ADJUDICATION_CATEGORIES = [
-        {"code": "submitted", "display": "Submitted Amount", "system": "http://terminology.hl7.org/CodeSystem/adjudication"},
+        {
+            "code": "submitted",
+            "display": "Submitted Amount",
+            "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+        },
         {"code": "copay", "display": "CoPay", "system": "http://terminology.hl7.org/CodeSystem/adjudication"},
-        {"code": "eligible", "display": "Eligible Amount", "system": "http://terminology.hl7.org/CodeSystem/adjudication"},
+        {
+            "code": "eligible",
+            "display": "Eligible Amount",
+            "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+        },
         {"code": "deductible", "display": "Deductible", "system": "http://terminology.hl7.org/CodeSystem/adjudication"},
-        {"code": "benefit", "display": "Benefit Amount", "system": "http://terminology.hl7.org/CodeSystem/adjudication"},
+        {
+            "code": "benefit",
+            "display": "Benefit Amount",
+            "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+        },
     ]
 
     # CPT codes
@@ -140,10 +160,12 @@ class ExplanationOfBenefitGenerator(FHIRResourceGenerator):
             ],
             "payment": {
                 "type": {
-                    "coding": [{
-                        "system": "http://terminology.hl7.org/CodeSystem/ex-paymenttype",
-                        "code": "complete" if outcome == "complete" else "partial",
-                    }],
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/ex-paymenttype",
+                            "code": "complete" if outcome == "complete" else "partial",
+                        }
+                    ],
                 },
                 "date": self._generate_date(),
                 "amount": {"value": benefit, "currency": "USD"},
