@@ -55,7 +55,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/encounter.html](htt
 ### Create an Encounter
 
 ```bash
-curl -X POST http://localhost:8080/Encounter \
+curl -X POST http://localhost:8080/baseR4/Encounter \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Encounter",
@@ -109,42 +109,42 @@ curl -X POST http://localhost:8080/Encounter \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Encounter?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Encounter?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/Encounter?status=finished"
+curl "http://localhost:8080/baseR4/Encounter?status=finished"
 
 # By class
-curl "http://localhost:8080/Encounter?class=AMB"
+curl "http://localhost:8080/baseR4/Encounter?class=AMB"
 
 # By date
-curl "http://localhost:8080/Encounter?date=2024-01-15"
+curl "http://localhost:8080/baseR4/Encounter?date=2024-01-15"
 
 # Combined: patient's ambulatory encounters
-curl "http://localhost:8080/Encounter?patient=Patient/123&class=AMB"
+curl "http://localhost:8080/baseR4/Encounter?patient=Patient/123&class=AMB"
 ```
 
 ### With _include
 
 ```bash
 # Include patient
-curl "http://localhost:8080/Encounter?_include=Encounter:patient"
+curl "http://localhost:8080/baseR4/Encounter?_include=Encounter:patient"
 
 # Include participant
-curl "http://localhost:8080/Encounter?_include=Encounter:participant"
+curl "http://localhost:8080/baseR4/Encounter?_include=Encounter:participant"
 
 # Include service provider
-curl "http://localhost:8080/Encounter?_include=Encounter:service-provider"
+curl "http://localhost:8080/baseR4/Encounter?_include=Encounter:service-provider"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all encounters for a patient
-curl "http://localhost:8080/Patient/123/Encounter"
+curl "http://localhost:8080/baseR4/Patient/123/Encounter"
 
 # Filter by status
-curl "http://localhost:8080/Patient/123/Encounter?status=finished"
+curl "http://localhost:8080/baseR4/Patient/123/Encounter?status=finished"
 ```
 
 ## Generator

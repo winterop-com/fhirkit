@@ -75,7 +75,7 @@ Each answer can contain:
 ### Create a Completed PHQ-9 Response
 
 ```bash
-curl -X POST http://localhost:8080/QuestionnaireResponse \
+curl -X POST http://localhost:8080/baseR4/QuestionnaireResponse \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "QuestionnaireResponse",
@@ -138,7 +138,7 @@ curl -X POST http://localhost:8080/QuestionnaireResponse \
 ### Create a Pain Assessment Response
 
 ```bash
-curl -X POST http://localhost:8080/QuestionnaireResponse \
+curl -X POST http://localhost:8080/baseR4/QuestionnaireResponse \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "QuestionnaireResponse",
@@ -191,7 +191,7 @@ curl -X POST http://localhost:8080/QuestionnaireResponse \
 ### Create a COVID-19 Screening Response
 
 ```bash
-curl -X POST http://localhost:8080/QuestionnaireResponse \
+curl -X POST http://localhost:8080/baseR4/QuestionnaireResponse \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "QuestionnaireResponse",
@@ -215,7 +215,7 @@ curl -X POST http://localhost:8080/QuestionnaireResponse \
 ### Create a Health Intake Response with Grouped Items
 
 ```bash
-curl -X POST http://localhost:8080/QuestionnaireResponse \
+curl -X POST http://localhost:8080/baseR4/QuestionnaireResponse \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "QuestionnaireResponse",
@@ -258,28 +258,28 @@ curl -X POST http://localhost:8080/QuestionnaireResponse \
 
 ```bash
 # All completed responses
-curl "http://localhost:8080/QuestionnaireResponse?status=completed"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?status=completed"
 
 # By patient
-curl "http://localhost:8080/QuestionnaireResponse?patient=Patient/patient-001"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?patient=Patient/patient-001"
 
 # By questionnaire URL
-curl "http://localhost:8080/QuestionnaireResponse?questionnaire=http://example.org/Questionnaire/phq-9"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?questionnaire=http://example.org/Questionnaire/phq-9"
 
 # By date range
-curl "http://localhost:8080/QuestionnaireResponse?authored=ge2024-01-01&authored=le2024-06-30"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?authored=ge2024-01-01&authored=le2024-06-30"
 
 # Combined: PHQ-9 responses for a patient
-curl "http://localhost:8080/QuestionnaireResponse?patient=Patient/patient-001&questionnaire=http://example.org/Questionnaire/phq-9"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?patient=Patient/patient-001&questionnaire=http://example.org/Questionnaire/phq-9"
 
 # Patient compartment
-curl "http://localhost:8080/Patient/patient-001/QuestionnaireResponse"
+curl "http://localhost:8080/baseR4/Patient/patient-001/QuestionnaireResponse"
 
 # In-progress responses
-curl "http://localhost:8080/QuestionnaireResponse?status=in-progress"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?status=in-progress"
 
 # With _include to get the questionnaire
-curl "http://localhost:8080/QuestionnaireResponse?patient=Patient/patient-001&_include=QuestionnaireResponse:questionnaire"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?patient=Patient/patient-001&_include=QuestionnaireResponse:questionnaire"
 ```
 
 ## Generator
@@ -440,7 +440,7 @@ entered-in-error ←
 
 ```bash
 # Find incomplete responses for a patient
-curl "http://localhost:8080/QuestionnaireResponse?patient=Patient/123&status=in-progress"
+curl "http://localhost:8080/baseR4/QuestionnaireResponse?patient=Patient/123&status=in-progress"
 
 # Find responses missing required items (application logic required)
 ```

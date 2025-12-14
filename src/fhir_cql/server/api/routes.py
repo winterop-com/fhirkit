@@ -250,6 +250,48 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         return JSONResponse(content=config, media_type="application/json")
 
     # =========================================================================
+    # Schema Endpoints (for UI form generation)
+    # =========================================================================
+
+    @router.get("/schema", tags=["Schema"])
+    async def list_schemas() -> Response:
+        """List all available resource schemas.
+
+        Returns a list of resource types that have JSON Schema definitions.
+        """
+        from ..models import RESOURCE_MODELS
+
+        return JSONResponse(
+            content={
+                "schemas": list(RESOURCE_MODELS.keys()),
+                "count": len(RESOURCE_MODELS),
+            },
+            media_type="application/json",
+        )
+
+    @router.get("/schema/{resource_type}", tags=["Schema"])
+    async def get_schema(resource_type: str) -> Response:
+        """Get JSON Schema for a resource type.
+
+        Returns the Pydantic-generated JSON Schema for form generation.
+        """
+        from ..models import get_resource_schema
+
+        schema = get_resource_schema(resource_type)
+        if schema is None:
+            # Return a minimal schema for unsupported types
+            schema = {
+                "type": "object",
+                "properties": {
+                    "resourceType": {"type": "string", "const": resource_type},
+                    "id": {"type": "string"},
+                },
+                "required": ["resourceType"],
+            }
+
+        return JSONResponse(content=schema, media_type="application/json")
+
+    # =========================================================================
     # Bulk Data Export Operations
     # =========================================================================
 

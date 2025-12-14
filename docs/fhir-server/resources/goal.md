@@ -42,7 +42,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/goal.html](https://
 ### Create a Goal
 
 ```bash
-curl -X POST http://localhost:8080/Goal \
+curl -X POST http://localhost:8080/baseR4/Goal \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Goal",
@@ -94,16 +94,16 @@ curl -X POST http://localhost:8080/Goal \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Goal?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Goal?patient=Patient/123"
 
 # Active goals
-curl "http://localhost:8080/Goal?lifecycle-status=active"
+curl "http://localhost:8080/baseR4/Goal?lifecycle-status=active"
 
 # By achievement status
-curl "http://localhost:8080/Goal?achievement-status=achieved"
+curl "http://localhost:8080/baseR4/Goal?achievement-status=achieved"
 
 # Combined
-curl "http://localhost:8080/Goal?patient=Patient/123&lifecycle-status=active"
+curl "http://localhost:8080/baseR4/Goal?patient=Patient/123&lifecycle-status=active"
 ```
 
 ## Generator

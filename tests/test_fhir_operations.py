@@ -145,7 +145,7 @@ def store_with_related_data() -> FHIRStore:
 @pytest.fixture
 def client(store_with_related_data: FHIRStore) -> TestClient:
     """Create test client with pre-populated store."""
-    settings = FHIRServerSettings(patients=0, enable_docs=False)
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings, store=store_with_related_data)
     return TestClient(app)
 

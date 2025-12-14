@@ -54,7 +54,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/medicationrequest.h
 ### Create a MedicationRequest
 
 ```bash
-curl -X POST http://localhost:8080/MedicationRequest \
+curl -X POST http://localhost:8080/baseR4/MedicationRequest \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "MedicationRequest",
@@ -132,29 +132,29 @@ curl -X POST http://localhost:8080/MedicationRequest \
 
 ```bash
 # By patient
-curl "http://localhost:8080/MedicationRequest?patient=Patient/123"
+curl "http://localhost:8080/baseR4/MedicationRequest?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/MedicationRequest?status=active"
+curl "http://localhost:8080/baseR4/MedicationRequest?status=active"
 
 # By medication code
-curl "http://localhost:8080/MedicationRequest?code=http://www.nlm.nih.gov/research/umls/rxnorm|197361"
+curl "http://localhost:8080/baseR4/MedicationRequest?code=http://www.nlm.nih.gov/research/umls/rxnorm|197361"
 
 # Active orders
-curl "http://localhost:8080/MedicationRequest?status=active&intent=order"
+curl "http://localhost:8080/baseR4/MedicationRequest?status=active&intent=order"
 
 # By prescriber
-curl "http://localhost:8080/MedicationRequest?requester=Practitioner/456"
+curl "http://localhost:8080/baseR4/MedicationRequest?requester=Practitioner/456"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all prescriptions for a patient
-curl "http://localhost:8080/Patient/123/MedicationRequest"
+curl "http://localhost:8080/baseR4/Patient/123/MedicationRequest"
 
 # Active prescriptions only
-curl "http://localhost:8080/Patient/123/MedicationRequest?status=active"
+curl "http://localhost:8080/baseR4/Patient/123/MedicationRequest?status=active"
 ```
 
 ## Status Codes

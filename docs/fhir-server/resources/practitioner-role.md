@@ -48,7 +48,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/practitionerrole.ht
 ### Create a PractitionerRole
 
 ```bash
-curl -X POST http://localhost:8080/PractitionerRole \
+curl -X POST http://localhost:8080/baseR4/PractitionerRole \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "PractitionerRole",
@@ -96,32 +96,32 @@ curl -X POST http://localhost:8080/PractitionerRole \
 
 ```bash
 # By practitioner
-curl "http://localhost:8080/PractitionerRole?practitioner=Practitioner/123"
+curl "http://localhost:8080/baseR4/PractitionerRole?practitioner=Practitioner/123"
 
 # By organization
-curl "http://localhost:8080/PractitionerRole?organization=Organization/456"
+curl "http://localhost:8080/baseR4/PractitionerRole?organization=Organization/456"
 
 # By specialty
-curl "http://localhost:8080/PractitionerRole?specialty=http://snomed.info/sct|394814009"
+curl "http://localhost:8080/baseR4/PractitionerRole?specialty=http://snomed.info/sct|394814009"
 
 # Active roles
-curl "http://localhost:8080/PractitionerRole?active=true"
+curl "http://localhost:8080/baseR4/PractitionerRole?active=true"
 
 # Combined: active roles at specific organization
-curl "http://localhost:8080/PractitionerRole?organization=Organization/456&active=true"
+curl "http://localhost:8080/baseR4/PractitionerRole?organization=Organization/456&active=true"
 ```
 
 ### With _include
 
 ```bash
 # Include practitioner
-curl "http://localhost:8080/PractitionerRole?_include=PractitionerRole:practitioner"
+curl "http://localhost:8080/baseR4/PractitionerRole?_include=PractitionerRole:practitioner"
 
 # Include organization
-curl "http://localhost:8080/PractitionerRole?_include=PractitionerRole:organization"
+curl "http://localhost:8080/baseR4/PractitionerRole?_include=PractitionerRole:organization"
 
 # Include location
-curl "http://localhost:8080/PractitionerRole?_include=PractitionerRole:location"
+curl "http://localhost:8080/baseR4/PractitionerRole?_include=PractitionerRole:location"
 ```
 
 ## Role Codes

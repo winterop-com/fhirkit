@@ -46,7 +46,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/group.html](https:/
 ### Create a Group
 
 ```bash
-curl -X POST http://localhost:8080/Group \
+curl -X POST http://localhost:8080/baseR4/Group \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Group",
@@ -92,7 +92,7 @@ curl -X POST http://localhost:8080/Group \
 ### Create a Definitional Group
 
 ```bash
-curl -X POST http://localhost:8080/Group \
+curl -X POST http://localhost:8080/baseR4/Group \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Group",
@@ -121,19 +121,19 @@ curl -X POST http://localhost:8080/Group \
 
 ```bash
 # By type
-curl "http://localhost:8080/Group?type=person"
+curl "http://localhost:8080/baseR4/Group?type=person"
 
 # By name
-curl "http://localhost:8080/Group?name=Diabetes"
+curl "http://localhost:8080/baseR4/Group?name=Diabetes"
 
 # Actual groups only
-curl "http://localhost:8080/Group?actual=true"
+curl "http://localhost:8080/baseR4/Group?actual=true"
 
 # By member
-curl "http://localhost:8080/Group?member=Patient/123"
+curl "http://localhost:8080/baseR4/Group?member=Patient/123"
 
 # By managing entity
-curl "http://localhost:8080/Group?managing-entity=Organization/456"
+curl "http://localhost:8080/baseR4/Group?managing-entity=Organization/456"
 ```
 
 ## Group Types

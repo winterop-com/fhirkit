@@ -51,7 +51,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/condition.html](htt
 ### Create a Condition
 
 ```bash
-curl -X POST http://localhost:8080/Condition \
+curl -X POST http://localhost:8080/baseR4/Condition \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Condition",
@@ -103,39 +103,39 @@ curl -X POST http://localhost:8080/Condition \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Condition?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Condition?patient=Patient/123"
 
 # By diagnosis code
-curl "http://localhost:8080/Condition?code=http://snomed.info/sct|73211009"
+curl "http://localhost:8080/baseR4/Condition?code=http://snomed.info/sct|73211009"
 
 # By clinical status
-curl "http://localhost:8080/Condition?clinical-status=active"
+curl "http://localhost:8080/baseR4/Condition?clinical-status=active"
 
 # Active confirmed conditions
-curl "http://localhost:8080/Condition?clinical-status=active&verification-status=confirmed"
+curl "http://localhost:8080/baseR4/Condition?clinical-status=active&verification-status=confirmed"
 
 # Problem list items
-curl "http://localhost:8080/Condition?category=problem-list-item"
+curl "http://localhost:8080/baseR4/Condition?category=problem-list-item"
 ```
 
 ### With _include
 
 ```bash
 # Include patient
-curl "http://localhost:8080/Condition?_include=Condition:patient"
+curl "http://localhost:8080/baseR4/Condition?_include=Condition:patient"
 
 # Include encounter
-curl "http://localhost:8080/Condition?_include=Condition:encounter"
+curl "http://localhost:8080/baseR4/Condition?_include=Condition:encounter"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all conditions for a patient
-curl "http://localhost:8080/Patient/123/Condition"
+curl "http://localhost:8080/baseR4/Patient/123/Condition"
 
 # Active conditions only
-curl "http://localhost:8080/Patient/123/Condition?clinical-status=active"
+curl "http://localhost:8080/baseR4/Patient/123/Condition?clinical-status=active"
 ```
 
 ## Generator

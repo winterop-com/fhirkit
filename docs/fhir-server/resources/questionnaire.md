@@ -60,7 +60,7 @@ Each item in a questionnaire can have:
 ### Create a PHQ-9 Depression Screening Questionnaire
 
 ```bash
-curl -X POST http://localhost:8080/Questionnaire \
+curl -X POST http://localhost:8080/baseR4/Questionnaire \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Questionnaire",
@@ -102,7 +102,7 @@ curl -X POST http://localhost:8080/Questionnaire \
 ### Create a Health Intake Form with Grouped Questions
 
 ```bash
-curl -X POST http://localhost:8080/Questionnaire \
+curl -X POST http://localhost:8080/baseR4/Questionnaire \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Questionnaire",
@@ -134,7 +134,7 @@ curl -X POST http://localhost:8080/Questionnaire \
 ### Create a Pain Assessment Questionnaire
 
 ```bash
-curl -X POST http://localhost:8080/Questionnaire \
+curl -X POST http://localhost:8080/baseR4/Questionnaire \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Questionnaire",
@@ -169,19 +169,19 @@ curl -X POST http://localhost:8080/Questionnaire \
 
 ```bash
 # All active questionnaires
-curl "http://localhost:8080/Questionnaire?status=active"
+curl "http://localhost:8080/baseR4/Questionnaire?status=active"
 
 # By canonical URL
-curl "http://localhost:8080/Questionnaire?url=http://example.org/Questionnaire/phq-9"
+curl "http://localhost:8080/baseR4/Questionnaire?url=http://example.org/Questionnaire/phq-9"
 
 # By name (partial match)
-curl "http://localhost:8080/Questionnaire?name:contains=phq"
+curl "http://localhost:8080/baseR4/Questionnaire?name:contains=phq"
 
 # By title
-curl "http://localhost:8080/Questionnaire?title=Patient%20Health"
+curl "http://localhost:8080/baseR4/Questionnaire?title=Patient%20Health"
 
 # Read a specific questionnaire
-curl "http://localhost:8080/Questionnaire/phq-9"
+curl "http://localhost:8080/baseR4/Questionnaire/phq-9"
 ```
 
 ## Generator

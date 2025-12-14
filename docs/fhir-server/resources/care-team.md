@@ -48,7 +48,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/careteam.html](http
 ### Create a CareTeam
 
 ```bash
-curl -X POST http://localhost:8080/CareTeam \
+curl -X POST http://localhost:8080/baseR4/CareTeam \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "CareTeam",
@@ -117,23 +117,23 @@ curl -X POST http://localhost:8080/CareTeam \
 
 ```bash
 # By patient
-curl "http://localhost:8080/CareTeam?patient=Patient/123"
+curl "http://localhost:8080/baseR4/CareTeam?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/CareTeam?status=active"
+curl "http://localhost:8080/baseR4/CareTeam?status=active"
 
 # By participant
-curl "http://localhost:8080/CareTeam?participant=Practitioner/456"
+curl "http://localhost:8080/baseR4/CareTeam?participant=Practitioner/456"
 
 # By category
-curl "http://localhost:8080/CareTeam?category=LA27976-2"
+curl "http://localhost:8080/baseR4/CareTeam?category=LA27976-2"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all care teams for a patient
-curl "http://localhost:8080/Patient/123/CareTeam"
+curl "http://localhost:8080/baseR4/Patient/123/CareTeam"
 ```
 
 ## Status Codes

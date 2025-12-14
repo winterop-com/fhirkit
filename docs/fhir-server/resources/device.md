@@ -63,7 +63,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/device.html](https:
 ### Create a Device
 
 ```bash
-curl -X POST http://localhost:8080/Device \
+curl -X POST http://localhost:8080/baseR4/Device \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Device",
@@ -109,23 +109,23 @@ curl -X POST http://localhost:8080/Device \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Device?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Device?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/Device?status=active"
+curl "http://localhost:8080/baseR4/Device?status=active"
 
 # By type
-curl "http://localhost:8080/Device?type=43770009"
+curl "http://localhost:8080/baseR4/Device?type=43770009"
 
 # By manufacturer
-curl "http://localhost:8080/Device?manufacturer=Acme"
+curl "http://localhost:8080/baseR4/Device?manufacturer=Acme"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all devices for a patient
-curl "http://localhost:8080/Patient/123/Device"
+curl "http://localhost:8080/baseR4/Patient/123/Device"
 ```
 
 ## Status Codes

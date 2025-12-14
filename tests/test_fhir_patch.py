@@ -296,7 +296,7 @@ class TestPatchEndpoint:
     @pytest.fixture
     def client(self):
         """Create test client with FHIR server."""
-        settings = FHIRServerSettings(patients=0)
+        settings = FHIRServerSettings(patients=0, enable_ui=False, api_base_path="")
         store = FHIRStore()
         app = create_app(settings=settings, store=store)
         return TestClient(app)

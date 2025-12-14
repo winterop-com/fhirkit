@@ -51,7 +51,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/allergyintolerance.
 ### Create an AllergyIntolerance
 
 ```bash
-curl -X POST http://localhost:8080/AllergyIntolerance \
+curl -X POST http://localhost:8080/baseR4/AllergyIntolerance \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "AllergyIntolerance",
@@ -103,42 +103,42 @@ curl -X POST http://localhost:8080/AllergyIntolerance \
 
 ```bash
 # By patient
-curl "http://localhost:8080/AllergyIntolerance?patient=Patient/123"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?patient=Patient/123"
 
 # By category (medication allergies)
-curl "http://localhost:8080/AllergyIntolerance?category=medication"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?category=medication"
 
 # By criticality (high-risk allergies)
-curl "http://localhost:8080/AllergyIntolerance?criticality=high"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?criticality=high"
 
 # Active allergies only
-curl "http://localhost:8080/AllergyIntolerance?clinical-status=active"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?clinical-status=active"
 
 # Confirmed medication allergies
-curl "http://localhost:8080/AllergyIntolerance?category=medication&verification-status=confirmed"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?category=medication&verification-status=confirmed"
 
 # Combined: patient's active high-criticality allergies
-curl "http://localhost:8080/AllergyIntolerance?patient=Patient/123&clinical-status=active&criticality=high"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?patient=Patient/123&clinical-status=active&criticality=high"
 ```
 
 ### With _include
 
 ```bash
 # Include the patient
-curl "http://localhost:8080/AllergyIntolerance?patient=123&_include=AllergyIntolerance:patient"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?patient=123&_include=AllergyIntolerance:patient"
 
 # Include the recorder
-curl "http://localhost:8080/AllergyIntolerance?_include=AllergyIntolerance:recorder"
+curl "http://localhost:8080/baseR4/AllergyIntolerance?_include=AllergyIntolerance:recorder"
 ```
 
 ### Patient Compartment Search
 
 ```bash
 # Get all allergies for a patient via compartment
-curl "http://localhost:8080/Patient/123/AllergyIntolerance"
+curl "http://localhost:8080/baseR4/Patient/123/AllergyIntolerance"
 
 # With criticality filter
-curl "http://localhost:8080/Patient/123/AllergyIntolerance?criticality=high"
+curl "http://localhost:8080/baseR4/Patient/123/AllergyIntolerance?criticality=high"
 ```
 
 ## Generator

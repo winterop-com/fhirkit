@@ -46,7 +46,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/careplan.html](http
 ### Create a CarePlan
 
 ```bash
-curl -X POST http://localhost:8080/CarePlan \
+curl -X POST http://localhost:8080/baseR4/CarePlan \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "CarePlan",
@@ -82,16 +82,16 @@ curl -X POST http://localhost:8080/CarePlan \
 
 ```bash
 # By patient
-curl "http://localhost:8080/CarePlan?patient=Patient/123"
+curl "http://localhost:8080/baseR4/CarePlan?patient=Patient/123"
 
 # Active care plans
-curl "http://localhost:8080/CarePlan?status=active"
+curl "http://localhost:8080/baseR4/CarePlan?status=active"
 
 # By category
-curl "http://localhost:8080/CarePlan?category=assess-plan"
+curl "http://localhost:8080/baseR4/CarePlan?category=assess-plan"
 
 # Combined
-curl "http://localhost:8080/CarePlan?patient=Patient/123&status=active"
+curl "http://localhost:8080/baseR4/CarePlan?patient=Patient/123&status=active"
 ```
 
 ## Generator

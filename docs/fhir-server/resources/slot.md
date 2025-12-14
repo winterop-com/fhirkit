@@ -46,7 +46,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/slot.html](https://
 ### Create a Slot
 
 ```bash
-curl -X POST http://localhost:8080/Slot \
+curl -X POST http://localhost:8080/baseR4/Slot \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Slot",
@@ -86,23 +86,23 @@ curl -X POST http://localhost:8080/Slot \
 
 ```bash
 # By schedule
-curl "http://localhost:8080/Slot?schedule=Schedule/123"
+curl "http://localhost:8080/baseR4/Slot?schedule=Schedule/123"
 
 # Free slots
-curl "http://localhost:8080/Slot?status=free"
+curl "http://localhost:8080/baseR4/Slot?status=free"
 
 # By date
-curl "http://localhost:8080/Slot?start=2024-01-15"
+curl "http://localhost:8080/baseR4/Slot?start=2024-01-15"
 
 # Free slots for a date
-curl "http://localhost:8080/Slot?status=free&start=2024-01-15"
+curl "http://localhost:8080/baseR4/Slot?status=free&start=2024-01-15"
 ```
 
 ### With _include
 
 ```bash
 # Include schedule
-curl "http://localhost:8080/Slot?_include=Slot:schedule"
+curl "http://localhost:8080/baseR4/Slot?_include=Slot:schedule"
 ```
 
 ## Status Codes

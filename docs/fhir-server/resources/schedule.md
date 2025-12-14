@@ -41,7 +41,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/schedule.html](http
 ### Create a Schedule
 
 ```bash
-curl -X POST http://localhost:8080/Schedule \
+curl -X POST http://localhost:8080/baseR4/Schedule \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Schedule",
@@ -89,21 +89,21 @@ curl -X POST http://localhost:8080/Schedule \
 
 ```bash
 # By actor
-curl "http://localhost:8080/Schedule?actor=Practitioner/123"
+curl "http://localhost:8080/baseR4/Schedule?actor=Practitioner/123"
 
 # Active schedules
-curl "http://localhost:8080/Schedule?active=true"
+curl "http://localhost:8080/baseR4/Schedule?active=true"
 
 # By specialty
-curl "http://localhost:8080/Schedule?specialty=394814009"
+curl "http://localhost:8080/baseR4/Schedule?specialty=394814009"
 
 # By date range
-curl "http://localhost:8080/Schedule?date=ge2024-01-01"
+curl "http://localhost:8080/baseR4/Schedule?date=ge2024-01-01"
 ```
 
 ### With _revinclude
 
 ```bash
 # Include slots
-curl "http://localhost:8080/Schedule?_revinclude=Slot:schedule"
+curl "http://localhost:8080/baseR4/Schedule?_revinclude=Slot:schedule"
 ```

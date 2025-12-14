@@ -62,7 +62,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/claim.html](https:/
 ### Create a Claim
 
 ```bash
-curl -X POST http://localhost:8080/Claim \
+curl -X POST http://localhost:8080/baseR4/Claim \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Claim",
@@ -139,23 +139,23 @@ curl -X POST http://localhost:8080/Claim \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Claim?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Claim?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/Claim?status=active"
+curl "http://localhost:8080/baseR4/Claim?status=active"
 
 # By created date
-curl "http://localhost:8080/Claim?created=2024-01-20"
+curl "http://localhost:8080/baseR4/Claim?created=2024-01-20"
 
 # By provider
-curl "http://localhost:8080/Claim?provider=Practitioner/456"
+curl "http://localhost:8080/baseR4/Claim?provider=Practitioner/456"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all claims for a patient
-curl "http://localhost:8080/Patient/123/Claim"
+curl "http://localhost:8080/baseR4/Patient/123/Claim"
 ```
 
 ## Status Codes

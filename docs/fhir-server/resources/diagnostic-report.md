@@ -48,7 +48,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/diagnosticreport.ht
 ### Create a DiagnosticReport
 
 ```bash
-curl -X POST http://localhost:8080/DiagnosticReport \
+curl -X POST http://localhost:8080/baseR4/DiagnosticReport \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "DiagnosticReport",
@@ -79,45 +79,45 @@ curl -X POST http://localhost:8080/DiagnosticReport \
 
 ```bash
 # By patient
-curl "http://localhost:8080/DiagnosticReport?patient=Patient/123"
+curl "http://localhost:8080/baseR4/DiagnosticReport?patient=Patient/123"
 
 # By category (laboratory reports)
-curl "http://localhost:8080/DiagnosticReport?category=LAB"
+curl "http://localhost:8080/baseR4/DiagnosticReport?category=LAB"
 
 # By code (CBC panel)
-curl "http://localhost:8080/DiagnosticReport?code=http://loinc.org|58410-2"
+curl "http://localhost:8080/baseR4/DiagnosticReport?code=http://loinc.org|58410-2"
 
 # By status (final reports only)
-curl "http://localhost:8080/DiagnosticReport?status=final"
+curl "http://localhost:8080/baseR4/DiagnosticReport?status=final"
 
 # By date range
-curl "http://localhost:8080/DiagnosticReport?date=ge2024-01-01&date=le2024-12-31"
+curl "http://localhost:8080/baseR4/DiagnosticReport?date=ge2024-01-01&date=le2024-12-31"
 
 # Combined search
-curl "http://localhost:8080/DiagnosticReport?patient=Patient/123&category=RAD&status=final"
+curl "http://localhost:8080/baseR4/DiagnosticReport?patient=Patient/123&category=RAD&status=final"
 ```
 
 ### With _include
 
 ```bash
 # Include the patient
-curl "http://localhost:8080/DiagnosticReport?patient=123&_include=DiagnosticReport:subject"
+curl "http://localhost:8080/baseR4/DiagnosticReport?patient=123&_include=DiagnosticReport:subject"
 
 # Include the observations referenced in results
-curl "http://localhost:8080/DiagnosticReport?_include=DiagnosticReport:result"
+curl "http://localhost:8080/baseR4/DiagnosticReport?_include=DiagnosticReport:result"
 
 # Include performer (practitioner)
-curl "http://localhost:8080/DiagnosticReport?_include=DiagnosticReport:performer"
+curl "http://localhost:8080/baseR4/DiagnosticReport?_include=DiagnosticReport:performer"
 ```
 
 ### Patient Compartment Search
 
 ```bash
 # Get all DiagnosticReports for a patient via compartment
-curl "http://localhost:8080/Patient/123/DiagnosticReport"
+curl "http://localhost:8080/baseR4/Patient/123/DiagnosticReport"
 
 # With category filter
-curl "http://localhost:8080/Patient/123/DiagnosticReport?category=LAB"
+curl "http://localhost:8080/baseR4/Patient/123/DiagnosticReport?category=LAB"
 ```
 
 ## Generator

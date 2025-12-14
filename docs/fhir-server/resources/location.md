@@ -54,7 +54,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/location.html](http
 ### Create a Location
 
 ```bash
-curl -X POST http://localhost:8080/Location \
+curl -X POST http://localhost:8080/baseR4/Location \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Location",
@@ -116,29 +116,29 @@ curl -X POST http://localhost:8080/Location \
 
 ```bash
 # By name
-curl "http://localhost:8080/Location?name=Main"
+curl "http://localhost:8080/baseR4/Location?name=Main"
 
 # By status
-curl "http://localhost:8080/Location?status=active"
+curl "http://localhost:8080/baseR4/Location?status=active"
 
 # By type
-curl "http://localhost:8080/Location?type=http://terminology.hl7.org/CodeSystem/v3-RoleCode|HOSP"
+curl "http://localhost:8080/baseR4/Location?type=http://terminology.hl7.org/CodeSystem/v3-RoleCode|HOSP"
 
 # By city
-curl "http://localhost:8080/Location?address-city=Boston"
+curl "http://localhost:8080/baseR4/Location?address-city=Boston"
 
 # By managing organization
-curl "http://localhost:8080/Location?organization=Organization/123"
+curl "http://localhost:8080/baseR4/Location?organization=Organization/123"
 ```
 
 ### With _include
 
 ```bash
 # Include managing organization
-curl "http://localhost:8080/Location?_include=Location:organization"
+curl "http://localhost:8080/baseR4/Location?_include=Location:organization"
 
 # Include parent location
-curl "http://localhost:8080/Location?_include=Location:partof"
+curl "http://localhost:8080/baseR4/Location?_include=Location:partof"
 ```
 
 ## Location Status

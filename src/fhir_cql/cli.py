@@ -111,16 +111,18 @@ def serve(
         rprint(f"  Synthetic patients: {patients}")
         if seed:
             rprint(f"  Random seed: {seed}")
+    api_base = settings.api_base_path
     rprint()
     rprint("[bold]Endpoints:[/bold]")
-    rprint(f"  Base URL:     http://{host}:{port}")
-    rprint(f"  Metadata:     http://{host}:{port}/metadata")
-    rprint(f"  API Docs:     http://{host}:{port}/docs")
+    rprint(f"  Web UI:       http://{host}:{port}/")
+    rprint(f"  FHIR API:     http://{host}:{port}{api_base}")
+    rprint(f"  Metadata:     http://{host}:{port}{api_base}/metadata")
+    rprint(f"  API Docs:     http://{host}:{port}{api_base}/docs")
     rprint()
     rprint("[bold]Example requests:[/bold]")
-    rprint(f"  GET  http://{host}:{port}/Patient")
-    rprint(f"  GET  http://{host}:{port}/Patient/{{id}}")
-    rprint(f"  POST http://{host}:{port}/Patient")
+    rprint(f"  GET  http://{host}:{port}{api_base}/Patient")
+    rprint(f"  GET  http://{host}:{port}{api_base}/Patient/{{id}}")
+    rprint(f"  POST http://{host}:{port}{api_base}/Patient")
     rprint()
 
     uvicorn.run(

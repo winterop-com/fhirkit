@@ -63,7 +63,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/appointment.html](h
 ### Create an Appointment
 
 ```bash
-curl -X POST http://localhost:8080/Appointment \
+curl -X POST http://localhost:8080/baseR4/Appointment \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Appointment",
@@ -129,29 +129,29 @@ curl -X POST http://localhost:8080/Appointment \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Appointment?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Appointment?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/Appointment?status=booked"
+curl "http://localhost:8080/baseR4/Appointment?status=booked"
 
 # By date
-curl "http://localhost:8080/Appointment?date=2024-01-15"
+curl "http://localhost:8080/baseR4/Appointment?date=2024-01-15"
 
 # By practitioner
-curl "http://localhost:8080/Appointment?practitioner=Practitioner/456"
+curl "http://localhost:8080/baseR4/Appointment?practitioner=Practitioner/456"
 
 # Upcoming appointments
-curl "http://localhost:8080/Appointment?date=ge2024-01-15&status=booked"
+curl "http://localhost:8080/baseR4/Appointment?date=ge2024-01-15&status=booked"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all appointments for a patient
-curl "http://localhost:8080/Patient/123/Appointment"
+curl "http://localhost:8080/baseR4/Patient/123/Appointment"
 
 # Booked appointments only
-curl "http://localhost:8080/Patient/123/Appointment?status=booked"
+curl "http://localhost:8080/baseR4/Patient/123/Appointment?status=booked"
 ```
 
 ## Status Codes

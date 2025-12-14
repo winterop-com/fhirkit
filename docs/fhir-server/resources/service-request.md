@@ -49,7 +49,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/servicerequest.html
 ### Create a ServiceRequest
 
 ```bash
-curl -X POST http://localhost:8080/ServiceRequest \
+curl -X POST http://localhost:8080/baseR4/ServiceRequest \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "ServiceRequest",
@@ -81,19 +81,19 @@ curl -X POST http://localhost:8080/ServiceRequest \
 
 ```bash
 # By patient
-curl "http://localhost:8080/ServiceRequest?patient=Patient/123"
+curl "http://localhost:8080/baseR4/ServiceRequest?patient=Patient/123"
 
 # By category (laboratory orders)
-curl "http://localhost:8080/ServiceRequest?category=laboratory"
+curl "http://localhost:8080/baseR4/ServiceRequest?category=laboratory"
 
 # Active orders
-curl "http://localhost:8080/ServiceRequest?status=active"
+curl "http://localhost:8080/baseR4/ServiceRequest?status=active"
 
 # STAT orders
-curl "http://localhost:8080/ServiceRequest?priority=stat"
+curl "http://localhost:8080/baseR4/ServiceRequest?priority=stat"
 
 # Combined
-curl "http://localhost:8080/ServiceRequest?patient=Patient/123&status=active&intent=order"
+curl "http://localhost:8080/baseR4/ServiceRequest?patient=Patient/123&status=active&intent=order"
 ```
 
 ## Generator

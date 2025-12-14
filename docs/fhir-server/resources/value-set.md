@@ -54,7 +54,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/valueset.html](http
 ### Create a ValueSet
 
 ```bash
-curl -X POST http://localhost:8080/ValueSet \
+curl -X POST http://localhost:8080/baseR4/ValueSet \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "ValueSet",
@@ -84,26 +84,26 @@ curl -X POST http://localhost:8080/ValueSet \
 
 ```bash
 # By URL
-curl "http://localhost:8080/ValueSet?url=http://example.org/fhir/ValueSet/condition-severity"
+curl "http://localhost:8080/baseR4/ValueSet?url=http://example.org/fhir/ValueSet/condition-severity"
 
 # By status
-curl "http://localhost:8080/ValueSet?status=active"
+curl "http://localhost:8080/baseR4/ValueSet?status=active"
 
 # By name
-curl "http://localhost:8080/ValueSet?name=ConditionSeverity"
+curl "http://localhost:8080/baseR4/ValueSet?name=ConditionSeverity"
 
 # By publisher
-curl "http://localhost:8080/ValueSet?publisher=HL7"
+curl "http://localhost:8080/baseR4/ValueSet?publisher=HL7"
 ```
 
 ### Expand ValueSet
 
 ```bash
 # Expand a specific value set
-curl "http://localhost:8080/ValueSet/vs-001/$expand"
+curl "http://localhost:8080/baseR4/ValueSet/vs-001/$expand"
 
 # Expand by URL
-curl "http://localhost:8080/ValueSet/$expand?url=http://example.org/fhir/ValueSet/condition-severity"
+curl "http://localhost:8080/baseR4/ValueSet/$expand?url=http://example.org/fhir/ValueSet/condition-severity"
 ```
 
 ## Status Codes

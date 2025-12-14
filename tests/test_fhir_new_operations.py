@@ -166,7 +166,7 @@ def store_with_composition() -> FHIRStore:
 @pytest.fixture
 def translate_client(store_with_concept_maps: FHIRStore) -> TestClient:
     """Create test client for translate tests."""
-    settings = FHIRServerSettings(patients=0, enable_docs=False)
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings, store=store_with_concept_maps)
     return TestClient(app)
 
@@ -174,7 +174,7 @@ def translate_client(store_with_concept_maps: FHIRStore) -> TestClient:
 @pytest.fixture
 def match_client(store_with_patients: FHIRStore) -> TestClient:
     """Create test client for match tests."""
-    settings = FHIRServerSettings(patients=0, enable_docs=False)
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings, store=store_with_patients)
     return TestClient(app)
 
@@ -182,7 +182,7 @@ def match_client(store_with_patients: FHIRStore) -> TestClient:
 @pytest.fixture
 def document_client(store_with_composition: FHIRStore) -> TestClient:
     """Create test client for document tests."""
-    settings = FHIRServerSettings(patients=0, enable_docs=False)
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings, store=store_with_composition)
     return TestClient(app)
 

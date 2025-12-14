@@ -49,7 +49,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/relatedperson.html]
 ### Create a RelatedPerson
 
 ```bash
-curl -X POST http://localhost:8080/RelatedPerson \
+curl -X POST http://localhost:8080/baseR4/RelatedPerson \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "RelatedPerson",
@@ -111,33 +111,33 @@ curl -X POST http://localhost:8080/RelatedPerson \
 
 ```bash
 # By patient
-curl "http://localhost:8080/RelatedPerson?patient=Patient/123"
+curl "http://localhost:8080/baseR4/RelatedPerson?patient=Patient/123"
 
 # By name
-curl "http://localhost:8080/RelatedPerson?name=Smith"
+curl "http://localhost:8080/baseR4/RelatedPerson?name=Smith"
 
 # By relationship type
-curl "http://localhost:8080/RelatedPerson?relationship=SPS"
+curl "http://localhost:8080/baseR4/RelatedPerson?relationship=SPS"
 
 # Active relationships
-curl "http://localhost:8080/RelatedPerson?active=true"
+curl "http://localhost:8080/baseR4/RelatedPerson?active=true"
 
 # Combined: patient's emergency contacts
-curl "http://localhost:8080/RelatedPerson?patient=Patient/123&relationship=ECON"
+curl "http://localhost:8080/baseR4/RelatedPerson?patient=Patient/123&relationship=ECON"
 ```
 
 ### With _include
 
 ```bash
 # Include patient
-curl "http://localhost:8080/RelatedPerson?_include=RelatedPerson:patient"
+curl "http://localhost:8080/baseR4/RelatedPerson?_include=RelatedPerson:patient"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all related persons for a patient
-curl "http://localhost:8080/Patient/123/RelatedPerson"
+curl "http://localhost:8080/baseR4/Patient/123/RelatedPerson"
 ```
 
 ## Relationship Types (v3-RoleCode)

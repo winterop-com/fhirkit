@@ -74,7 +74,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/library.html](https
 ### Create a CQL Library
 
 ```bash
-curl -X POST http://localhost:8080/Library \
+curl -X POST http://localhost:8080/baseR4/Library \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Library",
@@ -136,7 +136,7 @@ curl -X POST http://localhost:8080/Library \
 ### Create with External CQL Reference
 
 ```bash
-curl -X POST http://localhost:8080/Library \
+curl -X POST http://localhost:8080/baseR4/Library \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Library",
@@ -162,19 +162,19 @@ curl -X POST http://localhost:8080/Library \
 
 ```bash
 # By URL
-curl "http://localhost:8080/Library?url=http://example.org/fhir/Library/DiabetesLogic"
+curl "http://localhost:8080/baseR4/Library?url=http://example.org/fhir/Library/DiabetesLogic"
 
 # By status
-curl "http://localhost:8080/Library?status=active"
+curl "http://localhost:8080/baseR4/Library?status=active"
 
 # By type
-curl "http://localhost:8080/Library?type=logic-library"
+curl "http://localhost:8080/baseR4/Library?type=logic-library"
 
 # By name
-curl "http://localhost:8080/Library?name=DiabetesLogic"
+curl "http://localhost:8080/baseR4/Library?name=DiabetesLogic"
 
 # By content type
-curl "http://localhost:8080/Library?content-type=text/cql"
+curl "http://localhost:8080/baseR4/Library?content-type=text/cql"
 ```
 
 ## Library Types

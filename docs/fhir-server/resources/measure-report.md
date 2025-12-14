@@ -46,7 +46,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/measurereport.html]
 ### Create an Individual MeasureReport
 
 ```bash
-curl -X POST http://localhost:8080/MeasureReport \
+curl -X POST http://localhost:8080/baseR4/MeasureReport \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "MeasureReport",
@@ -107,7 +107,7 @@ curl -X POST http://localhost:8080/MeasureReport \
 ### Create a Summary MeasureReport
 
 ```bash
-curl -X POST http://localhost:8080/MeasureReport \
+curl -X POST http://localhost:8080/baseR4/MeasureReport \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "MeasureReport",
@@ -161,19 +161,19 @@ curl -X POST http://localhost:8080/MeasureReport \
 
 ```bash
 # By patient
-curl "http://localhost:8080/MeasureReport?patient=Patient/123"
+curl "http://localhost:8080/baseR4/MeasureReport?patient=Patient/123"
 
 # By measure
-curl "http://localhost:8080/MeasureReport?measure=http://example.org/Measure/DiabetesHbA1c"
+curl "http://localhost:8080/baseR4/MeasureReport?measure=http://example.org/Measure/DiabetesHbA1c"
 
 # Complete reports
-curl "http://localhost:8080/MeasureReport?status=complete"
+curl "http://localhost:8080/baseR4/MeasureReport?status=complete"
 
 # By date range
-curl "http://localhost:8080/MeasureReport?date=ge2024-01-01"
+curl "http://localhost:8080/baseR4/MeasureReport?date=ge2024-01-01"
 
 # Combined
-curl "http://localhost:8080/MeasureReport?patient=Patient/123&status=complete"
+curl "http://localhost:8080/baseR4/MeasureReport?patient=Patient/123&status=complete"
 ```
 
 ## Generator
@@ -273,8 +273,8 @@ MeasureReport is part of the Patient compartment when it has a `subject` referen
 
 ```bash
 # Get all measure reports for a patient
-curl "http://localhost:8080/Patient/123/MeasureReport"
+curl "http://localhost:8080/baseR4/Patient/123/MeasureReport"
 
 # Included in $everything
-curl "http://localhost:8080/Patient/123/$everything"
+curl "http://localhost:8080/baseR4/Patient/123/$everything"
 ```

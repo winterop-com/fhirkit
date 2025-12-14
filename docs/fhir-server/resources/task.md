@@ -66,7 +66,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/task.html](https://
 ### Create a Task
 
 ```bash
-curl -X POST http://localhost:8080/Task \
+curl -X POST http://localhost:8080/baseR4/Task \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Task",
@@ -111,26 +111,26 @@ curl -X POST http://localhost:8080/Task \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Task?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Task?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/Task?status=in-progress"
+curl "http://localhost:8080/baseR4/Task?status=in-progress"
 
 # By owner
-curl "http://localhost:8080/Task?owner=Practitioner/456"
+curl "http://localhost:8080/baseR4/Task?owner=Practitioner/456"
 
 # Urgent tasks
-curl "http://localhost:8080/Task?priority=urgent"
+curl "http://localhost:8080/baseR4/Task?priority=urgent"
 
 # Combined: patient's pending tasks
-curl "http://localhost:8080/Task?patient=Patient/123&status=requested,in-progress"
+curl "http://localhost:8080/baseR4/Task?patient=Patient/123&status=requested,in-progress"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all tasks for a patient
-curl "http://localhost:8080/Patient/123/Task"
+curl "http://localhost:8080/baseR4/Patient/123/Task"
 ```
 
 ## Status Codes

@@ -48,7 +48,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/immunization.html](
 ### Create an Immunization
 
 ```bash
-curl -X POST http://localhost:8080/Immunization \
+curl -X POST http://localhost:8080/baseR4/Immunization \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Immunization",
@@ -103,42 +103,42 @@ curl -X POST http://localhost:8080/Immunization \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Immunization?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Immunization?patient=Patient/123"
 
 # By vaccine code (COVID-19 vaccines)
-curl "http://localhost:8080/Immunization?vaccine-code=http://hl7.org/fhir/sid/cvx|208"
+curl "http://localhost:8080/baseR4/Immunization?vaccine-code=http://hl7.org/fhir/sid/cvx|208"
 
 # By status
-curl "http://localhost:8080/Immunization?status=completed"
+curl "http://localhost:8080/baseR4/Immunization?status=completed"
 
 # By date range (immunizations in 2024)
-curl "http://localhost:8080/Immunization?date=ge2024-01-01&date=le2024-12-31"
+curl "http://localhost:8080/baseR4/Immunization?date=ge2024-01-01&date=le2024-12-31"
 
 # By lot number
-curl "http://localhost:8080/Immunization?lot-number=EL9262"
+curl "http://localhost:8080/baseR4/Immunization?lot-number=EL9262"
 
 # Combined: patient's flu shots
-curl "http://localhost:8080/Immunization?patient=Patient/123&vaccine-code=http://hl7.org/fhir/sid/cvx|158"
+curl "http://localhost:8080/baseR4/Immunization?patient=Patient/123&vaccine-code=http://hl7.org/fhir/sid/cvx|158"
 ```
 
 ### With _include
 
 ```bash
 # Include the patient
-curl "http://localhost:8080/Immunization?patient=123&_include=Immunization:patient"
+curl "http://localhost:8080/baseR4/Immunization?patient=123&_include=Immunization:patient"
 
 # Include the performer
-curl "http://localhost:8080/Immunization?_include=Immunization:performer"
+curl "http://localhost:8080/baseR4/Immunization?_include=Immunization:performer"
 ```
 
 ### Patient Compartment Search
 
 ```bash
 # Get all immunizations for a patient via compartment
-curl "http://localhost:8080/Patient/123/Immunization"
+curl "http://localhost:8080/baseR4/Patient/123/Immunization"
 
 # With status filter
-curl "http://localhost:8080/Patient/123/Immunization?status=completed"
+curl "http://localhost:8080/baseR4/Patient/123/Immunization?status=completed"
 ```
 
 ## Generator

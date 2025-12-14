@@ -43,7 +43,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/organization.html](
 ### Create an Organization
 
 ```bash
-curl -X POST http://localhost:8080/Organization \
+curl -X POST http://localhost:8080/baseR4/Organization \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Organization",
@@ -93,29 +93,29 @@ curl -X POST http://localhost:8080/Organization \
 
 ```bash
 # By name
-curl "http://localhost:8080/Organization?name=General"
+curl "http://localhost:8080/baseR4/Organization?name=General"
 
 # By type
-curl "http://localhost:8080/Organization?type=prov"
+curl "http://localhost:8080/baseR4/Organization?type=prov"
 
 # By city
-curl "http://localhost:8080/Organization?address-city=Boston"
+curl "http://localhost:8080/baseR4/Organization?address-city=Boston"
 
 # Active organizations
-curl "http://localhost:8080/Organization?active=true"
+curl "http://localhost:8080/baseR4/Organization?active=true"
 
 # Combined: active providers in Boston
-curl "http://localhost:8080/Organization?type=prov&active=true&address-city=Boston"
+curl "http://localhost:8080/baseR4/Organization?type=prov&active=true&address-city=Boston"
 ```
 
 ### With _revinclude
 
 ```bash
 # Include practitioners at organization
-curl "http://localhost:8080/Organization?_revinclude=PractitionerRole:organization"
+curl "http://localhost:8080/baseR4/Organization?_revinclude=PractitionerRole:organization"
 
 # Include locations managed by organization
-curl "http://localhost:8080/Organization?_revinclude=Location:organization"
+curl "http://localhost:8080/baseR4/Organization?_revinclude=Location:organization"
 ```
 
 ## Organization Types

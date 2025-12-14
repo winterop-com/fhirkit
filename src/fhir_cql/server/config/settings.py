@@ -11,7 +11,10 @@ class FHIRServerSettings(BaseSettings):
     server_name: str = "FHIR R4 Server"
     host: str = "0.0.0.0"
     port: int = 8080
-    base_path: str = ""
+    api_base_path: str = Field(
+        default="/baseR4",
+        description="Base URL path for FHIR REST API",
+    )
 
     # Data generation
     patients: int = Field(
@@ -47,6 +50,20 @@ class FHIRServerSettings(BaseSettings):
     enable_docs: bool = Field(
         default=True,
         description="Enable Swagger/OpenAPI documentation endpoints",
+    )
+
+    # Web UI
+    enable_ui: bool = Field(
+        default=True,
+        description="Enable web UI for browsing resources",
+    )
+    ui_mount_path: str = Field(
+        default="",
+        description="URL path for web UI (empty for root)",
+    )
+    ui_resources_per_page: int = Field(
+        default=20,
+        description="Number of resources per page in UI",
     )
 
     # Security

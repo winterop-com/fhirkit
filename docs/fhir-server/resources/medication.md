@@ -38,7 +38,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/medication.html](ht
 ### Create a Medication
 
 ```bash
-curl -X POST http://localhost:8080/Medication \
+curl -X POST http://localhost:8080/baseR4/Medication \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Medication",
@@ -92,19 +92,19 @@ curl -X POST http://localhost:8080/Medication \
 
 ```bash
 # By code (RxNorm)
-curl "http://localhost:8080/Medication?code=http://www.nlm.nih.gov/research/umls/rxnorm|310965"
+curl "http://localhost:8080/baseR4/Medication?code=http://www.nlm.nih.gov/research/umls/rxnorm|310965"
 
 # Active medications
-curl "http://localhost:8080/Medication?status=active"
+curl "http://localhost:8080/baseR4/Medication?status=active"
 
 # By form (tablets)
-curl "http://localhost:8080/Medication?form=http://snomed.info/sct|385055001"
+curl "http://localhost:8080/baseR4/Medication?form=http://snomed.info/sct|385055001"
 
 # By lot number
-curl "http://localhost:8080/Medication?lot-number=AB1234-56"
+curl "http://localhost:8080/baseR4/Medication?lot-number=AB1234-56"
 
 # By expiration (not expired)
-curl "http://localhost:8080/Medication?expiration-date=ge2025-01-01"
+curl "http://localhost:8080/baseR4/Medication?expiration-date=ge2025-01-01"
 ```
 
 ## Generator

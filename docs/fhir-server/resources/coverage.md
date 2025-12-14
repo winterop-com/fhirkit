@@ -53,7 +53,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/coverage.html](http
 ### Create a Coverage
 
 ```bash
-curl -X POST http://localhost:8080/Coverage \
+curl -X POST http://localhost:8080/baseR4/Coverage \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Coverage",
@@ -116,20 +116,20 @@ curl -X POST http://localhost:8080/Coverage \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Coverage?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Coverage?patient=Patient/123"
 
 # Active coverage
-curl "http://localhost:8080/Coverage?status=active"
+curl "http://localhost:8080/baseR4/Coverage?status=active"
 
 # By payor
-curl "http://localhost:8080/Coverage?payor=Organization/456"
+curl "http://localhost:8080/baseR4/Coverage?payor=Organization/456"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all coverage for a patient
-curl "http://localhost:8080/Patient/123/Coverage"
+curl "http://localhost:8080/baseR4/Patient/123/Coverage"
 ```
 
 ## Status Codes

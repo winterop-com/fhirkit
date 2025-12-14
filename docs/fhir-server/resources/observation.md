@@ -58,7 +58,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/observation.html](h
 ### Create a Blood Pressure Observation
 
 ```bash
-curl -X POST http://localhost:8080/Observation \
+curl -X POST http://localhost:8080/baseR4/Observation \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Observation",
@@ -119,7 +119,7 @@ curl -X POST http://localhost:8080/Observation \
 ### Create a Lab Result
 
 ```bash
-curl -X POST http://localhost:8080/Observation \
+curl -X POST http://localhost:8080/baseR4/Observation \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Observation",
@@ -167,35 +167,35 @@ curl -X POST http://localhost:8080/Observation \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Observation?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Observation?patient=Patient/123"
 
 # By code (LOINC)
-curl "http://localhost:8080/Observation?code=http://loinc.org|4548-4"
+curl "http://localhost:8080/baseR4/Observation?code=http://loinc.org|4548-4"
 
 # By category
-curl "http://localhost:8080/Observation?category=vital-signs"
+curl "http://localhost:8080/baseR4/Observation?category=vital-signs"
 
 # Lab results
-curl "http://localhost:8080/Observation?category=laboratory"
+curl "http://localhost:8080/baseR4/Observation?category=laboratory"
 
 # By date range
-curl "http://localhost:8080/Observation?date=ge2024-01-01&date=le2024-01-31"
+curl "http://localhost:8080/baseR4/Observation?date=ge2024-01-01&date=le2024-01-31"
 
 # Combined: patient's recent vital signs
-curl "http://localhost:8080/Observation?patient=Patient/123&category=vital-signs&date=ge2024-01-01"
+curl "http://localhost:8080/baseR4/Observation?patient=Patient/123&category=vital-signs&date=ge2024-01-01"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all observations for a patient
-curl "http://localhost:8080/Patient/123/Observation"
+curl "http://localhost:8080/baseR4/Patient/123/Observation"
 
 # Vital signs only
-curl "http://localhost:8080/Patient/123/Observation?category=vital-signs"
+curl "http://localhost:8080/baseR4/Patient/123/Observation?category=vital-signs"
 
 # Lab results only
-curl "http://localhost:8080/Patient/123/Observation?category=laboratory"
+curl "http://localhost:8080/baseR4/Patient/123/Observation?category=laboratory"
 ```
 
 ## Generator

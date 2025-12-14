@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_new %}Create{% else %}Edit{% endif %} {{ resource_type }} - FHIR Server{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{{ url_for('ui_resource_types') }}" class="text-sm text-gray-500 hover:text-gray-700">Resources</a>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                        <a href="{{ url_for('ui_resource_list', resource_type=resource_type) }}" class="ml-2 text-sm text-gray-500 hover:text-gray-700">{{ resource_type }}</a>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="ml-2 text-sm font-medium text-gray-900">{% if is_new %}New{% else %}{{ resource_id }}{% endif %}</span>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                {% if is_new %}Create {{ resource_type }}{% else %}Edit {{ resource_type }}/{{ resource_id }}{% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <!-- Validation Errors -->
+    {% if validation_errors %}
+    <div class="rounded-md bg-red-50 p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Validation Errors</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc space-y-1 pl-5">
+                        {% for error in validation_errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Edit Form -->
+    <form method="post" class="space-y-6">
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-4 py-4 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-medium text-gray-900">Resource JSON</h2>
+                    <p class="mt-1 text-sm text-gray-500">Edit the FHIR resource in JSON format</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="formatJSON()"
+                            class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Format
+                    </button>
+                    <button type="button" onclick="validateJSON()"
+                            class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Validate
+                    </button>
+                </div>
+            </div>
+            <div class="p-4">
+                <textarea name="resource_json"
+                          id="resource-json"
+                          rows="25"
+                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-fhir-500 focus:ring-fhir-500 font-mono text-sm"
+                          placeholder="Enter FHIR resource JSON...">{{ resource_json }}</textarea>
+                <div id="json-error" class="mt-2 text-sm text-red-600 hidden"></div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3">
+            <a href="{% if is_new %}{{ url_for('ui_resource_list', resource_type=resource_type) }}{% else %}{{ url_for('ui_resource_detail', resource_type=resource_type, resource_id=resource_id) }}{% endif %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center rounded-md bg-fhir-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-fhir-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fhir-600">
+                {% if is_new %}Create{% else %}Save Changes{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+    function formatJSON() {
+        const textarea = document.getElementById('resource-json');
+        const errorDiv = document.getElementById('json-error');
+
+        try {
+            const json = JSON.parse(textarea.value);
+            textarea.value = JSON.stringify(json, null, 2);
+            errorDiv.classList.add('hidden');
+        } catch (e) {
+            errorDiv.textContent = 'Invalid JSON: ' + e.message;
+            errorDiv.classList.remove('hidden');
+        }
+    }
+
+    function validateJSON() {
+        const textarea = document.getElementById('resource-json');
+        const errorDiv = document.getElementById('json-error');
+
+        try {
+            const json = JSON.parse(textarea.value);
+
+            // Check resourceType
+            if (!json.resourceType) {
+                throw new Error('Missing resourceType field');
+            }
+
+            if (json.resourceType !== '{{ resource_type }}') {
+                throw new Error('resourceType must be "{{ resource_type }}"');
+            }
+
+            errorDiv.innerHTML = '<span class="text-green-600">Valid JSON for {{ resource_type }}</span>';
+            errorDiv.classList.remove('hidden');
+
+            // Server-side validation
+            fetch('{{ api_base_path }}/{{ resource_type }}/$validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/fhir+json' },
+                body: textarea.value
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.resourceType === 'OperationOutcome') {
+                    const issues = data.issue || [];
+                    const errors = issues.filter(i => i.severity === 'error' || i.severity === 'fatal');
+                    if (errors.length > 0) {
+                        errorDiv.innerHTML = '<span class="text-red-600">Validation issues: ' +
+                            errors.map(i => i.diagnostics || i.details?.text || 'Unknown error').join(', ') +
+                            '</span>';
+                    } else {
+                        errorDiv.innerHTML = '<span class="text-green-600">Resource is valid</span>';
+                    }
+                }
+            })
+            .catch(() => {
+                // Server validation failed, but JSON is valid
+            });
+
+        } catch (e) {
+            errorDiv.textContent = 'Invalid JSON: ' + e.message;
+            errorDiv.classList.remove('hidden');
+        }
+    }
+
+    // Auto-format on load if JSON is valid
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.getElementById('resource-json');
+        if (textarea.value.trim()) {
+            try {
+                const json = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(json, null, 2);
+            } catch (e) {
+                // Leave as-is if invalid
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

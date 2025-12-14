@@ -17,7 +17,7 @@ def store():
 @pytest.fixture
 def client(store):
     """Create a test client with empty store."""
-    settings = FHIRServerSettings(patients=0, enable_docs=False)
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings, store=store)
     return TestClient(app)
 
@@ -54,7 +54,7 @@ def client_with_data(store):
         }
     )
 
-    settings = FHIRServerSettings(patients=0, enable_docs=False)
+    settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
     app = create_app(settings=settings, store=store)
     return TestClient(app)
 

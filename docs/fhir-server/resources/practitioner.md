@@ -41,7 +41,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/practitioner.html](
 ### Create a Practitioner
 
 ```bash
-curl -X POST http://localhost:8080/Practitioner \
+curl -X POST http://localhost:8080/baseR4/Practitioner \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Practitioner",
@@ -96,23 +96,23 @@ curl -X POST http://localhost:8080/Practitioner \
 
 ```bash
 # By name
-curl "http://localhost:8080/Practitioner?name=Smith"
+curl "http://localhost:8080/baseR4/Practitioner?name=Smith"
 
 # By NPI
-curl "http://localhost:8080/Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|1234567890"
+curl "http://localhost:8080/baseR4/Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|1234567890"
 
 # Active practitioners
-curl "http://localhost:8080/Practitioner?active=true"
+curl "http://localhost:8080/baseR4/Practitioner?active=true"
 
 # By family name
-curl "http://localhost:8080/Practitioner?family=Smith"
+curl "http://localhost:8080/baseR4/Practitioner?family=Smith"
 ```
 
 ### With _revinclude
 
 ```bash
 # Include PractitionerRoles
-curl "http://localhost:8080/Practitioner?_revinclude=PractitionerRole:practitioner"
+curl "http://localhost:8080/baseR4/Practitioner?_revinclude=PractitionerRole:practitioner"
 ```
 
 ## Generator

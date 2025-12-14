@@ -54,7 +54,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/patient.html](https
 ### Create a Patient
 
 ```bash
-curl -X POST http://localhost:8080/Patient \
+curl -X POST http://localhost:8080/baseR4/Patient \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Patient",
@@ -88,29 +88,29 @@ curl -X POST http://localhost:8080/Patient \
 
 ```bash
 # By name
-curl "http://localhost:8080/Patient?name=Smith"
+curl "http://localhost:8080/baseR4/Patient?name=Smith"
 
 # By gender
-curl "http://localhost:8080/Patient?gender=male"
+curl "http://localhost:8080/baseR4/Patient?gender=male"
 
 # By birth date
-curl "http://localhost:8080/Patient?birthdate=1980-05-15"
+curl "http://localhost:8080/baseR4/Patient?birthdate=1980-05-15"
 
 # By city
-curl "http://localhost:8080/Patient?address-city=Boston"
+curl "http://localhost:8080/baseR4/Patient?address-city=Boston"
 
 # Combined: male patients named Smith in Boston
-curl "http://localhost:8080/Patient?name=Smith&gender=male&address-city=Boston"
+curl "http://localhost:8080/baseR4/Patient?name=Smith&gender=male&address-city=Boston"
 ```
 
 ### With _include
 
 ```bash
 # Include general practitioner
-curl "http://localhost:8080/Patient?_include=Patient:general-practitioner"
+curl "http://localhost:8080/baseR4/Patient?_include=Patient:general-practitioner"
 
 # Include managing organization
-curl "http://localhost:8080/Patient?_include=Patient:organization"
+curl "http://localhost:8080/baseR4/Patient?_include=Patient:organization"
 ```
 
 ### Patient Compartment
@@ -119,13 +119,13 @@ The Patient compartment provides access to all resources associated with a patie
 
 ```bash
 # Get everything for a patient
-curl "http://localhost:8080/Patient/123/$everything"
+curl "http://localhost:8080/baseR4/Patient/123/$everything"
 
 # Get patient's observations
-curl "http://localhost:8080/Patient/123/Observation"
+curl "http://localhost:8080/baseR4/Patient/123/Observation"
 
 # Get patient's conditions
-curl "http://localhost:8080/Patient/123/Condition"
+curl "http://localhost:8080/baseR4/Patient/123/Condition"
 ```
 
 ## Generator

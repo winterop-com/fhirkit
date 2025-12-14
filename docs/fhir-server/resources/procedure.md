@@ -61,7 +61,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/procedure.html](htt
 ### Create a Procedure
 
 ```bash
-curl -X POST http://localhost:8080/Procedure \
+curl -X POST http://localhost:8080/baseR4/Procedure \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Procedure",
@@ -136,42 +136,42 @@ curl -X POST http://localhost:8080/Procedure \
 
 ```bash
 # By patient
-curl "http://localhost:8080/Procedure?patient=Patient/123"
+curl "http://localhost:8080/baseR4/Procedure?patient=Patient/123"
 
 # By code
-curl "http://localhost:8080/Procedure?code=http://snomed.info/sct|80146002"
+curl "http://localhost:8080/baseR4/Procedure?code=http://snomed.info/sct|80146002"
 
 # By status
-curl "http://localhost:8080/Procedure?status=completed"
+curl "http://localhost:8080/baseR4/Procedure?status=completed"
 
 # By date
-curl "http://localhost:8080/Procedure?date=2024-01-15"
+curl "http://localhost:8080/baseR4/Procedure?date=2024-01-15"
 
 # Combined: patient's completed surgical procedures
-curl "http://localhost:8080/Procedure?patient=Patient/123&status=completed&category=387713003"
+curl "http://localhost:8080/baseR4/Procedure?patient=Patient/123&status=completed&category=387713003"
 ```
 
 ### With _include
 
 ```bash
 # Include patient
-curl "http://localhost:8080/Procedure?_include=Procedure:patient"
+curl "http://localhost:8080/baseR4/Procedure?_include=Procedure:patient"
 
 # Include performer
-curl "http://localhost:8080/Procedure?_include=Procedure:performer"
+curl "http://localhost:8080/baseR4/Procedure?_include=Procedure:performer"
 
 # Include encounter
-curl "http://localhost:8080/Procedure?_include=Procedure:encounter"
+curl "http://localhost:8080/baseR4/Procedure?_include=Procedure:encounter"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all procedures for a patient
-curl "http://localhost:8080/Patient/123/Procedure"
+curl "http://localhost:8080/baseR4/Patient/123/Procedure"
 
 # Completed procedures only
-curl "http://localhost:8080/Patient/123/Procedure?status=completed"
+curl "http://localhost:8080/baseR4/Patient/123/Procedure?status=completed"
 ```
 
 ## Generator

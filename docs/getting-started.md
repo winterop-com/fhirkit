@@ -168,19 +168,19 @@ In another terminal, query the server:
 
 ```bash
 # Get all patients
-curl http://localhost:8080/Patient
+curl http://localhost:8080/baseR4/Patient
 
 # Get a specific patient
-curl http://localhost:8080/Patient | jq '.entry[0].resource'
+curl http://localhost:8080/baseR4/Patient | jq '.entry[0].resource'
 
 # Search by name
-curl "http://localhost:8080/Patient?name=Smith"
+curl "http://localhost:8080/baseR4/Patient?name=Smith"
 
 # Get patient conditions
-curl "http://localhost:8080/Condition?patient=Patient/patient-001"
+curl "http://localhost:8080/baseR4/Condition?patient=Patient/patient-001"
 
 # Get observations
-curl "http://localhost:8080/Observation?_count=5"
+curl "http://localhost:8080/baseR4/Observation?_count=5"
 ```
 
 ### Generate Synthetic Data

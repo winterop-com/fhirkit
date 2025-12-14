@@ -37,30 +37,35 @@ fhir serve --patients 100
 #   Synthetic patients: 100
 #
 # Endpoints:
-#   Base URL:     http://0.0.0.0:8080
-#   Metadata:     http://0.0.0.0:8080/metadata
-#   API Docs:     http://0.0.0.0:8080/docs
+#   Web UI:       http://0.0.0.0:8080/
+#   FHIR API:     http://0.0.0.0:8080/baseR4
+#   Metadata:     http://0.0.0.0:8080/baseR4/metadata
+#   API Docs:     http://0.0.0.0:8080/baseR4/docs
 ```
 
 ### Make Your First Request
 
 ```bash
 # List all patients
-curl http://localhost:8080/Patient
+curl http://localhost:8080/baseR4/Patient
 
 # Get a specific patient
-curl http://localhost:8080/Patient/patient-001
+curl http://localhost:8080/baseR4/Patient/patient-001
 
 # Search by name
-curl "http://localhost:8080/Patient?name=Smith"
+curl "http://localhost:8080/baseR4/Patient?name=Smith"
 
 # Get capability statement
-curl http://localhost:8080/metadata
+curl http://localhost:8080/baseR4/metadata
 ```
+
+### View Web UI
+
+Open http://localhost:8080/ in your browser to browse resources through the web interface.
 
 ### View API Documentation
 
-Open http://localhost:8080/docs in your browser to see the interactive Swagger UI with all available endpoints.
+Open http://localhost:8080/baseR4/docs in your browser to see the interactive Swagger UI with all available endpoints.
 
 ---
 
@@ -348,7 +353,7 @@ GET /metadata
 Returns the CapabilityStatement describing server capabilities.
 
 ```bash
-curl http://localhost:8080/metadata
+curl http://localhost:8080/baseR4/metadata
 ```
 
 ### CRUD Operations
@@ -365,7 +370,7 @@ Content-Type: application/fhir+json
 Returns `201 Created` with `Location` header.
 
 ```bash
-curl -X POST http://localhost:8080/Patient \
+curl -X POST http://localhost:8080/baseR4/Patient \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Patient",
@@ -383,7 +388,7 @@ GET /{ResourceType}/{id}
 Returns the resource or `404 Not Found`.
 
 ```bash
-curl http://localhost:8080/Patient/patient-001
+curl http://localhost:8080/baseR4/Patient/patient-001
 ```
 
 #### Update Resource
@@ -398,7 +403,7 @@ Content-Type: application/fhir+json
 Updates existing resource or creates with specific ID.
 
 ```bash
-curl -X PUT http://localhost:8080/Patient/patient-001 \
+curl -X PUT http://localhost:8080/baseR4/Patient/patient-001 \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Patient",
@@ -417,7 +422,7 @@ DELETE /{ResourceType}/{id}
 Returns `204 No Content` on success.
 
 ```bash
-curl -X DELETE http://localhost:8080/Patient/patient-001
+curl -X DELETE http://localhost:8080/baseR4/Patient/patient-001
 ```
 
 ### Search Operations
@@ -462,22 +467,22 @@ Available for all resource types:
 
 ```bash
 # Find patients named Smith
-curl "http://localhost:8080/Patient?name=Smith"
+curl "http://localhost:8080/baseR4/Patient?name=Smith"
 
 # Find female patients
-curl "http://localhost:8080/Patient?gender=female"
+curl "http://localhost:8080/baseR4/Patient?gender=female"
 
 # Find patients born after 1990
-curl "http://localhost:8080/Patient?birthdate=ge1990-01-01"
+curl "http://localhost:8080/baseR4/Patient?birthdate=ge1990-01-01"
 
 # Find conditions for a patient
-curl "http://localhost:8080/Condition?patient=Patient/patient-001"
+curl "http://localhost:8080/baseR4/Condition?patient=Patient/patient-001"
 
 # Find observations by LOINC code
-curl "http://localhost:8080/Observation?code=http://loinc.org|8480-6"
+curl "http://localhost:8080/baseR4/Observation?code=http://loinc.org|8480-6"
 
 # Combined search with pagination
-curl "http://localhost:8080/Observation?patient=Patient/001&_count=50&_offset=100"
+curl "http://localhost:8080/baseR4/Observation?patient=Patient/001&_count=50&_offset=100"
 ```
 
 ### Resource-Specific Search Parameters
@@ -572,7 +577,7 @@ GET /{ResourceType}/{id}/_history
 Returns all versions of a resource.
 
 ```bash
-curl http://localhost:8080/Patient/patient-001/_history
+curl http://localhost:8080/baseR4/Patient/patient-001/_history
 ```
 
 #### Version Read
@@ -584,7 +589,7 @@ GET /{ResourceType}/{id}/_history/{versionId}
 Returns a specific version.
 
 ```bash
-curl http://localhost:8080/Patient/patient-001/_history/2
+curl http://localhost:8080/baseR4/Patient/patient-001/_history/2
 ```
 
 ### Batch Operations
@@ -634,13 +639,13 @@ Expand a ValueSet to list all codes.
 
 ```bash
 # By URL
-curl "http://localhost:8080/ValueSet/\$expand?url=http://example.com/vs/conditions"
+curl "http://localhost:8080/baseR4/ValueSet/\$expand?url=http://example.com/vs/conditions"
 
 # By ID
-curl http://localhost:8080/ValueSet/vs-001/\$expand
+curl http://localhost:8080/baseR4/ValueSet/vs-001/\$expand
 
 # With filter
-curl "http://localhost:8080/ValueSet/\$expand?url=http://example.com/vs&filter=diabetes"
+curl "http://localhost:8080/baseR4/ValueSet/\$expand?url=http://example.com/vs&filter=diabetes"
 ```
 
 #### CodeSystem $lookup
@@ -653,7 +658,7 @@ POST /CodeSystem/$lookup
 Look up information about a code.
 
 ```bash
-curl "http://localhost:8080/CodeSystem/\$lookup?system=http://snomed.info/sct&code=44054006"
+curl "http://localhost:8080/baseR4/CodeSystem/\$lookup?system=http://snomed.info/sct&code=44054006"
 ```
 
 #### ValueSet $validate-code
@@ -666,7 +671,7 @@ POST /ValueSet/$validate-code
 Validate that a code is in a ValueSet.
 
 ```bash
-curl "http://localhost:8080/ValueSet/\$validate-code?url=http://example.com/vs&code=12345"
+curl "http://localhost:8080/baseR4/ValueSet/\$validate-code?url=http://example.com/vs&code=12345"
 ```
 
 ---
@@ -866,7 +871,7 @@ cql-libraries/
 Each CQL file is converted to a FHIR Library resource and can be retrieved:
 
 ```bash
-curl http://localhost:8080/Library?name=DiabetesManagement
+curl http://localhost:8080/baseR4/Library?name=DiabetesManagement
 ```
 
 ### ValueSets and CodeSystems
@@ -1194,10 +1199,10 @@ fhir server stats
 
 # Verify search parameter format
 # Correct:
-curl "http://localhost:8080/Patient?name=Smith"
+curl "http://localhost:8080/baseR4/Patient?name=Smith"
 
 # Incorrect (missing quote escaping):
-curl http://localhost:8080/Patient?name=Smith  # May fail in some shells
+curl http://localhost:8080/baseR4/Patient?name=Smith  # May fail in some shells
 ```
 
 ### Performance Considerations
@@ -1217,9 +1222,9 @@ For large datasets, consider:
 
 The server provides built-in API documentation:
 
-- **Swagger UI**: http://localhost:8080/docs
-- **ReDoc**: http://localhost:8080/redoc
-- **OpenAPI JSON**: http://localhost:8080/openapi.json
+- **Swagger UI**: http://localhost:8080/baseR4/docs
+- **ReDoc**: http://localhost:8080/baseR4/redoc
+- **OpenAPI JSON**: http://localhost:8080/baseR4/openapi.json
 
 To disable documentation:
 

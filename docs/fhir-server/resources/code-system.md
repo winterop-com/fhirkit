@@ -63,7 +63,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/codesystem.html](ht
 ### Create a CodeSystem
 
 ```bash
-curl -X POST http://localhost:8080/CodeSystem \
+curl -X POST http://localhost:8080/baseR4/CodeSystem \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "CodeSystem",
@@ -108,23 +108,23 @@ curl -X POST http://localhost:8080/CodeSystem \
 
 ```bash
 # By URL
-curl "http://localhost:8080/CodeSystem?url=http://example.org/fhir/CodeSystem/priority-codes"
+curl "http://localhost:8080/baseR4/CodeSystem?url=http://example.org/fhir/CodeSystem/priority-codes"
 
 # By status
-curl "http://localhost:8080/CodeSystem?status=active"
+curl "http://localhost:8080/baseR4/CodeSystem?status=active"
 
 # By name
-curl "http://localhost:8080/CodeSystem?name=PriorityCodes"
+curl "http://localhost:8080/baseR4/CodeSystem?name=PriorityCodes"
 
 # By content mode
-curl "http://localhost:8080/CodeSystem?content-mode=complete"
+curl "http://localhost:8080/baseR4/CodeSystem?content-mode=complete"
 ```
 
 ### Lookup Code
 
 ```bash
 # Lookup a code in a code system
-curl "http://localhost:8080/CodeSystem/$lookup?system=http://snomed.info/sct&code=386661006"
+curl "http://localhost:8080/baseR4/CodeSystem/$lookup?system=http://snomed.info/sct&code=386661006"
 ```
 
 ## Status Codes

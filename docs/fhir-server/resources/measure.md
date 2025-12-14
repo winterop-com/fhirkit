@@ -54,7 +54,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/measure.html](https
 ### Create a Measure
 
 ```bash
-curl -X POST http://localhost:8080/Measure \
+curl -X POST http://localhost:8080/baseR4/Measure \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "Measure",
@@ -134,19 +134,19 @@ curl -X POST http://localhost:8080/Measure \
 
 ```bash
 # By status
-curl "http://localhost:8080/Measure?status=active"
+curl "http://localhost:8080/baseR4/Measure?status=active"
 
 # By name
-curl "http://localhost:8080/Measure?name=Diabetes"
+curl "http://localhost:8080/baseR4/Measure?name=Diabetes"
 
 # By URL
-curl "http://localhost:8080/Measure?url=http://example.org/fhir/Measure/DiabetesHbA1c"
+curl "http://localhost:8080/baseR4/Measure?url=http://example.org/fhir/Measure/DiabetesHbA1c"
 
 # By type (outcome measures)
-curl "http://localhost:8080/Measure?topic=outcome"
+curl "http://localhost:8080/baseR4/Measure?topic=outcome"
 
 # Active measures by publisher
-curl "http://localhost:8080/Measure?status=active&publisher=CMS"
+curl "http://localhost:8080/baseR4/Measure?status=active&publisher=CMS"
 ```
 
 ## Generator

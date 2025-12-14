@@ -47,7 +47,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/documentreference.h
 ### Create a DocumentReference
 
 ```bash
-curl -X POST http://localhost:8080/DocumentReference \
+curl -X POST http://localhost:8080/baseR4/DocumentReference \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "DocumentReference",
@@ -86,19 +86,19 @@ curl -X POST http://localhost:8080/DocumentReference \
 
 ```bash
 # By patient
-curl "http://localhost:8080/DocumentReference?patient=Patient/123"
+curl "http://localhost:8080/baseR4/DocumentReference?patient=Patient/123"
 
 # By type (H&P notes)
-curl "http://localhost:8080/DocumentReference?type=http://loinc.org|34117-2"
+curl "http://localhost:8080/baseR4/DocumentReference?type=http://loinc.org|34117-2"
 
 # Current documents only
-curl "http://localhost:8080/DocumentReference?status=current"
+curl "http://localhost:8080/baseR4/DocumentReference?status=current"
 
 # By date range
-curl "http://localhost:8080/DocumentReference?date=ge2024-01-01"
+curl "http://localhost:8080/baseR4/DocumentReference?date=ge2024-01-01"
 
 # Combined
-curl "http://localhost:8080/DocumentReference?patient=Patient/123&category=clinical-note&status=current"
+curl "http://localhost:8080/baseR4/DocumentReference?patient=Patient/123&category=clinical-note&status=current"
 ```
 
 ## Generator

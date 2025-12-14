@@ -62,7 +62,7 @@ See the official HL7 specification: [https://hl7.org/fhir/R4/explanationofbenefi
 ### Create an ExplanationOfBenefit
 
 ```bash
-curl -X POST http://localhost:8080/ExplanationOfBenefit \
+curl -X POST http://localhost:8080/baseR4/ExplanationOfBenefit \
   -H "Content-Type: application/fhir+json" \
   -d '{
     "resourceType": "ExplanationOfBenefit",
@@ -162,23 +162,23 @@ curl -X POST http://localhost:8080/ExplanationOfBenefit \
 
 ```bash
 # By patient
-curl "http://localhost:8080/ExplanationOfBenefit?patient=Patient/123"
+curl "http://localhost:8080/baseR4/ExplanationOfBenefit?patient=Patient/123"
 
 # By status
-curl "http://localhost:8080/ExplanationOfBenefit?status=active"
+curl "http://localhost:8080/baseR4/ExplanationOfBenefit?status=active"
 
 # By outcome
-curl "http://localhost:8080/ExplanationOfBenefit?outcome=complete"
+curl "http://localhost:8080/baseR4/ExplanationOfBenefit?outcome=complete"
 
 # By created date
-curl "http://localhost:8080/ExplanationOfBenefit?created=2024-01-25"
+curl "http://localhost:8080/baseR4/ExplanationOfBenefit?created=2024-01-25"
 ```
 
 ### Patient Compartment
 
 ```bash
 # Get all EOBs for a patient
-curl "http://localhost:8080/Patient/123/ExplanationOfBenefit"
+curl "http://localhost:8080/baseR4/Patient/123/ExplanationOfBenefit"
 ```
 
 ## Status Codes

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ resource_type }}/{{ resource.id }} - FHIR Server{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{{ url_for('ui_resource_types') }}" class="text-sm text-gray-500 hover:text-gray-700">Resources</a>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                        <a href="{{ url_for('ui_resource_list', resource_type=resource_type) }}" class="ml-2 text-sm text-gray-500 hover:text-gray-700">{{ resource_type }}</a>
+                    </li>
+                    <li class="flex items-center">
+                        <svg class="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="ml-2 text-sm font-medium text-gray-900">{{ resource.id }}</span>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                {{ get_resource_display(resource) }}
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                {{ resource_type }}/{{ resource.id }}
+                {% if resource.meta and resource.meta.versionId %}
+                 &middot; Version {{ resource.meta.versionId }}
+                {% endif %}
+                {% if resource.meta and resource.meta.lastUpdated %}
+                 &middot; Updated {{ format_date(resource.meta.lastUpdated) }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="mt-4 flex space-x-3 md:ml-4 md:mt-0">
+            <a href="{{ url_for('ui_resource_history', resource_type=resource_type, resource_id=resource.id) }}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" />
+                </svg>
+                History
+            </a>
+            <a href="{{ url_for('ui_resource_edit', resource_type=resource_type, resource_id=resource.id) }}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                </svg>
+                Edit
+            </a>
+            <form action="{{ url_for('ui_resource_delete', resource_type=resource_type, resource_id=resource.id) }}"
+                  method="post"
+                  onsubmit="return confirmDelete('{{ resource_type }}', '{{ resource.id }}');">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700">
+                    <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+                    </svg>
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resource JSON -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-4 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-medium text-gray-900">Resource JSON</h2>
+            <div class="flex space-x-2">
+                <button onclick="copyToClipboard(document.getElementById('resource-json').textContent, this)"
+                        class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                    </svg>
+                    Copy
+                </button>
+                <a href="{{ api_base_path }}/{{ resource_type }}/{{ resource.id }}" target="_blank"
+                   class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    Raw JSON
+                </a>
+            </div>
+        </div>
+        <div class="p-4 bg-gray-50">
+            <pre id="resource-json" class="json-content custom-scrollbar overflow-x-auto text-sm font-mono p-4 bg-white rounded border border-gray-200">{{ resource_json }}</pre>
+        </div>
+    </div>
+
+    <!-- References -->
+    {% if references %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-4 sm:px-6 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">References</h2>
+            <p class="mt-1 text-sm text-gray-500">Resources referenced by this {{ resource_type }}</p>
+        </div>
+        <div class="p-4">
+            <div class="space-y-2">
+                {% for ref in references %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <span class="text-sm text-gray-500">{{ ref.path }}:</span>
+                        <a href="{{ url_for('ui_resource_detail', resource_type=ref.type, resource_id=ref.id) }}"
+                           class="ml-2 text-sm font-medium text-fhir-600 hover:text-fhir-900">
+                            {{ ref.type }}/{{ ref.id }}
+                        </a>
+                    </div>
+                    <a href="{{ url_for('ui_resource_detail', resource_type=ref.type, resource_id=ref.id) }}"
+                       class="text-sm text-fhir-600 hover:text-fhir-900">
+                        View &rarr;
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
