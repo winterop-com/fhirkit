@@ -134,7 +134,7 @@ def _singleton(args: list[Any]) -> Any:
 
 def _singleton_from(args: list[Any]) -> Any:
     """Get single element from a list, error if more than one."""
-    from ..exceptions import CQLError
+    from ...exceptions import CQLError
 
     if args and isinstance(args[0], list):
         lst = args[0]
