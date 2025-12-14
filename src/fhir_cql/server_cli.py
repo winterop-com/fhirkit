@@ -9,8 +9,10 @@ from rich import print as rprint
 from rich.table import Table
 
 from fhir_cql.server.generator import (
+    AdverseEventGenerator,
     AllergyIntoleranceGenerator,
     AppointmentGenerator,
+    AuditEventGenerator,
     CarePlanGenerator,
     CareTeamGenerator,
     ClaimGenerator,
@@ -20,6 +22,7 @@ from fhir_cql.server.generator import (
     ConditionGenerator,
     ConsentGenerator,
     CoverageGenerator,
+    DetectedIssueGenerator,
     DeviceGenerator,
     DiagnosticReportGenerator,
     DocumentReferenceGenerator,
@@ -29,12 +32,15 @@ from fhir_cql.server.generator import (
     FlagGenerator,
     GoalGenerator,
     GroupGenerator,
+    HealthcareServiceGenerator,
     ImmunizationGenerator,
     LibraryGenerator,
     LocationGenerator,
     MeasureGenerator,
     MeasureReportGenerator,
+    MediaGenerator,
     MedicationAdministrationGenerator,
+    MedicationDispenseGenerator,
     MedicationGenerator,
     MedicationRequestGenerator,
     MedicationStatementGenerator,
@@ -45,9 +51,11 @@ from fhir_cql.server.generator import (
     PractitionerGenerator,
     PractitionerRoleGenerator,
     ProcedureGenerator,
+    ProvenanceGenerator,
     QuestionnaireGenerator,
     QuestionnaireResponseGenerator,
     RelatedPersonGenerator,
+    RiskAssessmentGenerator,
     ScheduleGenerator,
     ServiceRequestGenerator,
     SlotGenerator,
@@ -86,6 +94,7 @@ GENERATORS: dict[str, type] = {
     "MedicationRequest": MedicationRequestGenerator,
     "MedicationAdministration": MedicationAdministrationGenerator,
     "MedicationStatement": MedicationStatementGenerator,
+    "MedicationDispense": MedicationDispenseGenerator,
     # Care Management
     "CarePlan": CarePlanGenerator,
     "CareTeam": CareTeamGenerator,
@@ -95,6 +104,7 @@ GENERATORS: dict[str, type] = {
     "Appointment": AppointmentGenerator,
     "Schedule": ScheduleGenerator,
     "Slot": SlotGenerator,
+    "HealthcareService": HealthcareServiceGenerator,
     # Financial
     "Coverage": CoverageGenerator,
     "Claim": ClaimGenerator,
@@ -104,6 +114,7 @@ GENERATORS: dict[str, type] = {
     # Documents
     "ServiceRequest": ServiceRequestGenerator,
     "DocumentReference": DocumentReferenceGenerator,
+    "Media": MediaGenerator,
     # Quality Measures
     "Measure": MeasureGenerator,
     "MeasureReport": MeasureReportGenerator,
@@ -124,6 +135,14 @@ GENERATORS: dict[str, type] = {
     "Specimen": SpecimenGenerator,
     # Orders
     "NutritionOrder": NutritionOrderGenerator,
+    # Clinical Decision Support
+    "RiskAssessment": RiskAssessmentGenerator,
+    "DetectedIssue": DetectedIssueGenerator,
+    # Safety
+    "AdverseEvent": AdverseEventGenerator,
+    # Infrastructure
+    "Provenance": ProvenanceGenerator,
+    "AuditEvent": AuditEventGenerator,
 }
 
 
@@ -706,6 +725,15 @@ def populate(
     slot_gen = SlotGenerator(faker, seed)
     slots = [track(slot_gen.generate(schedule_ref=ref(schedule))) for _ in range(3)]
 
+    # HealthcareService
+    healthcare_svc_gen = HealthcareServiceGenerator(faker, seed)
+    track(
+        healthcare_svc_gen.generate(
+            organization_ref=ref(hospital_org),
+            location_ref=ref(clinic_location) if clinic_location else None,
+        )
+    )
+
     # ============================================================
     # Generate per-patient resources
     # ============================================================
@@ -740,6 +768,13 @@ def populate(
     family_hist_gen = FamilyMemberHistoryGenerator(faker, seed)
     clin_imp_gen = ClinicalImpressionGenerator(faker, seed)
     nutr_order_gen = NutritionOrderGenerator(faker, seed)
+    med_disp_gen = MedicationDispenseGenerator(faker, seed)
+    media_gen = MediaGenerator(faker, seed)
+    risk_assess_gen = RiskAssessmentGenerator(faker, seed)
+    detected_issue_gen = DetectedIssueGenerator(faker, seed)
+    adverse_event_gen = AdverseEventGenerator(faker, seed)
+    provenance_gen = ProvenanceGenerator(faker, seed)
+    audit_event_gen = AuditEventGenerator(faker, seed)
 
     patient_refs: list[str] = []
 
@@ -910,6 +945,16 @@ def populate(
             )
         )
 
+        # MedicationDispense (pharmacy dispensing)
+        track(
+            med_disp_gen.generate(
+                patient_ref=patient_ref,
+                practitioner_ref=ref(practitioners[0]),
+                medication_request_ref=ref(med_request),
+                location_ref=ref(clinic_location) if clinic_location else None,
+            )
+        )
+
         # Procedure
         track(
             proc_gen.generate(
@@ -1003,6 +1048,61 @@ def populate(
                 patient_ref=patient_ref,
                 encounter_ref=ref(encounters[0]) if encounters else None,
                 orderer_ref=ref(practitioners[0]),
+            )
+        )
+
+        # Media (clinical images/attachments)
+        track(
+            media_gen.generate(
+                patient_ref=patient_ref,
+                encounter_ref=ref(encounters[0]) if encounters else None,
+                operator_ref=ref(practitioners[0]),
+            )
+        )
+
+        # RiskAssessment (clinical risk scoring)
+        track(
+            risk_assess_gen.generate(
+                patient_ref=patient_ref,
+                encounter_ref=ref(encounters[0]) if encounters else None,
+                performer_ref=ref(practitioners[0]),
+                condition_ref=ref(conditions_for_patient[0]) if conditions_for_patient else None,
+            )
+        )
+
+        # DetectedIssue (CDS alerts)
+        track(
+            detected_issue_gen.generate(
+                patient_ref=patient_ref,
+                author_ref=ref(practitioners[0]),
+            )
+        )
+
+        # AdverseEvent (patient safety events) - only 20% of patients
+        if faker.boolean(chance_of_getting_true=20):
+            track(
+                adverse_event_gen.generate(
+                    patient_ref=patient_ref,
+                    encounter_ref=ref(encounters[0]) if encounters else None,
+                    practitioner_ref=ref(practitioners[0]),
+                    location_ref=ref(clinic_location) if clinic_location else None,
+                )
+            )
+
+        # Provenance (resource audit trail)
+        track(
+            provenance_gen.generate(
+                target_ref=patient_ref,
+                agent_ref=ref(practitioners[0]),
+                organization_ref=ref(hospital_org),
+            )
+        )
+
+        # AuditEvent (security logging)
+        track(
+            audit_event_gen.generate(
+                agent_ref=ref(practitioners[0]),
+                patient_ref=patient_ref,
             )
         )
 

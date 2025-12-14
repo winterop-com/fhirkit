@@ -4,18 +4,18 @@ This page provides an overview of all FHIR R4 resource types supported by the py
 
 ## Resource Categories
 
-The server supports **45 resource types** organized into the following categories:
+The server supports **53 resource types** organized into the following categories:
 
 | Category | Resources | Count |
 |----------|-----------|-------|
 | [Administrative](#administrative-resources) | Patient, Practitioner, PractitionerRole, Organization, Location, RelatedPerson | 6 |
 | [Clinical](#clinical-resources) | Encounter, Condition, Observation, Procedure, DiagnosticReport, AllergyIntolerance, Immunization, ClinicalImpression, FamilyMemberHistory | 9 |
-| [Medications](#medication-resources) | Medication, MedicationRequest, MedicationAdministration, MedicationStatement | 4 |
+| [Medications](#medication-resources) | Medication, MedicationRequest, MedicationAdministration, MedicationStatement, MedicationDispense | 5 |
 | [Care Management](#care-management-resources) | CarePlan, CareTeam, Goal, Task | 4 |
-| [Scheduling](#scheduling-resources) | Appointment, Schedule, Slot | 3 |
+| [Scheduling](#scheduling-resources) | Appointment, Schedule, Slot, HealthcareService | 4 |
 | [Financial](#financial-resources) | Coverage, Claim, ExplanationOfBenefit | 3 |
 | [Devices](#device-resources) | Device | 1 |
-| [Documents](#document-resources) | ServiceRequest, DocumentReference | 2 |
+| [Documents](#document-resources) | ServiceRequest, DocumentReference, Media | 3 |
 | [Forms & Consent](#forms--consent-resources) | Questionnaire, QuestionnaireResponse, Consent | 3 |
 | [Quality Measures](#quality-measure-resources) | Measure, MeasureReport, Library | 3 |
 | [Terminology](#terminology-resources) | ValueSet, CodeSystem | 2 |
@@ -23,6 +23,9 @@ The server supports **45 resource types** organized into the following categorie
 | [Communication & Alerts](#communication--alerts-resources) | Communication, Flag | 2 |
 | [Diagnostics](#diagnostics-resources) | Specimen | 1 |
 | [Orders](#orders-resources) | NutritionOrder | 1 |
+| [Clinical Decision Support](#clinical-decision-support-resources) | RiskAssessment, DetectedIssue | 2 |
+| [Safety](#safety-resources) | AdverseEvent | 1 |
+| [Infrastructure](#infrastructure-resources) | Provenance, AuditEvent | 2 |
 
 ---
 
@@ -518,6 +521,45 @@ Record of what a patient reports they are taking.
 
 ---
 
+### MedicationDispense
+
+Pharmacy dispensing records.
+
+**Key Fields:**
+- `status` - preparation | in-progress | cancelled | on-hold | completed | entered-in-error | stopped | declined | unknown
+- `medicationCodeableConcept` - Medication dispensed
+- `subject` - Reference to Patient
+- `performer` - Pharmacist/technician
+- `authorizingPrescription` - Reference to MedicationRequest
+- `quantity` - Amount dispensed
+- `daysSupply` - Days supply
+- `whenHandedOver` - When given to patient
+
+**Common Search Parameters:**
+- `patient`, `subject` - By patient
+- `status` - Dispense status
+- `performer` - By performer
+- `prescription` - By prescription
+
+**Example:**
+```json
+{
+  "resourceType": "MedicationDispense",
+  "id": "md-001",
+  "status": "completed",
+  "medicationCodeableConcept": {
+    "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "860975", "display": "Metformin 500mg"}]
+  },
+  "subject": {"reference": "Patient/patient-001"},
+  "quantity": {"value": 90, "unit": "tablets"},
+  "daysSupply": {"value": 30, "unit": "days"}
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/medicationdispense.html)
+
+---
+
 ## Care Management Resources
 
 ### CarePlan
@@ -686,6 +728,45 @@ Individual bookable time slots.
 
 ---
 
+### HealthcareService
+
+Services offered by healthcare organizations.
+
+**Key Fields:**
+- `active` - Whether service is active
+- `providedBy` - Reference to Organization
+- `category` - Service category
+- `type` - Type of service
+- `specialty` - Medical specialties
+- `location` - Service locations
+- `name` - Service name
+- `availableTime` - Availability hours
+- `notAvailable` - Unavailable times
+
+**Common Search Parameters:**
+- `organization` - By organization
+- `active` - Active services
+- `location` - By location
+- `specialty` - By specialty
+- `service-type` - By service type
+
+**Example:**
+```json
+{
+  "resourceType": "HealthcareService",
+  "id": "hs-001",
+  "active": true,
+  "providedBy": {"reference": "Organization/org-001"},
+  "category": [{"coding": [{"code": "35", "display": "Hospital"}]}],
+  "type": [{"coding": [{"code": "124", "display": "General Practice"}]}],
+  "name": "General Medicine Clinic"
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/healthcareservice.html)
+
+---
+
 ## Financial Resources
 
 ### Coverage
@@ -807,6 +888,46 @@ References to clinical documents.
 See [detailed documentation](document-reference.md)
 
 [FHIR R4 Specification](https://hl7.org/fhir/R4/documentreference.html)
+
+---
+
+### Media
+
+Clinical images, videos, and audio recordings.
+
+**Key Fields:**
+- `status` - preparation | in-progress | not-done | on-hold | stopped | completed | entered-in-error | unknown
+- `type` - image | video | audio
+- `modality` - DICOM modality (X-ray, CT, MRI, etc.)
+- `subject` - Reference to Patient
+- `encounter` - Reference to Encounter
+- `createdDateTime` - When captured
+- `operator` - Practitioner who captured
+- `bodySite` - Body site imaged
+- `content` - Media attachment with contentType
+
+**Common Search Parameters:**
+- `patient`, `subject` - By patient
+- `encounter` - By encounter
+- `status` - Media status
+- `type` - Media type
+- `created` - Creation date
+
+**Example:**
+```json
+{
+  "resourceType": "Media",
+  "id": "media-001",
+  "status": "completed",
+  "type": {"coding": [{"code": "image", "display": "Image"}]},
+  "modality": {"coding": [{"system": "http://dicom.nema.org/resources/ontology/DCM", "code": "DX", "display": "Digital Radiography"}]},
+  "subject": {"reference": "Patient/patient-001"},
+  "bodySite": {"coding": [{"code": "51185008", "display": "Chest"}]},
+  "content": {"contentType": "image/jpeg", "title": "Chest X-ray"}
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/media.html)
 
 ---
 
@@ -1198,6 +1319,220 @@ Diet and nutrition orders for patients.
 ```
 
 [FHIR R4 Specification](https://hl7.org/fhir/R4/nutritionorder.html)
+
+---
+
+## Clinical Decision Support Resources
+
+### RiskAssessment
+
+Clinical risk predictions and scoring.
+
+**Key Fields:**
+- `status` - registered | preliminary | final | amended | corrected | cancelled | entered-in-error | unknown
+- `subject` - Reference to Patient
+- `encounter` - Reference to Encounter
+- `occurrenceDateTime` - When assessment was performed
+- `performer` - Practitioner who performed assessment
+- `condition` - Condition being assessed
+- `prediction` - Predictions with outcome, probability, and qualitative risk
+
+**Common Search Parameters:**
+- `patient`, `subject` - By patient
+- `encounter` - By encounter
+- `condition` - By condition
+- `performer` - By performer
+
+**Example:**
+```json
+{
+  "resourceType": "RiskAssessment",
+  "id": "ra-001",
+  "status": "final",
+  "subject": {"reference": "Patient/patient-001"},
+  "occurrenceDateTime": "2024-06-15T10:00:00Z",
+  "prediction": [
+    {
+      "outcome": {"text": "Fall"},
+      "probabilityDecimal": 0.35,
+      "qualitativeRisk": {"coding": [{"code": "moderate", "display": "Moderate Risk"}]}
+    }
+  ]
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/riskassessment.html)
+
+---
+
+### DetectedIssue
+
+Clinical decision support alerts and warnings.
+
+**Key Fields:**
+- `status` - registered | preliminary | final | amended | corrected | cancelled | entered-in-error | unknown
+- `code` - Issue type (drug-drug interaction, duplicate therapy, etc.)
+- `severity` - high | moderate | low
+- `patient` - Reference to Patient
+- `identifiedDateTime` - When issue was identified
+- `author` - Who identified the issue
+- `implicated` - Resources involved in the issue
+- `detail` - Description of the issue
+- `mitigation` - Actions taken to address the issue
+
+**Common Search Parameters:**
+- `patient` - By patient
+- `code` - Issue type
+- `author` - By author
+- `identified` - When identified
+
+**Example:**
+```json
+{
+  "resourceType": "DetectedIssue",
+  "id": "di-001",
+  "status": "final",
+  "code": {"coding": [{"code": "DRG", "display": "Drug Interaction Alert"}]},
+  "severity": "high",
+  "patient": {"reference": "Patient/patient-001"},
+  "identifiedDateTime": "2024-06-15T10:00:00Z",
+  "detail": "Potential interaction between warfarin and aspirin"
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/detectedissue.html)
+
+---
+
+## Safety Resources
+
+### AdverseEvent
+
+Patient safety event reporting.
+
+**Key Fields:**
+- `actuality` - actual | potential
+- `category` - Event category (product-problem, wrong-dose, medical-device-use-error, etc.)
+- `event` - Event type (SNOMED CT codes)
+- `subject` - Reference to Patient
+- `encounter` - Reference to Encounter
+- `date` - When event occurred
+- `recorder` - Who recorded the event
+- `seriousness` - Non-serious | Serious | Life-threatening | Results in death
+- `outcome` - resolved | recovering | ongoing | resolvedWithSequelae | fatal | unknown
+- `suspectEntity` - Suspected causative agents
+
+**Common Search Parameters:**
+- `patient`, `subject` - By patient
+- `actuality` - Actual vs potential
+- `category` - Event category
+- `date` - Event date
+
+**Example:**
+```json
+{
+  "resourceType": "AdverseEvent",
+  "id": "ae-001",
+  "actuality": "actual",
+  "category": [{"coding": [{"code": "product-problem", "display": "Product Problem"}]}],
+  "event": {"coding": [{"system": "http://snomed.info/sct", "code": "418799008", "display": "Adverse reaction to drug"}]},
+  "subject": {"reference": "Patient/patient-001"},
+  "date": "2024-06-15T10:00:00Z",
+  "seriousness": {"coding": [{"code": "Non-serious", "display": "Non-serious"}]}
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/adverseevent.html)
+
+---
+
+## Infrastructure Resources
+
+### Provenance
+
+Resource provenance and audit trail tracking.
+
+**Key Fields:**
+- `target` - Resources being tracked
+- `occurredDateTime` - When activity occurred
+- `recorded` - When provenance was recorded
+- `activity` - Activity type (create, revise, delete, etc.)
+- `agent` - Who/what was responsible (type, who, onBehalfOf)
+- `entity` - Entities used/modified (role, what)
+- `reason` - Reason for the activity
+- `signature` - Digital signatures
+
+**Common Search Parameters:**
+- `target` - By target resource
+- `agent` - By agent
+- `recorded` - When recorded
+- `patient` - By patient (via target)
+
+**Example:**
+```json
+{
+  "resourceType": "Provenance",
+  "id": "prov-001",
+  "target": [{"reference": "Patient/patient-001"}],
+  "occurredDateTime": "2024-06-15T10:00:00Z",
+  "recorded": "2024-06-15T10:05:00Z",
+  "activity": {"coding": [{"code": "CREATE", "display": "create"}]},
+  "agent": [
+    {
+      "type": {"coding": [{"code": "author", "display": "Author"}]},
+      "who": {"reference": "Practitioner/practitioner-001"}
+    }
+  ]
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/provenance.html)
+
+---
+
+### AuditEvent
+
+Security audit logging.
+
+**Key Fields:**
+- `type` - Event type (rest, export, import, query, etc.)
+- `subtype` - Event subtype for REST operations (create, read, update, delete)
+- `action` - C (Create) | R (Read) | U (Update) | D (Delete) | E (Execute)
+- `recorded` - When event was recorded
+- `outcome` - 0 (success) | 4 (minor failure) | 8 (serious failure) | 12 (major failure)
+- `agent` - Who/what participated (type, who, requestor, network)
+- `source` - Audit event source (observer, type)
+- `entity` - Resources involved (what, type, role)
+
+**Common Search Parameters:**
+- `patient` - By patient (via entity)
+- `agent` - By agent
+- `date` - When recorded
+- `action` - By action type
+- `outcome` - By outcome
+
+**Example:**
+```json
+{
+  "resourceType": "AuditEvent",
+  "id": "audit-001",
+  "type": {"coding": [{"code": "rest", "display": "RESTful Operation"}]},
+  "subtype": [{"coding": [{"code": "read", "display": "read"}]}],
+  "action": "R",
+  "recorded": "2024-06-15T10:00:00Z",
+  "outcome": "0",
+  "agent": [
+    {
+      "type": {"coding": [{"code": "IRCP", "display": "information recipient"}]},
+      "who": {"reference": "Practitioner/practitioner-001"},
+      "requestor": true
+    }
+  ],
+  "source": {"observer": {"display": "FHIR Server"}}
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/auditevent.html)
 
 ---
 

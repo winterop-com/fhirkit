@@ -1,13 +1,19 @@
 """Tests for FHIR synthetic data generators."""
 
 from fhir_cql.server.generator import (
+    AdverseEventGenerator,
+    AuditEventGenerator,
     ClinicalImpressionGenerator,
     CommunicationGenerator,
     ConditionGenerator,
+    DetectedIssueGenerator,
     EncounterGenerator,
     FamilyMemberHistoryGenerator,
     FlagGenerator,
+    HealthcareServiceGenerator,
+    MediaGenerator,
     MedicationAdministrationGenerator,
+    MedicationDispenseGenerator,
     MedicationRequestGenerator,
     MedicationStatementGenerator,
     NutritionOrderGenerator,
@@ -17,6 +23,8 @@ from fhir_cql.server.generator import (
     PatientRecordGenerator,
     PractitionerGenerator,
     ProcedureGenerator,
+    ProvenanceGenerator,
+    RiskAssessmentGenerator,
     SpecimenGenerator,
 )
 from fhir_cql.server.generator.clinical_codes import (
@@ -596,3 +604,244 @@ class TestClinicalCodes:
             assert "code" in med
             assert "display" in med
             assert "system" in med
+
+
+class TestMedicationDispenseGenerator:
+    """Tests for MedicationDispenseGenerator."""
+
+    def test_generate_medication_dispense(self):
+        """Test generating a medication dispense."""
+        gen = MedicationDispenseGenerator(seed=42)
+        dispense = gen.generate(patient_ref="Patient/123")
+
+        assert dispense["resourceType"] == "MedicationDispense"
+        assert "id" in dispense
+        assert "status" in dispense
+        assert dispense["subject"]["reference"] == "Patient/123"
+
+    def test_medication_dispense_has_quantity(self):
+        """Test that medication dispense has quantity."""
+        gen = MedicationDispenseGenerator(seed=42)
+        dispense = gen.generate()
+
+        assert "quantity" in dispense
+        assert "value" in dispense["quantity"]
+        assert "unit" in dispense["quantity"]
+
+    def test_medication_dispense_has_days_supply(self):
+        """Test that medication dispense has days supply."""
+        gen = MedicationDispenseGenerator(seed=42)
+        dispense = gen.generate()
+
+        assert "daysSupply" in dispense
+        assert "value" in dispense["daysSupply"]
+
+
+class TestHealthcareServiceGenerator:
+    """Tests for HealthcareServiceGenerator."""
+
+    def test_generate_healthcare_service(self):
+        """Test generating a healthcare service."""
+        gen = HealthcareServiceGenerator(seed=42)
+        service = gen.generate()
+
+        assert service["resourceType"] == "HealthcareService"
+        assert "id" in service
+        assert "active" in service
+        assert "name" in service
+
+    def test_healthcare_service_has_category(self):
+        """Test that healthcare service has category."""
+        gen = HealthcareServiceGenerator(seed=42)
+        service = gen.generate()
+
+        assert "category" in service
+        assert len(service["category"]) > 0
+
+    def test_healthcare_service_with_organization(self):
+        """Test healthcare service with organization reference."""
+        gen = HealthcareServiceGenerator(seed=42)
+        service = gen.generate(organization_ref="Organization/456")
+
+        assert service["providedBy"]["reference"] == "Organization/456"
+
+
+class TestMediaGenerator:
+    """Tests for MediaGenerator."""
+
+    def test_generate_media(self):
+        """Test generating a media resource."""
+        gen = MediaGenerator(seed=42)
+        media = gen.generate(patient_ref="Patient/123")
+
+        assert media["resourceType"] == "Media"
+        assert "id" in media
+        assert "status" in media
+        assert media["subject"]["reference"] == "Patient/123"
+
+    def test_media_has_content(self):
+        """Test that media has content."""
+        gen = MediaGenerator(seed=42)
+        media = gen.generate()
+
+        assert "content" in media
+        assert "contentType" in media["content"]
+
+    def test_media_has_type(self):
+        """Test that media has type."""
+        gen = MediaGenerator(seed=42)
+        media = gen.generate()
+
+        assert "type" in media
+
+
+class TestRiskAssessmentGenerator:
+    """Tests for RiskAssessmentGenerator."""
+
+    def test_generate_risk_assessment(self):
+        """Test generating a risk assessment."""
+        gen = RiskAssessmentGenerator(seed=42)
+        assessment = gen.generate(patient_ref="Patient/123")
+
+        assert assessment["resourceType"] == "RiskAssessment"
+        assert "id" in assessment
+        assert "status" in assessment
+        assert assessment["subject"]["reference"] == "Patient/123"
+
+    def test_risk_assessment_has_prediction(self):
+        """Test that risk assessment has prediction."""
+        gen = RiskAssessmentGenerator(seed=42)
+        assessment = gen.generate()
+
+        assert "prediction" in assessment
+        assert len(assessment["prediction"]) > 0
+
+    def test_risk_assessment_has_occurrence(self):
+        """Test that risk assessment has occurrence datetime."""
+        gen = RiskAssessmentGenerator(seed=42)
+        assessment = gen.generate()
+
+        assert "occurrenceDateTime" in assessment
+
+
+class TestDetectedIssueGenerator:
+    """Tests for DetectedIssueGenerator."""
+
+    def test_generate_detected_issue(self):
+        """Test generating a detected issue."""
+        gen = DetectedIssueGenerator(seed=42)
+        issue = gen.generate(patient_ref="Patient/123")
+
+        assert issue["resourceType"] == "DetectedIssue"
+        assert "id" in issue
+        assert "status" in issue
+        assert issue["patient"]["reference"] == "Patient/123"
+
+    def test_detected_issue_has_severity(self):
+        """Test that detected issue has severity."""
+        gen = DetectedIssueGenerator(seed=42)
+        issue = gen.generate()
+
+        assert "severity" in issue
+
+    def test_detected_issue_has_code(self):
+        """Test that detected issue has code."""
+        gen = DetectedIssueGenerator(seed=42)
+        issue = gen.generate()
+
+        assert "code" in issue
+
+
+class TestAdverseEventGenerator:
+    """Tests for AdverseEventGenerator."""
+
+    def test_generate_adverse_event(self):
+        """Test generating an adverse event."""
+        gen = AdverseEventGenerator(seed=42)
+        event = gen.generate(patient_ref="Patient/123")
+
+        assert event["resourceType"] == "AdverseEvent"
+        assert "id" in event
+        assert "actuality" in event
+        assert event["subject"]["reference"] == "Patient/123"
+
+    def test_adverse_event_has_category(self):
+        """Test that adverse event has category."""
+        gen = AdverseEventGenerator(seed=42)
+        event = gen.generate()
+
+        assert "category" in event
+        assert len(event["category"]) > 0
+
+    def test_adverse_event_has_outcome(self):
+        """Test that adverse event has outcome."""
+        gen = AdverseEventGenerator(seed=42)
+        event = gen.generate()
+
+        assert "outcome" in event
+
+
+class TestProvenanceGenerator:
+    """Tests for ProvenanceGenerator."""
+
+    def test_generate_provenance(self):
+        """Test generating a provenance resource."""
+        gen = ProvenanceGenerator(seed=42)
+        provenance = gen.generate(target_ref="Patient/123")
+
+        assert provenance["resourceType"] == "Provenance"
+        assert "id" in provenance
+        assert "target" in provenance
+        assert provenance["target"][0]["reference"] == "Patient/123"
+
+    def test_provenance_has_agent(self):
+        """Test that provenance has agent."""
+        gen = ProvenanceGenerator(seed=42)
+        provenance = gen.generate()
+
+        assert "agent" in provenance
+        assert len(provenance["agent"]) > 0
+
+    def test_provenance_has_recorded(self):
+        """Test that provenance has recorded timestamp."""
+        gen = ProvenanceGenerator(seed=42)
+        provenance = gen.generate()
+
+        assert "recorded" in provenance
+
+
+class TestAuditEventGenerator:
+    """Tests for AuditEventGenerator."""
+
+    def test_generate_audit_event(self):
+        """Test generating an audit event."""
+        gen = AuditEventGenerator(seed=42)
+        event = gen.generate()
+
+        assert event["resourceType"] == "AuditEvent"
+        assert "id" in event
+        assert "type" in event
+        assert "action" in event
+
+    def test_audit_event_has_agent(self):
+        """Test that audit event has agent."""
+        gen = AuditEventGenerator(seed=42)
+        event = gen.generate()
+
+        assert "agent" in event
+        assert len(event["agent"]) > 0
+
+    def test_audit_event_has_source(self):
+        """Test that audit event has source."""
+        gen = AuditEventGenerator(seed=42)
+        event = gen.generate()
+
+        assert "source" in event
+        assert "observer" in event["source"]
+
+    def test_audit_event_has_outcome(self):
+        """Test that audit event has outcome."""
+        gen = AuditEventGenerator(seed=42)
+        event = gen.generate()
+
+        assert "outcome" in event

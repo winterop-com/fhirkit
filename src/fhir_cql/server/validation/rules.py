@@ -30,6 +30,7 @@ VALID_RESOURCE_TYPES = {
     "MedicationRequest",
     "MedicationAdministration",
     "MedicationStatement",
+    "MedicationDispense",
     # Care Management
     "CarePlan",
     "CareTeam",
@@ -39,6 +40,7 @@ VALID_RESOURCE_TYPES = {
     "Appointment",
     "Schedule",
     "Slot",
+    "HealthcareService",
     # Financial
     "Coverage",
     "Claim",
@@ -48,6 +50,7 @@ VALID_RESOURCE_TYPES = {
     # Documents
     "ServiceRequest",
     "DocumentReference",
+    "Media",
     # Quality Measures
     "Measure",
     "MeasureReport",
@@ -68,11 +71,18 @@ VALID_RESOURCE_TYPES = {
     "Specimen",
     # Orders
     "NutritionOrder",
+    # Clinical Decision Support
+    "RiskAssessment",
+    "DetectedIssue",
+    # Safety
+    "AdverseEvent",
     # Infrastructure
     "Bundle",
     "OperationOutcome",
     "Parameters",
     "CapabilityStatement",
+    "Provenance",
+    "AuditEvent",
 }
 
 # Validation rules per resource type

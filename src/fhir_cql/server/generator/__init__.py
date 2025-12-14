@@ -8,8 +8,10 @@ from typing import Any
 
 from faker import Faker
 
+from .adverse_event import AdverseEventGenerator
 from .allergy_intolerance import AllergyIntoleranceGenerator
 from .appointment import AppointmentGenerator
+from .audit_event import AuditEventGenerator
 from .base import FHIRResourceGenerator
 from .care_team import CareTeamGenerator
 from .careplan import CarePlanGenerator
@@ -20,6 +22,7 @@ from .communication import CommunicationGenerator
 from .condition import ConditionGenerator
 from .consent import ConsentGenerator
 from .coverage import CoverageGenerator
+from .detected_issue import DetectedIssueGenerator
 from .device import DeviceGenerator
 from .diagnostic_report import DiagnosticReportGenerator
 from .document_reference import DocumentReferenceGenerator
@@ -29,13 +32,16 @@ from .family_member_history import FamilyMemberHistoryGenerator
 from .flag import FlagGenerator
 from .goal import GoalGenerator
 from .group import GroupGenerator
+from .healthcare_service import HealthcareServiceGenerator
 from .immunization import ImmunizationGenerator
 from .library import LibraryGenerator
 from .location import LocationGenerator
 from .measure import MeasureGenerator
 from .measure_report import MeasureReportGenerator
+from .media import MediaGenerator
 from .medication import MedicationGenerator
 from .medication_administration import MedicationAdministrationGenerator
+from .medication_dispense import MedicationDispenseGenerator
 from .medication_request import MedicationRequestGenerator
 from .medication_statement import MedicationStatementGenerator
 from .nutrition_order import NutritionOrderGenerator
@@ -45,9 +51,11 @@ from .patient import PatientGenerator
 from .practitioner import PractitionerGenerator
 from .practitioner_role import PractitionerRoleGenerator
 from .procedure import ProcedureGenerator
+from .provenance import ProvenanceGenerator
 from .questionnaire import QuestionnaireGenerator
 from .questionnaire_response import QuestionnaireResponseGenerator
 from .related_person import RelatedPersonGenerator
+from .risk_assessment import RiskAssessmentGenerator
 from .schedule import ScheduleGenerator
 from .service_request import ServiceRequestGenerator
 from .slot import SlotGenerator
@@ -221,6 +229,7 @@ __all__ = [
     "MedicationRequestGenerator",
     "MedicationAdministrationGenerator",
     "MedicationStatementGenerator",
+    "MedicationDispenseGenerator",
     # Care Management
     "CarePlanGenerator",
     "CareTeamGenerator",
@@ -230,6 +239,7 @@ __all__ = [
     "AppointmentGenerator",
     "ScheduleGenerator",
     "SlotGenerator",
+    "HealthcareServiceGenerator",
     # Financial
     "CoverageGenerator",
     "ClaimGenerator",
@@ -239,6 +249,7 @@ __all__ = [
     # Documents
     "ServiceRequestGenerator",
     "DocumentReferenceGenerator",
+    "MediaGenerator",
     # Quality Measures
     "MeasureGenerator",
     "MeasureReportGenerator",
@@ -259,4 +270,12 @@ __all__ = [
     "SpecimenGenerator",
     # Orders
     "NutritionOrderGenerator",
+    # Clinical Decision Support
+    "RiskAssessmentGenerator",
+    "DetectedIssueGenerator",
+    # Safety
+    "AdverseEventGenerator",
+    # Infrastructure
+    "ProvenanceGenerator",
+    "AuditEventGenerator",
 ]

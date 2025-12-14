@@ -220,7 +220,7 @@ fhir terminology <command> # Terminology Service commands
 | `fhir serve` | Start the FHIR R4 server |
 | `fhir serve --patients 100` | Start with synthetic patient data |
 | `fhir server generate Patient -n 10` | Generate specific resource types |
-| `fhir server populate` | Populate server with all 45 linked resource types |
+| `fhir server populate` | Populate server with all 53 linked resource types |
 | `fhir server load <file>` | Load resources into running server |
 | `fhir server stats` | Show server resource statistics |
 | `fhir server info` | Show server capability statement |
@@ -269,18 +269,18 @@ fhir terminology <command> # Terminology Service commands
 
 ### FHIR Resources (53 files)
 
-**45 supported resource types** with example JSON files in `examples/fhir/`:
+**53 supported resource types** with example JSON files in `examples/fhir/`:
 
 | Category | Example Resources |
 |----------|-------------------|
 | Administrative | Patient, Practitioner, PractitionerRole, Organization, Location, RelatedPerson |
 | Clinical | Encounter, Condition, Observation, Procedure, DiagnosticReport, AllergyIntolerance, Immunization, ClinicalImpression, FamilyMemberHistory |
-| Medications | Medication, MedicationRequest, MedicationAdministration, MedicationStatement |
+| Medications | Medication, MedicationRequest, MedicationAdministration, MedicationStatement, MedicationDispense |
 | Care Management | CarePlan, CareTeam, Goal, Task |
-| Scheduling | Appointment, Schedule, Slot |
+| Scheduling | Appointment, Schedule, Slot, HealthcareService |
 | Financial | Coverage, Claim, ExplanationOfBenefit |
 | Devices | Device |
-| Documents | ServiceRequest, DocumentReference |
+| Documents | ServiceRequest, DocumentReference, Media |
 | Forms & Consent | Questionnaire, QuestionnaireResponse, Consent |
 | Quality Measures | Measure, MeasureReport, Library |
 | Terminology | ValueSet, CodeSystem |
@@ -288,7 +288,9 @@ fhir terminology <command> # Terminology Service commands
 | Communication & Alerts | Communication, Flag |
 | Diagnostics | Specimen |
 | Orders | NutritionOrder |
-| Infrastructure | Bundle |
+| Clinical Decision Support | RiskAssessment, DetectedIssue |
+| Safety | AdverseEvent |
+| Infrastructure | Bundle, Provenance, AuditEvent |
 
 See [Supported Resources](docs/fhir-server/resources/index.md) for complete documentation.
 
@@ -307,7 +309,7 @@ See [Supported Resources](docs/fhir-server/resources/index.md) for complete docu
 - [CQL API](docs/cql-api.md)
 - [ELM Guide](docs/elm-guide.md) - ELM loading, evaluation, and CQL-to-ELM export
 - [FHIR Server Guide](docs/fhir-server-guide.md) - REST API, synthetic data, terminology operations
-- [Supported Resources](docs/fhir-server/resources/index.md) - All 45 supported FHIR resource types
+- [Supported Resources](docs/fhir-server/resources/index.md) - All 53 supported FHIR resource types
 - [CDS Hooks Guide](docs/cds-hooks-guide.md) - Building clinical decision support services
 - [FHIRPath & CQL Reference](docs/fhirpath-cql-tutorial.md)
 
