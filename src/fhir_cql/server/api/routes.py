@@ -45,6 +45,97 @@ SUPPORTED_TYPES = [
     "Library",
 ]
 
+# Summary elements per resource type (per FHIR spec)
+SUMMARY_ELEMENTS: dict[str, list[str]] = {
+    "Patient": ["identifier", "active", "name", "telecom", "gender", "birthDate", "address"],
+    "Practitioner": ["identifier", "active", "name", "telecom", "address"],
+    "Organization": ["identifier", "active", "name", "type", "telecom", "address"],
+    "Encounter": ["identifier", "status", "class", "type", "subject", "period"],
+    "Condition": ["identifier", "clinicalStatus", "verificationStatus", "code", "subject", "onsetDateTime"],
+    "Observation": ["identifier", "status", "category", "code", "subject", "effectiveDateTime", "valueQuantity"],
+    "MedicationRequest": ["identifier", "status", "intent", "medicationCodeableConcept", "subject", "authoredOn"],
+    "Procedure": ["identifier", "status", "code", "subject", "performedDateTime", "performedPeriod"],
+    "DiagnosticReport": ["identifier", "status", "category", "code", "subject", "effectiveDateTime", "issued"],
+    "AllergyIntolerance": ["identifier", "clinicalStatus", "verificationStatus", "code", "patient", "onsetDateTime"],
+    "Immunization": ["identifier", "status", "vaccineCode", "patient", "occurrenceDateTime"],
+    "CarePlan": ["identifier", "status", "intent", "category", "subject", "period"],
+    "Goal": ["identifier", "lifecycleStatus", "category", "description", "subject"],
+    "ServiceRequest": ["identifier", "status", "intent", "code", "subject", "authoredOn"],
+    "DocumentReference": ["identifier", "status", "type", "subject", "date", "author"],
+    "Medication": ["identifier", "code", "status"],
+    "Measure": ["identifier", "url", "name", "status", "title", "date"],
+    "MeasureReport": ["identifier", "status", "type", "measure", "subject", "date"],
+    "ValueSet": ["identifier", "url", "name", "status", "title"],
+    "CodeSystem": ["identifier", "url", "name", "status", "title"],
+    "Library": ["identifier", "url", "name", "status", "title", "date"],
+}
+
+
+def filter_elements(resource: dict[str, Any], elements: list[str]) -> dict[str, Any]:
+    """Filter resource to only include specified elements.
+
+    Always includes: resourceType, id, meta (per FHIR spec).
+
+    Args:
+        resource: The FHIR resource to filter
+        elements: List of element names to include
+
+    Returns:
+        Filtered resource with only specified elements
+    """
+    result: dict[str, Any] = {
+        "resourceType": resource.get("resourceType"),
+    }
+    if "id" in resource:
+        result["id"] = resource["id"]
+    if "meta" in resource:
+        result["meta"] = resource["meta"]
+
+    for element in elements:
+        if element in resource:
+            result[element] = resource[element]
+
+    return result
+
+
+def filter_summary(resource: dict[str, Any], summary_type: str) -> dict[str, Any]:
+    """Filter resource based on _summary type.
+
+    Args:
+        resource: The FHIR resource to filter
+        summary_type: Summary type (true, text, data, false)
+
+    Returns:
+        Filtered resource based on summary type
+    """
+    if summary_type == "false":
+        return resource
+
+    resource_type = resource.get("resourceType", "")
+
+    if summary_type == "true":
+        elements = SUMMARY_ELEMENTS.get(resource_type, [])
+        return filter_elements(resource, elements)
+
+    if summary_type == "text":
+        result: dict[str, Any] = {
+            "resourceType": resource.get("resourceType"),
+        }
+        if "id" in resource:
+            result["id"] = resource["id"]
+        if "meta" in resource:
+            result["meta"] = resource["meta"]
+        if "text" in resource:
+            result["text"] = resource["text"]
+        return result
+
+    if summary_type == "data":
+        result = dict(resource)
+        result.pop("text", None)
+        return result
+
+    return resource
+
 
 def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
     """Create FHIR API router.
@@ -115,6 +206,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         patient_id: str,
         _count: int = Query(default=100, ge=1, le=1000, alias="_count"),
         _offset: int = Query(default=0, ge=0, alias="_offset"),
+        _elements: str | None = Query(default=None, alias="_elements"),
+        _summary: str | None = Query(default=None, alias="_summary"),
     ) -> Response:
         """Return all resources related to a patient.
 
@@ -126,6 +219,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             patient_id: The patient ID
             _count: Maximum number of resources per page (default 100)
             _offset: Pagination offset (default 0)
+            _elements: Comma-separated list of elements to include
+            _summary: Return summary view (true, text, data, count, false)
         """
         from .compartments import PATIENT_COMPARTMENT, get_patient_reference_paths, get_reference_from_path
 
@@ -159,7 +254,28 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
         # Apply pagination
         total = len(all_resources)
+
+        # Handle _summary=count
+        if _summary == "count":
+            return JSONResponse(
+                content={
+                    "resourceType": "Bundle",
+                    "type": "searchset",
+                    "total": total,
+                },
+                media_type=FHIR_JSON,
+            )
+
         paginated = all_resources[_offset : _offset + _count]
+
+        # Apply _elements filtering
+        if _elements:
+            element_list = [e.strip() for e in _elements.split(",")]
+            paginated = [filter_elements(r, element_list) for r in paginated]
+
+        # Apply _summary filtering
+        if _summary and _summary != "false":
+            paginated = [filter_summary(r, _summary) for r in paginated]
 
         # Build bundle
         entries = []
@@ -244,7 +360,6 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             MeasureReport resource with evaluation results
         """
         import base64
-        from datetime import datetime as dt
 
         from fhir_cql.engine.cql.evaluator import CQLEvaluator
         from fhir_cql.engine.cql.measure import MeasureEvaluator, MeasureScoring
@@ -262,9 +377,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         # Get Library reference from Measure
         library_refs = measure.get("library", [])
         if not library_refs:
-            outcome = OperationOutcome.error(
-                "Measure has no associated Library", code="not-found"
-            )
+            outcome = OperationOutcome.error("Measure has no associated Library", code="not-found")
             return JSONResponse(
                 content=outcome.model_dump(exclude_none=True),
                 status_code=400,
@@ -279,9 +392,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             library_id = library_url.split("/")[-1] if "/" in library_url else library_url
             library = store.read("Library", library_id)
             if library is None:
-                outcome = OperationOutcome.error(
-                    f"Library not found: {library_url}", code="not-found"
-                )
+                outcome = OperationOutcome.error(f"Library not found: {library_url}", code="not-found")
                 return JSONResponse(
                     content=outcome.model_dump(exclude_none=True),
                     status_code=400,
@@ -301,9 +412,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
                     break
 
         if not cql_source:
-            outcome = OperationOutcome.error(
-                "No CQL content found in Library", code="invalid"
-            )
+            outcome = OperationOutcome.error("No CQL content found in Library", code="invalid")
             return JSONResponse(
                 content=outcome.model_dump(exclude_none=True),
                 status_code=400,
@@ -331,9 +440,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             patients, _ = store.search("Patient", {})
 
         if not patients:
-            outcome = OperationOutcome.error(
-                "No patients found for evaluation", code="not-found"
-            )
+            outcome = OperationOutcome.error("No patients found for evaluation", code="not-found")
             return JSONResponse(
                 content=outcome.model_dump(exclude_none=True),
                 status_code=400,
@@ -358,9 +465,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
                 measure_evaluator.set_scoring(MeasureScoring.COHORT)
 
         except Exception as e:
-            outcome = OperationOutcome.error(
-                f"Failed to compile CQL: {e}", code="invalid"
-            )
+            outcome = OperationOutcome.error(f"Failed to compile CQL: {e}", code="invalid")
             return JSONResponse(
                 content=outcome.model_dump(exclude_none=True),
                 status_code=400,
@@ -397,9 +502,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
                 fhir_report["improvementNotation"] = measure["improvementNotation"]
 
         except Exception as e:
-            outcome = OperationOutcome.error(
-                f"Measure evaluation failed: {e}", code="processing"
-            )
+            outcome = OperationOutcome.error(f"Measure evaluation failed: {e}", code="processing")
             return JSONResponse(
                 content=outcome.model_dump(exclude_none=True),
                 status_code=500,
@@ -484,6 +587,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         _count: int = Query(default=100, ge=1, le=1000, alias="_count"),
         _offset: int = Query(default=0, ge=0, alias="_offset"),
         _sort: str | None = Query(default=None, alias="_sort"),
+        _elements: str | None = Query(default=None, alias="_elements"),
+        _summary: str | None = Query(default=None, alias="_summary"),
     ) -> Response:
         """Search for resources within a patient compartment.
 
@@ -498,6 +603,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             _count: Maximum number of results per page
             _offset: Pagination offset
             _sort: Sort order (prefix with - for descending)
+            _elements: Comma-separated list of elements to include
+            _summary: Return summary view (true, text, data, count, false)
         """
         from .compartments import PATIENT_COMPARTMENT, get_patient_reference_paths, get_reference_from_path
         from .search import filter_resources
@@ -550,8 +657,27 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
         # Handle special case: requesting Patient returns just the patient
         if resource_type == "Patient":
+            # Handle _summary=count
+            if _summary == "count":
+                return JSONResponse(
+                    content={
+                        "resourceType": "Bundle",
+                        "type": "searchset",
+                        "total": 1,
+                    },
+                    media_type=FHIR_JSON,
+                )
+
+            # Apply filtering to patient
+            filtered_patient = patient
+            if _elements:
+                element_list = [e.strip() for e in _elements.split(",")]
+                filtered_patient = filter_elements(filtered_patient, element_list)
+            if _summary and _summary != "false":
+                filtered_patient = filter_summary(filtered_patient, _summary)
+
             bundle = Bundle.searchset(
-                resources=[patient],
+                resources=[filtered_patient],
                 total=1,
                 base_url=get_base_url(request),
                 resource_type="Patient",
@@ -595,7 +721,28 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
         # Apply pagination
         total = len(compartment_resources)
+
+        # Handle _summary=count
+        if _summary == "count":
+            return JSONResponse(
+                content={
+                    "resourceType": "Bundle",
+                    "type": "searchset",
+                    "total": total,
+                },
+                media_type=FHIR_JSON,
+            )
+
         paginated = compartment_resources[_offset : _offset + _count]
+
+        # Apply _elements filtering
+        if _elements:
+            element_list = [e.strip() for e in _elements.split(",")]
+            paginated = [filter_elements(r, element_list) for r in paginated]
+
+        # Apply _summary filtering
+        if _summary and _summary != "false":
+            paginated = [filter_summary(r, _summary) for r in paginated]
 
         # Build bundle
         bundle = Bundle.searchset(
@@ -626,6 +773,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         _sort: str | None = Query(default=None, alias="_sort"),
         _include: list[str] | None = Query(default=None, alias="_include"),
         _revinclude: list[str] | None = Query(default=None, alias="_revinclude"),
+        _elements: str | None = Query(default=None, alias="_elements"),
+        _summary: str | None = Query(default=None, alias="_summary"),
     ) -> Response:
         """Search for resources of a specific type.
 
@@ -635,6 +784,8 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         - _count: Number of results per page (default 100, max 1000)
         - _offset: Offset for pagination
         - _sort: Sort order (prefix with - for descending)
+        - _elements: Comma-separated list of elements to include
+        - _summary: Return summary view (true, text, data, count, false)
         """
         if resource_type not in SUPPORTED_TYPES:
             outcome = OperationOutcome.error(
@@ -698,6 +849,26 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             except (TypeError, KeyError):
                 pass  # Ignore sort errors
 
+        # Handle _summary=count (return count-only bundle)
+        if _summary == "count":
+            return JSONResponse(
+                content={
+                    "resourceType": "Bundle",
+                    "type": "searchset",
+                    "total": total,
+                },
+                media_type=FHIR_JSON,
+            )
+
+        # Apply _elements filtering
+        if _elements:
+            element_list = [e.strip() for e in _elements.split(",")]
+            resources = [filter_elements(r, element_list) for r in resources]
+
+        # Apply _summary filtering
+        if _summary and _summary != "false":
+            resources = [filter_summary(r, _summary) for r in resources]
+
         # Process _include and _revinclude
         included_resources: list[dict[str, Any]] = []
 
@@ -711,6 +882,13 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
             if _revinclude:
                 included_resources.extend(handler.process_revinclude(resources, _revinclude))
+
+            # Apply same filtering to included resources
+            if _elements:
+                incl_element_list = [e.strip() for e in _elements.split(",")]
+                included_resources = [filter_elements(r, incl_element_list) for r in included_resources]
+            if _summary and _summary != "false":
+                included_resources = [filter_summary(r, _summary) for r in included_resources]
 
         # Build bundle with both match and include entries
         entries = []

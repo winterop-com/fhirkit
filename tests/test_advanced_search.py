@@ -121,11 +121,7 @@ def populated_store(store, client):
         "id": "obs-bp-smith",
         "status": "final",
         "subject": {"reference": "Patient/patient-smith"},
-        "code": {
-            "coding": [
-                {"system": "http://loinc.org", "code": "8480-6", "display": "Systolic BP"}
-            ]
-        },
+        "code": {"coding": [{"system": "http://loinc.org", "code": "8480-6", "display": "Systolic BP"}]},
         "valueQuantity": {"value": 140, "unit": "mmHg"},
     }
 
@@ -236,9 +232,7 @@ class TestReverseChainedSearch:
     def test_has_search_multiple_conditions(self, client, populated_store):
         """Test multiple _has parameters (AND logic)."""
         # Find patients with BOTH diabetes AND hypertension
-        response = client.get(
-            "/Patient?_has:Condition:subject:code=44054006&_has:Condition:subject:code=38341003"
-        )
+        response = client.get("/Patient?_has:Condition:subject:code=44054006&_has:Condition:subject:code=38341003")
         assert response.status_code == 200
 
         bundle = response.json()
@@ -274,9 +268,7 @@ class TestAdvancedSearchCombinations:
 
     def test_has_with_include(self, client, populated_store):
         """Test _has search with _include."""
-        response = client.get(
-            "/Patient?_has:Condition:subject:code=44054006&_revinclude=Condition:subject"
-        )
+        response = client.get("/Patient?_has:Condition:subject:code=44054006&_revinclude=Condition:subject")
         assert response.status_code == 200
 
         bundle = response.json()

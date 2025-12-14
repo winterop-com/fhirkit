@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 from fhir_cql.server.api.app import create_app
 from fhir_cql.server.storage.fhir_store import FHIRStore
 
-
 # Simple CQL for testing
 SIMPLE_CQL = """library TestMeasure version '1.0.0'
 
@@ -55,13 +54,13 @@ def populated_store(store, client):
         "url": "http://example.org/fhir/Library/TestMeasure",
         "name": "TestMeasure",
         "status": "active",
-        "type": {
-            "coding": [{"code": "logic-library"}]
-        },
-        "content": [{
-            "contentType": "text/cql",
-            "data": base64.b64encode(SIMPLE_CQL.encode("utf-8")).decode("utf-8"),
-        }],
+        "type": {"coding": [{"code": "logic-library"}]},
+        "content": [
+            {
+                "contentType": "text/cql",
+                "data": base64.b64encode(SIMPLE_CQL.encode("utf-8")).decode("utf-8"),
+            }
+        ],
     }
     client.put("/Library/library-test", json=library)
 
@@ -74,37 +73,43 @@ def populated_store(store, client):
         "status": "active",
         "library": ["http://example.org/fhir/Library/TestMeasure"],
         "scoring": {
-            "coding": [{
-                "system": "http://terminology.hl7.org/CodeSystem/measure-scoring",
-                "code": "proportion",
-            }]
+            "coding": [
+                {
+                    "system": "http://terminology.hl7.org/CodeSystem/measure-scoring",
+                    "code": "proportion",
+                }
+            ]
         },
         "effectivePeriod": {
             "start": "2024-01-01",
             "end": "2024-12-31",
         },
         "improvementNotation": {
-            "coding": [{
-                "system": "http://terminology.hl7.org/CodeSystem/measure-improvement-notation",
-                "code": "increase",
-            }]
-        },
-        "group": [{
-            "population": [
+            "coding": [
                 {
-                    "code": {"coding": [{"code": "initial-population"}]},
-                    "criteria": {"expression": "Initial Population"},
-                },
-                {
-                    "code": {"coding": [{"code": "denominator"}]},
-                    "criteria": {"expression": "Denominator"},
-                },
-                {
-                    "code": {"coding": [{"code": "numerator"}]},
-                    "criteria": {"expression": "Numerator"},
-                },
+                    "system": "http://terminology.hl7.org/CodeSystem/measure-improvement-notation",
+                    "code": "increase",
+                }
             ]
-        }],
+        },
+        "group": [
+            {
+                "population": [
+                    {
+                        "code": {"coding": [{"code": "initial-population"}]},
+                        "criteria": {"expression": "Initial Population"},
+                    },
+                    {
+                        "code": {"coding": [{"code": "denominator"}]},
+                        "criteria": {"expression": "Denominator"},
+                    },
+                    {
+                        "code": {"coding": [{"code": "numerator"}]},
+                        "criteria": {"expression": "Numerator"},
+                    },
+                ]
+            }
+        ],
     }
     client.put("/Measure/measure-test", json=measure)
 
@@ -129,12 +134,8 @@ def populated_store(store, client):
         "resourceType": "Condition",
         "id": "condition-1",
         "subject": {"reference": "Patient/patient-1"},
-        "clinicalStatus": {
-            "coding": [{"code": "active"}]
-        },
-        "code": {
-            "coding": [{"code": "test"}]
-        },
+        "clinicalStatus": {"coding": [{"code": "active"}]},
+        "code": {"coding": [{"code": "test"}]},
     }
     client.put("/Condition/condition-1", json=condition)
 
@@ -144,9 +145,7 @@ def populated_store(store, client):
         "id": "obs-1",
         "status": "final",
         "subject": {"reference": "Patient/patient-1"},
-        "code": {
-            "coding": [{"code": "test"}]
-        },
+        "code": {"coding": [{"code": "test"}]},
     }
     client.put("/Observation/obs-1", json=observation)
 
@@ -169,9 +168,7 @@ class TestEvaluateMeasure:
 
     def test_evaluate_measure_individual(self, client, populated_store):
         """Test individual patient measure evaluation."""
-        response = client.get(
-            "/Measure/measure-test/$evaluate-measure?subject=Patient/patient-1&reportType=individual"
-        )
+        response = client.get("/Measure/measure-test/$evaluate-measure?subject=Patient/patient-1&reportType=individual")
         assert response.status_code == 200
 
         report = response.json()
@@ -181,9 +178,7 @@ class TestEvaluateMeasure:
 
     def test_evaluate_measure_with_period(self, client, populated_store):
         """Test measure evaluation with custom period."""
-        response = client.get(
-            "/Measure/measure-test/$evaluate-measure?periodStart=2024-01-01&periodEnd=2024-06-30"
-        )
+        response = client.get("/Measure/measure-test/$evaluate-measure?periodStart=2024-01-01&periodEnd=2024-06-30")
         assert response.status_code == 200
 
         report = response.json()
@@ -240,10 +235,12 @@ class TestEvaluateMeasure:
             "id": "library-empty",
             "url": "http://example.org/fhir/Library/Empty",
             "status": "active",
-            "content": [{
-                "contentType": "text/cql",
-                "data": base64.b64encode(SIMPLE_CQL.encode("utf-8")).decode("utf-8"),
-            }],
+            "content": [
+                {
+                    "contentType": "text/cql",
+                    "data": base64.b64encode(SIMPLE_CQL.encode("utf-8")).decode("utf-8"),
+                }
+            ],
         }
         empty_client.put("/Library/library-empty", json=library)
 
@@ -295,9 +292,7 @@ class TestCapabilityStatement:
         capability = response.json()
         resources = capability["rest"][0]["resource"]
 
-        measure_resource = next(
-            (r for r in resources if r["type"] == "Measure"), None
-        )
+        measure_resource = next((r for r in resources if r["type"] == "Measure"), None)
         assert measure_resource is not None
         assert "operation" in measure_resource
 
