@@ -9,14 +9,23 @@ from typing import Any
 from faker import Faker
 
 from .allergy_intolerance import AllergyIntoleranceGenerator
+from .appointment import AppointmentGenerator
 from .base import FHIRResourceGenerator
+from .care_team import CareTeamGenerator
 from .careplan import CarePlanGenerator
+from .claim import ClaimGenerator
+from .code_system import CodeSystemGenerator
 from .condition import ConditionGenerator
+from .coverage import CoverageGenerator
+from .device import DeviceGenerator
 from .diagnostic_report import DiagnosticReportGenerator
 from .document_reference import DocumentReferenceGenerator
 from .encounter import EncounterGenerator
+from .explanation_of_benefit import ExplanationOfBenefitGenerator
 from .goal import GoalGenerator
+from .group import GroupGenerator
 from .immunization import ImmunizationGenerator
+from .library import LibraryGenerator
 from .location import LocationGenerator
 from .measure import MeasureGenerator
 from .measure_report import MeasureReportGenerator
@@ -26,8 +35,14 @@ from .observation import ObservationGenerator
 from .organization import OrganizationGenerator
 from .patient import PatientGenerator
 from .practitioner import PractitionerGenerator
+from .practitioner_role import PractitionerRoleGenerator
 from .procedure import ProcedureGenerator
+from .related_person import RelatedPersonGenerator
+from .schedule import ScheduleGenerator
 from .service_request import ServiceRequestGenerator
+from .slot import SlotGenerator
+from .task import TaskGenerator
+from .value_set import ValueSetGenerator
 
 
 class PatientRecordGenerator:
@@ -170,25 +185,52 @@ class PatientRecordGenerator:
 
 
 __all__ = [
+    # Base
     "FHIRResourceGenerator",
+    "PatientRecordGenerator",
+    # Administrative
     "PatientGenerator",
     "PractitionerGenerator",
+    "PractitionerRoleGenerator",
     "OrganizationGenerator",
     "LocationGenerator",
+    "RelatedPersonGenerator",
+    # Clinical
     "EncounterGenerator",
     "ConditionGenerator",
     "ObservationGenerator",
-    "MedicationRequestGenerator",
     "ProcedureGenerator",
     "DiagnosticReportGenerator",
     "AllergyIntoleranceGenerator",
     "ImmunizationGenerator",
+    # Medications
+    "MedicationGenerator",
+    "MedicationRequestGenerator",
+    # Care Management
     "CarePlanGenerator",
+    "CareTeamGenerator",
     "GoalGenerator",
+    "TaskGenerator",
+    # Scheduling
+    "AppointmentGenerator",
+    "ScheduleGenerator",
+    "SlotGenerator",
+    # Financial
+    "CoverageGenerator",
+    "ClaimGenerator",
+    "ExplanationOfBenefitGenerator",
+    # Devices
+    "DeviceGenerator",
+    # Documents
     "ServiceRequestGenerator",
     "DocumentReferenceGenerator",
-    "MedicationGenerator",
+    # Quality Measures
     "MeasureGenerator",
     "MeasureReportGenerator",
-    "PatientRecordGenerator",
+    "LibraryGenerator",
+    # Terminology
+    "ValueSetGenerator",
+    "CodeSystemGenerator",
+    # Groups
+    "GroupGenerator",
 ]

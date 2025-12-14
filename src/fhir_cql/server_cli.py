@@ -10,13 +10,22 @@ from rich.table import Table
 
 from fhir_cql.server.generator import (
     AllergyIntoleranceGenerator,
+    AppointmentGenerator,
     CarePlanGenerator,
+    CareTeamGenerator,
+    ClaimGenerator,
+    CodeSystemGenerator,
     ConditionGenerator,
+    CoverageGenerator,
+    DeviceGenerator,
     DiagnosticReportGenerator,
     DocumentReferenceGenerator,
     EncounterGenerator,
+    ExplanationOfBenefitGenerator,
     GoalGenerator,
+    GroupGenerator,
     ImmunizationGenerator,
+    LibraryGenerator,
     LocationGenerator,
     MeasureGenerator,
     MeasureReportGenerator,
@@ -26,8 +35,14 @@ from fhir_cql.server.generator import (
     OrganizationGenerator,
     PatientGenerator,
     PractitionerGenerator,
+    PractitionerRoleGenerator,
     ProcedureGenerator,
+    RelatedPersonGenerator,
+    ScheduleGenerator,
     ServiceRequestGenerator,
+    SlotGenerator,
+    TaskGenerator,
+    ValueSetGenerator,
 )
 
 app = typer.Typer(
@@ -38,25 +53,51 @@ app = typer.Typer(
 
 # Mapping of resource types to generator classes
 GENERATORS: dict[str, type] = {
+    # Administrative
     "Patient": PatientGenerator,
     "Practitioner": PractitionerGenerator,
+    "PractitionerRole": PractitionerRoleGenerator,
     "Organization": OrganizationGenerator,
     "Location": LocationGenerator,
+    "RelatedPerson": RelatedPersonGenerator,
+    # Clinical
     "Encounter": EncounterGenerator,
     "Condition": ConditionGenerator,
     "Observation": ObservationGenerator,
-    "MedicationRequest": MedicationRequestGenerator,
     "Procedure": ProcedureGenerator,
     "DiagnosticReport": DiagnosticReportGenerator,
     "AllergyIntolerance": AllergyIntoleranceGenerator,
     "Immunization": ImmunizationGenerator,
+    # Medications
+    "Medication": MedicationGenerator,
+    "MedicationRequest": MedicationRequestGenerator,
+    # Care Management
     "CarePlan": CarePlanGenerator,
+    "CareTeam": CareTeamGenerator,
     "Goal": GoalGenerator,
+    "Task": TaskGenerator,
+    # Scheduling
+    "Appointment": AppointmentGenerator,
+    "Schedule": ScheduleGenerator,
+    "Slot": SlotGenerator,
+    # Financial
+    "Coverage": CoverageGenerator,
+    "Claim": ClaimGenerator,
+    "ExplanationOfBenefit": ExplanationOfBenefitGenerator,
+    # Devices
+    "Device": DeviceGenerator,
+    # Documents
     "ServiceRequest": ServiceRequestGenerator,
     "DocumentReference": DocumentReferenceGenerator,
-    "Medication": MedicationGenerator,
+    # Quality Measures
     "Measure": MeasureGenerator,
     "MeasureReport": MeasureReportGenerator,
+    "Library": LibraryGenerator,
+    # Terminology
+    "ValueSet": ValueSetGenerator,
+    "CodeSystem": CodeSystemGenerator,
+    # Groups
+    "Group": GroupGenerator,
 }
 
 
