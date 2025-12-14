@@ -578,6 +578,38 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             media_type=FHIR_JSON,
         )
 
+    # Patient-specific $validate route (must be before compartment search)
+    @router.get("/Patient/{patient_id}/$validate", tags=["Validation"])
+    @router.post("/Patient/{patient_id}/$validate", tags=["Validation"])
+    async def validate_patient_resource(
+        request: Request,
+        patient_id: str,
+        mode: str = Query(default="validation"),
+    ) -> Response:
+        """Validate an existing Patient resource by ID.
+
+        Validates the stored Patient resource against FHIR R4 structure rules,
+        required fields, code bindings, and reference validity.
+        """
+        from ..validation import FHIRValidator
+
+        resource = store.read("Patient", patient_id)
+        if resource is None:
+            outcome = OperationOutcome.not_found("Patient", patient_id)
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=404,
+                media_type=FHIR_JSON,
+            )
+
+        validator = FHIRValidator(store)
+        result = validator.validate(resource, mode)
+
+        return JSONResponse(
+            content=result.to_operation_outcome(),
+            media_type=FHIR_JSON,
+        )
+
     @router.get("/Patient/{patient_id}/{resource_type}", tags=["Compartment"])
     async def compartment_search(
         request: Request,
@@ -1074,6 +1106,135 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         return JSONResponse(content=result, media_type=FHIR_JSON)
 
     # =========================================================================
+    # Validation Operations
+    # =========================================================================
+
+    @router.post("/{resource_type}/$validate", tags=["Validation"])
+    async def validate_resource(
+        request: Request,
+        resource_type: str,
+        mode: str = Query(default="validation"),
+    ) -> Response:
+        """Validate a resource against FHIR R4 rules.
+
+        Validates the resource in the request body against FHIR R4 structure
+        rules, required fields, code bindings, and reference validity.
+
+        Parameters:
+            resource_type: The expected resource type
+            mode: Validation mode (validation, create, update, delete)
+
+        Returns:
+            OperationOutcome with validation results
+        """
+        from ..validation import FHIRValidator
+
+        if resource_type not in SUPPORTED_TYPES:
+            outcome = OperationOutcome.error(
+                f"Resource type '{resource_type}' is not supported",
+                code="not-supported",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        try:
+            body = await request.json()
+        except Exception as e:
+            outcome = OperationOutcome.error(
+                f"Invalid JSON in request body: {e}",
+                code="invalid",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Handle Parameters wrapper (FHIR $validate can accept Parameters)
+        resource = body
+        if body.get("resourceType") == "Parameters":
+            # Extract resource from Parameters
+            for param in body.get("parameter", []):
+                if param.get("name") == "resource" and "resource" in param:
+                    resource = param["resource"]
+                    break
+
+        # Validate resource type matches endpoint
+        if resource.get("resourceType") != resource_type:
+            outcome = OperationOutcome.error(
+                f"Resource type '{resource.get('resourceType')}' does not match endpoint '{resource_type}'",
+                code="invalid",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        validator = FHIRValidator(store)
+        result = validator.validate(resource, mode)
+
+        # Return 200 even for invalid resources (per FHIR spec)
+        return JSONResponse(
+            content=result.to_operation_outcome(),
+            media_type=FHIR_JSON,
+        )
+
+    @router.get("/{resource_type}/{resource_id}/$validate", tags=["Validation"])
+    @router.post("/{resource_type}/{resource_id}/$validate", tags=["Validation"])
+    async def validate_existing_resource(
+        request: Request,
+        resource_type: str,
+        resource_id: str,
+        mode: str = Query(default="validation"),
+    ) -> Response:
+        """Validate an existing resource by ID.
+
+        Validates the stored resource against FHIR R4 structure rules,
+        required fields, code bindings, and reference validity.
+
+        Parameters:
+            resource_type: The resource type
+            resource_id: The resource ID
+            mode: Validation mode (validation, create, update, delete)
+
+        Returns:
+            OperationOutcome with validation results
+        """
+        from ..validation import FHIRValidator
+
+        if resource_type not in SUPPORTED_TYPES:
+            outcome = OperationOutcome.error(
+                f"Resource type '{resource_type}' is not supported",
+                code="not-supported",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        resource = store.read(resource_type, resource_id)
+        if resource is None:
+            outcome = OperationOutcome.not_found(resource_type, resource_id)
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=404,
+                media_type=FHIR_JSON,
+            )
+
+        validator = FHIRValidator(store)
+        result = validator.validate(resource, mode)
+
+        return JSONResponse(
+            content=result.to_operation_outcome(),
+            media_type=FHIR_JSON,
+        )
+
+    # =========================================================================
     # Resource Operations
     # =========================================================================
 
@@ -1525,6 +1686,128 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             media_type=FHIR_JSON,
             headers={
                 "Location": f"{get_base_url(request)}/{resource_type}/{resource_id}",
+                "ETag": f'W/"{version}"',
+            },
+        )
+
+    @router.patch("/{resource_type}/{resource_id}", tags=["Update"])
+    async def patch(
+        request: Request,
+        resource_type: str,
+        resource_id: str,
+    ) -> Response:
+        """Apply partial updates to a resource using JSON Patch (RFC 6902).
+
+        Accepts a list of JSON Patch operations and applies them to the resource.
+        Returns the updated resource with an incremented version.
+
+        Supported operations:
+        - add: Add a value at a path
+        - remove: Remove a value at a path
+        - replace: Replace a value at a path
+        - move: Move a value from one path to another
+        - copy: Copy a value from one path to another
+        - test: Test that a value equals the expected value
+
+        Example request body:
+        [
+            {"op": "replace", "path": "/active", "value": false},
+            {"op": "add", "path": "/telecom/-", "value": {"system": "email", "value": "new@example.com"}}
+        ]
+        """
+        from .patch import PatchError, apply_json_patch
+
+        if resource_type not in SUPPORTED_TYPES:
+            outcome = OperationOutcome.error(
+                f"Resource type '{resource_type}' is not supported",
+                code="not-supported",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Read existing resource
+        existing = store.read(resource_type, resource_id)
+        if not existing:
+            outcome = OperationOutcome.not_found(resource_type, resource_id)
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=404,
+                media_type=FHIR_JSON,
+            )
+
+        # Parse patch operations
+        try:
+            operations = await request.json()
+        except Exception as e:
+            outcome = OperationOutcome.error(f"Invalid JSON: {e}", code="invalid")
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        if not isinstance(operations, list):
+            outcome = OperationOutcome.error(
+                "Patch body must be a JSON array of operations",
+                code="invalid",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=400,
+                media_type=FHIR_JSON,
+            )
+
+        # Apply patch operations
+        try:
+            patched = apply_json_patch(existing, operations)
+        except PatchError as e:
+            # Determine status code based on error type
+            if "Test failed" in e.message:
+                status_code = 409  # Conflict - test operation failed
+            else:
+                status_code = 422  # Unprocessable Entity - invalid patch
+            outcome = OperationOutcome.error(e.message, code="processing")
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=status_code,
+                media_type=FHIR_JSON,
+            )
+
+        # Validate immutable fields weren't modified
+        if patched.get("id") != resource_id:
+            outcome = OperationOutcome.error(
+                "Cannot modify resource id via PATCH",
+                code="processing",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=422,
+                media_type=FHIR_JSON,
+            )
+
+        if patched.get("resourceType") != resource_type:
+            outcome = OperationOutcome.error(
+                "Cannot modify resourceType via PATCH",
+                code="processing",
+            )
+            return JSONResponse(
+                content=outcome.model_dump(exclude_none=True),
+                status_code=422,
+                media_type=FHIR_JSON,
+            )
+
+        # Update resource
+        updated = store.update(resource_type, resource_id, patched)
+        version = updated.get("meta", {}).get("versionId", "1")
+
+        return JSONResponse(
+            content=updated,
+            status_code=200,
+            media_type=FHIR_JSON,
+            headers={
                 "ETag": f'W/"{version}"',
             },
         )

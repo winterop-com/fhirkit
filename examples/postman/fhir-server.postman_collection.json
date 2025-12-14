@@ -135,6 +135,22 @@
           }
         },
         {
+          "name": "Patch Patient",
+          "description": "Apply JSON Patch operations to a Patient resource (RFC 6902)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json-patch+json"},
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\"op\": \"replace\", \"path\": \"/active\", \"value\": false},\n  {\"op\": \"add\", \"path\": \"/telecom/-\", \"value\": {\"system\": \"email\", \"value\": \"john.smith@example.com\", \"use\": \"home\"}}\n]"
+            },
+            "url": "{{baseUrl}}/Patient/{{patientId}}"
+          }
+        },
+        {
           "name": "Delete Patient",
           "request": {
             "method": "DELETE",
@@ -829,6 +845,81 @@
     {
       "name": "Operations",
       "item": [
+        {
+          "name": "Patient $validate (Type-level)",
+          "description": "Validate a Patient resource against FHIR R4 rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/fhir+json"},
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Patient\",\n  \"name\": [{\"family\": \"Smith\", \"given\": [\"John\"]}],\n  \"gender\": \"male\",\n  \"birthDate\": \"1970-01-15\"\n}"
+            },
+            "url": "{{baseUrl}}/Patient/$validate"
+          }
+        },
+        {
+          "name": "Patient $validate (Instance-level)",
+          "description": "Validate an existing Patient resource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "url": "{{baseUrl}}/Patient/{{patientId}}/$validate"
+          }
+        },
+        {
+          "name": "Observation $validate (Missing Required)",
+          "description": "Validate an Observation with missing required fields - shows validation errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/fhir+json"},
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Observation\",\n  \"subject\": {\"reference\": \"Patient/{{patientId}}\"}\n}"
+            },
+            "url": "{{baseUrl}}/Observation/$validate"
+          }
+        },
+        {
+          "name": "Observation $validate (Valid)",
+          "description": "Validate a valid Observation resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/fhir+json"},
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Observation\",\n  \"status\": \"final\",\n  \"code\": {\n    \"coding\": [{\"system\": \"http://loinc.org\", \"code\": \"8480-6\", \"display\": \"Systolic BP\"}]\n  },\n  \"subject\": {\"reference\": \"Patient/{{patientId}}\"}\n}"
+            },
+            "url": "{{baseUrl}}/Observation/$validate"
+          }
+        },
+        {
+          "name": "Condition $validate (Invalid Code)",
+          "description": "Validate a Condition with invalid clinical status code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/fhir+json"},
+              {"key": "Accept", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Condition\",\n  \"subject\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"clinicalStatus\": {\n    \"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/condition-clinical\", \"code\": \"invalid-status\"}]\n  }\n}"
+            },
+            "url": "{{baseUrl}}/Condition/$validate"
+          }
+        },
         {
           "name": "Patient $everything",
           "description": "Get all resources related to a patient",
