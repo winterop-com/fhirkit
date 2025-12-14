@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}Measures Dashboard - FHIR Server{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Measures Dashboard
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Evaluate quality measures against patient populations
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Panel: Measure Browser -->
+        <div class="space-y-4">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900">Available Measures</h2>
+                    <span class="text-xs text-gray-500">{{ measures | length }} measures</span>
+                </div>
+                <div id="measures-list" class="divide-y divide-gray-200 max-h-[500px] overflow-auto">
+                    {% if measures %}
+                        {% for measure in measures %}
+                        <div class="p-4 hover:bg-gray-50 cursor-pointer measure-item"
+                             onclick="selectMeasure('{{ measure.id }}', this)"
+                             data-measure-id="{{ measure.id }}">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-900">{{ measure.title | default(measure.name | default(measure.id)) }}</h3>
+                                    <p class="text-xs text-gray-500 mt-1">{{ measure.description | default('No description') | truncate(100) }}</p>
+                                </div>
+                                {% if measure.scoring and measure.scoring.coding %}
+                                <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-fhir-100 text-fhir-700">
+                                    {{ measure.scoring.coding[0].code | default('unknown') }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% if measure.group %}
+                                    {% for group in measure.group %}
+                                        {% if group.population %}
+                                            {% for pop in group.population %}
+                                            <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600">
+                                                {{ pop.code.coding[0].code | default('pop') if pop.code and pop.code.coding else 'pop' }}
+                                            </span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-4 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="mt-2 text-sm">No Measure resources found</p>
+                            <p class="text-xs text-gray-400 mt-1">Create a Measure resource to get started</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Panel: Evaluation Form -->
+        <div class="space-y-4">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Evaluation Parameters</h2>
+                </div>
+                <div id="eval-form" class="p-4 space-y-4">
+                    <!-- Selected Measure -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Selected Measure</label>
+                        <input type="text" id="selected-measure" readonly placeholder="Select a measure"
+                               class="w-full text-sm border-gray-300 rounded-md bg-gray-50">
+                    </div>
+
+                    <!-- Subject Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                        <select id="subject-type" onchange="updateSubjectOptions()" class="w-full text-sm border-gray-300 rounded-md">
+                            <option value="patient">Individual Patient</option>
+                            <option value="population">All Patients (Population)</option>
+                        </select>
+                    </div>
+
+                    <div id="patient-select-container">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                        <select id="eval-patient" class="w-full text-sm border-gray-300 rounded-md">
+                            <option value="">-- Select Patient --</option>
+                            {% for patient in patients %}
+                            <option value="{{ patient.id }}">
+                                {% if patient.name and patient.name[0] %}
+                                    {{ patient.name[0].given | join(' ') }} {{ patient.name[0].family | default('') }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                                ({{ patient.id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">{{ patient_total }} patients available</p>
+                    </div>
+
+                    <!-- Measurement Period -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Period Start</label>
+                            <input type="date" id="period-start" class="w-full text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Period End</label>
+                            <input type="date" id="period-end" class="w-full text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+
+                    <!-- Report Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                        <select id="report-type" class="w-full text-sm border-gray-300 rounded-md">
+                            <option value="individual">Individual</option>
+                            <option value="subject-list">Subject List</option>
+                            <option value="summary">Summary</option>
+                            <option value="data-collection">Data Collection</option>
+                        </select>
+                    </div>
+
+                    <!-- Evaluate Button -->
+                    <div class="pt-2">
+                        <button onclick="evaluateMeasure()" id="evaluate-btn"
+                                class="w-full inline-flex justify-center items-center rounded-md bg-fhir-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-fhir-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Evaluate Measure
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Measure Details -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Measure Details</h2>
+                </div>
+                <div id="measure-details" class="p-4 max-h-64 overflow-auto">
+                    <p class="text-sm text-gray-500">Select a measure to see details</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Results -->
+        <div class="space-y-4">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900">Results</h2>
+                    <span id="eval-time" class="text-xs text-gray-500"></span>
+                </div>
+                <div id="results-panel" class="max-h-[600px] overflow-auto">
+                    <div id="results-placeholder" class="p-4 text-center text-gray-500 py-8">
+                        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p class="mt-2 text-sm">Select a measure and click Evaluate</p>
+                    </div>
+                    <div id="results-error" class="hidden p-4">
+                        <div class="rounded-md bg-red-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">Error</h3>
+                                    <p id="error-message" class="mt-1 text-sm text-red-700"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="results-content" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Raw Response -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900">Raw MeasureReport</h2>
+                    <button onclick="copyResults()" class="text-sm text-gray-600 hover:text-gray-900">Copy</button>
+                </div>
+                <div class="max-h-64 overflow-auto">
+                    <pre id="raw-response" class="p-4 text-xs json-content">No results yet</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var selectedMeasureId = null;
+    var currentMeasure = null;
+    var currentResults = null;
+
+    // Set default dates (current year)
+    document.addEventListener('DOMContentLoaded', function() {
+        var today = new Date();
+        var yearStart = new Date(today.getFullYear(), 0, 1);
+        var yearEnd = new Date(today.getFullYear(), 11, 31);
+
+        document.getElementById('period-start').value = yearStart.toISOString().split('T')[0];
+        document.getElementById('period-end').value = yearEnd.toISOString().split('T')[0];
+    });
+
+    function updateSubjectOptions() {
+        var subjectType = document.getElementById('subject-type').value;
+        var patientContainer = document.getElementById('patient-select-container');
+        patientContainer.classList.toggle('hidden', subjectType === 'population');
+
+        // Update report type based on subject
+        var reportType = document.getElementById('report-type');
+        if (subjectType === 'population') {
+            reportType.value = 'summary';
+        } else {
+            reportType.value = 'individual';
+        }
+    }
+
+    async function selectMeasure(measureId, element) {
+        selectedMeasureId = measureId;
+
+        // Update UI selection
+        document.querySelectorAll('.measure-item').forEach(function(el) {
+            el.classList.remove('bg-fhir-50', 'border-l-4', 'border-fhir-600');
+        });
+        element.classList.add('bg-fhir-50', 'border-l-4', 'border-fhir-600');
+
+        document.getElementById('selected-measure').value = 'Measure/' + measureId;
+        document.getElementById('evaluate-btn').disabled = false;
+
+        // Load measure details
+        try {
+            var response = await fetch('{{ api_base_path }}/Measure/' + measureId);
+            if (response.ok) {
+                currentMeasure = await response.json();
+                renderMeasureDetails(currentMeasure);
+            }
+        } catch (e) {
+            console.error('Failed to load measure:', e);
+        }
+    }
+
+    function renderMeasureDetails(measure) {
+        var html = '';
+
+        html += '<div class="space-y-3">';
+
+        // Title and description
+        if (measure.title) {
+            html += '<div><span class="text-xs font-medium text-gray-500 uppercase">Title</span>';
+            html += '<p class="text-sm text-gray-900">' + measure.title + '</p></div>';
+        }
+
+        if (measure.description) {
+            html += '<div><span class="text-xs font-medium text-gray-500 uppercase">Description</span>';
+            html += '<p class="text-sm text-gray-900">' + measure.description + '</p></div>';
+        }
+
+        // Scoring
+        if (measure.scoring && measure.scoring.coding) {
+            var scoring = measure.scoring.coding[0];
+            html += '<div><span class="text-xs font-medium text-gray-500 uppercase">Scoring</span>';
+            html += '<p class="text-sm text-gray-900">' + (scoring.display || scoring.code) + '</p></div>';
+        }
+
+        // Groups and Populations
+        if (measure.group && measure.group.length > 0) {
+            html += '<div><span class="text-xs font-medium text-gray-500 uppercase">Populations</span>';
+            html += '<div class="mt-1 space-y-2">';
+            measure.group.forEach(function(group, gi) {
+                if (group.population) {
+                    group.population.forEach(function(pop) {
+                        var popCode = pop.code && pop.code.coding ? pop.code.coding[0].code : 'population';
+                        var popDisplay = pop.code && pop.code.coding ? (pop.code.coding[0].display || popCode) : 'Population';
+                        html += '<div class="flex items-center justify-between text-sm">';
+                        html += '<span class="text-gray-600">' + popDisplay + '</span>';
+                        html += '<span class="text-xs bg-gray-100 px-2 py-0.5 rounded">' + popCode + '</span>';
+                        html += '</div>';
+                    });
+                }
+            });
+            html += '</div></div>';
+        }
+
+        html += '</div>';
+
+        document.getElementById('measure-details').innerHTML = html;
+    }
+
+    async function evaluateMeasure() {
+        if (!selectedMeasureId) {
+            alert('Please select a measure');
+            return;
+        }
+
+        var subjectType = document.getElementById('subject-type').value;
+        var patientId = document.getElementById('eval-patient').value;
+        var periodStart = document.getElementById('period-start').value;
+        var periodEnd = document.getElementById('period-end').value;
+        var reportType = document.getElementById('report-type').value;
+
+        if (subjectType === 'patient' && !patientId) {
+            alert('Please select a patient');
+            return;
+        }
+
+        // Build URL
+        var url = '{{ api_base_path }}/Measure/' + selectedMeasureId + '/$evaluate-measure';
+        var params = new URLSearchParams();
+        params.append('periodStart', periodStart);
+        params.append('periodEnd', periodEnd);
+        params.append('reportType', reportType);
+
+        if (subjectType === 'patient') {
+            params.append('subject', 'Patient/' + patientId);
+        }
+
+        // Show loading
+        document.getElementById('evaluate-btn').disabled = true;
+        document.getElementById('evaluate-btn').innerHTML = `
+            <svg class="animate-spin w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Evaluating...
+        `;
+
+        var startTime = performance.now();
+
+        try {
+            var response = await fetch(url + '?' + params.toString());
+            var endTime = performance.now();
+            document.getElementById('eval-time').textContent = Math.round(endTime - startTime) + 'ms';
+
+            var data = await response.json();
+            currentResults = data;
+
+            document.getElementById('raw-response').textContent = JSON.stringify(data, null, 2);
+            document.getElementById('raw-response').innerHTML = highlightJSON(JSON.stringify(data, null, 2));
+
+            if (response.ok && data.resourceType === 'MeasureReport') {
+                showResults(data);
+            } else if (data.resourceType === 'OperationOutcome') {
+                showError(data.issue ? data.issue.map(i => i.diagnostics || i.details?.text).join(', ') : 'Evaluation failed');
+            } else {
+                showError('Unexpected response');
+            }
+        } catch (e) {
+            showError('Request failed: ' + e.message);
+        } finally {
+            document.getElementById('evaluate-btn').disabled = false;
+            document.getElementById('evaluate-btn').innerHTML = `
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Evaluate Measure
+            `;
+        }
+    }
+
+    function showResults(report) {
+        document.getElementById('results-placeholder').classList.add('hidden');
+        document.getElementById('results-error').classList.add('hidden');
+        document.getElementById('results-content').classList.remove('hidden');
+
+        var html = '<div class="p-4 space-y-4">';
+
+        // Report header
+        html += '<div class="bg-fhir-50 rounded-lg p-4">';
+        html += '<div class="flex items-center justify-between">';
+        html += '<div>';
+        html += '<h3 class="text-sm font-medium text-fhir-900">MeasureReport</h3>';
+        html += '<p class="text-xs text-fhir-600">' + report.type + ' report</p>';
+        html += '</div>';
+        html += '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ' +
+                getStatusColor(report.status) + '">' + report.status + '</span>';
+        html += '</div>';
+        html += '<div class="mt-2 text-xs text-fhir-700">';
+        html += 'Period: ' + (report.period?.start || 'N/A') + ' to ' + (report.period?.end || 'N/A');
+        html += '</div>';
+        html += '</div>';
+
+        // Population Results
+        if (report.group && report.group.length > 0) {
+            html += '<div class="border rounded-lg overflow-hidden">';
+            html += '<div class="bg-gray-50 px-4 py-2 border-b">';
+            html += '<h4 class="text-sm font-medium text-gray-900">Population Results</h4>';
+            html += '</div>';
+            html += '<div class="overflow-x-auto">';
+            html += '<table class="min-w-full divide-y divide-gray-200">';
+            html += '<thead class="bg-gray-50"><tr>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Population</th>';
+            html += '<th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Count</th>';
+            html += '</tr></thead>';
+            html += '<tbody class="divide-y divide-gray-200">';
+
+            report.group.forEach(function(group) {
+                if (group.population) {
+                    group.population.forEach(function(pop) {
+                        var popCode = pop.code && pop.code.coding ? pop.code.coding[0].code : 'unknown';
+                        var popDisplay = pop.code && pop.code.coding ? (pop.code.coding[0].display || popCode) : 'Population';
+                        html += '<tr>';
+                        html += '<td class="px-4 py-2 text-sm text-gray-900">' + popDisplay + '</td>';
+                        html += '<td class="px-4 py-2 text-sm text-right font-medium text-gray-900">' + (pop.count || 0) + '</td>';
+                        html += '</tr>';
+                    });
+                }
+
+                // Measure score
+                if (group.measureScore) {
+                    html += '<tr class="bg-fhir-50">';
+                    html += '<td class="px-4 py-2 text-sm font-medium text-fhir-900">Measure Score</td>';
+                    html += '<td class="px-4 py-2 text-sm text-right font-bold text-fhir-900">';
+                    if (group.measureScore.value !== undefined) {
+                        html += (group.measureScore.value * 100).toFixed(1) + '%';
+                    } else {
+                        html += 'N/A';
+                    }
+                    html += '</td>';
+                    html += '</tr>';
+                }
+            });
+
+            html += '</tbody></table>';
+            html += '</div></div>';
+        }
+
+        // Stratification
+        if (report.group && report.group[0] && report.group[0].stratifier) {
+            html += '<div class="border rounded-lg overflow-hidden">';
+            html += '<div class="bg-gray-50 px-4 py-2 border-b">';
+            html += '<h4 class="text-sm font-medium text-gray-900">Stratification</h4>';
+            html += '</div>';
+            html += '<div class="p-4 text-sm text-gray-500">Stratification data available - expand raw response to view</div>';
+            html += '</div>';
+        }
+
+        html += '</div>';
+
+        document.getElementById('results-content').innerHTML = html;
+    }
+
+    function getStatusColor(status) {
+        switch (status) {
+            case 'complete': return 'bg-green-100 text-green-800';
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'error': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    function showError(message) {
+        currentResults = null;
+        document.getElementById('results-placeholder').classList.add('hidden');
+        document.getElementById('results-content').classList.add('hidden');
+        document.getElementById('results-error').classList.remove('hidden');
+        document.getElementById('error-message').textContent = message;
+    }
+
+    function copyResults() {
+        if (currentResults !== null) {
+            navigator.clipboard.writeText(JSON.stringify(currentResults, null, 2));
+        }
+    }
+</script>
+{% endblock %}

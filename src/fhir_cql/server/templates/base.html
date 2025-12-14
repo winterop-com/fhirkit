@@ -73,6 +73,22 @@
                                class="{% if '/resources' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
                                 Resources
                             </a>
+                            <a href="{{ url_for('ui_fhirpath') }}"
+                               class="{% if '/fhirpath' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                                FHIRPath
+                            </a>
+                            <a href="{{ url_for('ui_cql') }}"
+                               class="{% if '/cql' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                                CQL
+                            </a>
+                            <a href="{{ url_for('ui_cds_hooks') }}"
+                               class="{% if '/cds-hooks' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                                CDS Hooks
+                            </a>
+                            <a href="{{ url_for('ui_measures') }}"
+                               class="{% if '/measures' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                                Measures
+                            </a>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">

@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block title %}FHIRPath Playground - FHIR Server{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                FHIRPath Playground
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Evaluate FHIRPath expressions against FHIR resources
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left Panel: Expression & Resource -->
+        <div class="space-y-4">
+            <!-- Expression Editor -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-medium text-gray-900">Expression</h2>
+                        <p class="text-xs text-gray-500">Ctrl+Enter to evaluate</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <select id="example-select" onchange="loadExample()" class="text-sm border-gray-300 rounded-md">
+                            <option value="">-- Examples --</option>
+                            <optgroup label="Patient - Basic">
+                                <option value="name.given">Given names</option>
+                                <option value="name.family">Family names</option>
+                                <option value="name.text">Full name text</option>
+                                <option value="birthDate">Birth date</option>
+                                <option value="gender">Gender</option>
+                                <option value="identifier.value">Identifier values</option>
+                                <option value="identifier.system">Identifier systems</option>
+                            </optgroup>
+                            <optgroup label="Patient - Contact">
+                                <option value="telecom.value">All contact values</option>
+                                <option value="telecom.where(system='phone').value">Phone numbers</option>
+                                <option value="telecom.where(system='email').value">Email addresses</option>
+                                <option value="address.line">Address lines</option>
+                                <option value="address.city">Cities</option>
+                                <option value="address.state">States</option>
+                                <option value="address.postalCode">Postal codes</option>
+                                <option value="address.country">Countries</option>
+                            </optgroup>
+                            <optgroup label="Patient - Advanced">
+                                <option value="name.where(use='official').given.first()">Official given name (first)</option>
+                                <option value="name.where(use='nickname').given">Nicknames</option>
+                                <option value="contact.name.text">Emergency contact names</option>
+                                <option value="contact.telecom.value">Emergency contact phones</option>
+                                <option value="communication.language.coding.display">Languages spoken</option>
+                                <option value="maritalStatus.coding.display">Marital status</option>
+                                <option value="generalPractitioner.reference">General practitioners</option>
+                            </optgroup>
+                            <optgroup label="Observation">
+                                <option value="code.coding.display">Observation name</option>
+                                <option value="code.coding.code">Observation code</option>
+                                <option value="value.ofType(Quantity).value">Numeric value</option>
+                                <option value="value.ofType(Quantity).unit">Value unit</option>
+                                <option value="value.ofType(CodeableConcept).coding.display">Coded value</option>
+                                <option value="value.ofType(string)">String value</option>
+                                <option value="effectiveDateTime">Effective date</option>
+                                <option value="status">Status</option>
+                                <option value="category.coding.display">Category</option>
+                                <option value="interpretation.coding.display">Interpretation</option>
+                                <option value="referenceRange.low.value">Reference range low</option>
+                                <option value="referenceRange.high.value">Reference range high</option>
+                                <option value="component.code.coding.display">Component names</option>
+                                <option value="component.value.ofType(Quantity).value">Component values</option>
+                            </optgroup>
+                            <optgroup label="Condition">
+                                <option value="code.coding.display">Condition name</option>
+                                <option value="code.coding.code">Condition code</option>
+                                <option value="clinicalStatus.coding.code">Clinical status</option>
+                                <option value="verificationStatus.coding.code">Verification status</option>
+                                <option value="severity.coding.display">Severity</option>
+                                <option value="category.coding.display">Category</option>
+                                <option value="onsetDateTime">Onset date</option>
+                                <option value="abatementDateTime">Abatement date</option>
+                                <option value="bodySite.coding.display">Body site</option>
+                            </optgroup>
+                            <optgroup label="MedicationRequest">
+                                <option value="medication.ofType(CodeableConcept).coding.display">Medication name</option>
+                                <option value="dosageInstruction.text">Dosage instructions</option>
+                                <option value="dosageInstruction.timing.repeat.frequency">Frequency</option>
+                                <option value="dosageInstruction.doseAndRate.dose.ofType(Quantity).value">Dose amount</option>
+                                <option value="status">Status</option>
+                                <option value="intent">Intent</option>
+                                <option value="authoredOn">Authored date</option>
+                            </optgroup>
+                            <optgroup label="Encounter">
+                                <option value="type.coding.display">Encounter type</option>
+                                <option value="class.display">Encounter class</option>
+                                <option value="status">Status</option>
+                                <option value="period.start">Start time</option>
+                                <option value="period.end">End time</option>
+                                <option value="reasonCode.coding.display">Reason</option>
+                                <option value="diagnosis.condition.reference">Diagnoses</option>
+                                <option value="participant.individual.reference">Participants</option>
+                            </optgroup>
+                            <optgroup label="Procedure">
+                                <option value="code.coding.display">Procedure name</option>
+                                <option value="status">Status</option>
+                                <option value="performed.ofType(DateTime)">Performed date</option>
+                                <option value="bodySite.coding.display">Body site</option>
+                                <option value="outcome.coding.display">Outcome</option>
+                                <option value="performer.actor.reference">Performers</option>
+                            </optgroup>
+                            <optgroup label="Functions - Existence">
+                                <option value="name.exists()">Has name?</option>
+                                <option value="telecom.empty()">No telecom?</option>
+                                <option value="address.count()">Address count</option>
+                                <option value="identifier.first()">First identifier</option>
+                                <option value="identifier.last()">Last identifier</option>
+                                <option value="name.single()">Single name (error if multiple)</option>
+                            </optgroup>
+                            <optgroup label="Functions - Filtering">
+                                <option value="name.where(use='official')">Official names only</option>
+                                <option value="telecom.where(system='phone' and use='mobile')">Mobile phones</option>
+                                <option value="address.where(use='home').first()">Home address</option>
+                                <option value="identifier.where(system.contains('mrn'))">MRN identifiers</option>
+                                <option value="name.select(given.first() + ' ' + family)">Formatted names</option>
+                                <option value="telecom.all(system='phone')">All are phones?</option>
+                            </optgroup>
+                            <optgroup label="Functions - String">
+                                <option value="name.family.upper()">Family name uppercase</option>
+                                <option value="name.family.lower()">Family name lowercase</option>
+                                <option value="name.given.first().substring(0,1)">First initial</option>
+                                <option value="identifier.value.matches('[0-9]+')">Numeric identifiers?</option>
+                                <option value="name.family.startsWith('S')">Family starts with S?</option>
+                                <option value="name.family.contains('son')">Family contains 'son'?</option>
+                                <option value="name.family.length()">Family name length</option>
+                                <option value="address.line.join(', ')">Address as string</option>
+                            </optgroup>
+                            <optgroup label="Functions - Math">
+                                <option value="value.ofType(Quantity).value + 10">Value plus 10</option>
+                                <option value="value.ofType(Quantity).value * 2">Value times 2</option>
+                                <option value="(value.ofType(Quantity).value - 32) * 5 / 9">F to C conversion</option>
+                                <option value="component.value.ofType(Quantity).value.aggregate($this + $total, 0)">Sum of values</option>
+                            </optgroup>
+                            <optgroup label="Functions - Date/Time">
+                                <option value="birthDate.toString()">Birth date as string</option>
+                                <option value="meta.lastUpdated">Last updated</option>
+                                <option value="today()">Today's date</option>
+                                <option value="now()">Current datetime</option>
+                            </optgroup>
+                            <optgroup label="Functions - Type">
+                                <option value="value.ofType(Quantity)">Value if Quantity</option>
+                                <option value="value.ofType(CodeableConcept)">Value if CodeableConcept</option>
+                                <option value="value.ofType(string)">Value if string</option>
+                                <option value="deceased.ofType(boolean)">Deceased boolean</option>
+                                <option value="deceased.ofType(dateTime)">Deceased datetime</option>
+                                <option value="children().count()">All children count</option>
+                                <option value="descendants().where($this is string).distinct()">All string values</option>
+                            </optgroup>
+                            <optgroup label="Boolean Logic">
+                                <option value="gender = 'male'">Is male?</option>
+                                <option value="gender != 'female'">Not female?</option>
+                                <option value="birthDate < '2000-01-01'">Born before 2000?</option>
+                                <option value="active = true and gender = 'female'">Active females</option>
+                                <option value="deceased.exists() or birthDate < '1950-01-01'">Deceased or elderly?</option>
+                                <option value="name.where(use='official').exists().not()">No official name?</option>
+                                <option value="iif(gender='male', 'M', 'F')">Gender code (M/F)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+                <div id="expression-editor" class="h-24 border-b border-gray-200"></div>
+                <div class="px-4 py-2 bg-gray-50 flex justify-between items-center">
+                    <button onclick="evaluate()" id="evaluate-btn"
+                            class="inline-flex items-center rounded-md bg-fhir-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-fhir-700">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Evaluate
+                    </button>
+                    <span id="exec-time" class="text-xs text-gray-500"></span>
+                </div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200">
+                    <div class="flex space-x-4">
+                        <button onclick="setMode('single')" id="mode-single"
+                                class="text-sm font-medium text-fhir-600 border-b-2 border-fhir-600 pb-1">
+                            Single Resource
+                        </button>
+                        <button onclick="setMode('search')" id="mode-search"
+                                class="text-sm font-medium text-gray-500 hover:text-gray-700 pb-1">
+                            Search & Query
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Single Resource Mode -->
+                <div id="single-mode" class="p-4">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <select id="resource-select" onchange="loadResource()" class="flex-1 text-sm border-gray-300 rounded-md">
+                            <option value="">-- Load from store --</option>
+                            {% for r in sample_resources %}
+                            <option value="{{ r.type }}/{{ r.id }}">{{ r.display }}</option>
+                            {% endfor %}
+                        </select>
+                        <button onclick="formatResource()" class="text-sm text-gray-600 hover:text-gray-900">Format</button>
+                    </div>
+                    <div id="resource-editor" class="h-64 border border-gray-200 rounded-md"></div>
+                </div>
+
+                <!-- Search Mode -->
+                <div id="search-mode" class="hidden p-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Resource Type</label>
+                        <select id="search-resource-type" onchange="updateSearchPlaceholder()" class="w-full text-sm border-gray-300 rounded-md">
+                            <option value="Patient">Patient</option>
+                            <option value="Observation">Observation</option>
+                            <option value="Condition">Condition</option>
+                            <option value="Encounter">Encounter</option>
+                            <option value="MedicationRequest">MedicationRequest</option>
+                            <option value="Procedure">Procedure</option>
+                            <option value="DiagnosticReport">DiagnosticReport</option>
+                            <option value="AllergyIntolerance">AllergyIntolerance</option>
+                            <option value="Immunization">Immunization</option>
+                            <option value="CarePlan">CarePlan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Search Parameters (optional)</label>
+                        <input type="text" id="search-params" placeholder="e.g., gender=male&birthdate=gt1990-01-01"
+                               class="w-full text-sm border-gray-300 rounded-md">
+                        <p class="text-xs text-gray-500 mt-1">Standard FHIR search parameters</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Max Resources</label>
+                            <select id="search-limit" class="w-full text-sm border-gray-300 rounded-md">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Output Format</label>
+                            <select id="output-format" class="w-full text-sm border-gray-300 rounded-md">
+                                <option value="grouped">Grouped by resource</option>
+                                <option value="flat">Flat list (all values)</option>
+                                <option value="table">Table view</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="bg-fhir-50 rounded-md p-3">
+                        <p class="text-sm text-fhir-700">
+                            <strong>Search mode</strong> queries the FHIR store and evaluates the expression against each matching resource.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Results -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-lg font-medium text-gray-900">Results</h2>
+                <div class="flex items-center space-x-2">
+                    <span id="result-count" class="text-sm text-gray-500"></span>
+                    <button onclick="copyResults()" class="text-sm text-gray-600 hover:text-gray-900">Copy</button>
+                </div>
+            </div>
+            <div id="results-panel" class="h-[550px] overflow-auto">
+                <div id="results-placeholder" class="flex items-center justify-center h-full text-gray-400">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <p class="mt-2 text-sm">Enter an expression and click Evaluate</p>
+                    </div>
+                </div>
+                <div id="results-error" class="hidden p-4">
+                    <div class="rounded-md bg-red-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Error</h3>
+                                <p id="error-message" class="mt-1 text-sm text-red-700"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="results-content" class="hidden p-4"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<script>
+    var expressionEditor = null;
+    var resourceEditor = null;
+    var currentResults = null;
+    var currentMode = 'single';
+
+    require.config({
+        paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' }
+    });
+
+    require(['vs/editor/editor.main'], function() {
+        // Expression editor
+        expressionEditor = monaco.editor.create(document.getElementById('expression-editor'), {
+            value: 'name.given',
+            language: 'plaintext',
+            theme: 'vs',
+            minimap: { enabled: false },
+            lineNumbers: 'off',
+            glyphMargin: false,
+            folding: false,
+            lineDecorationsWidth: 10,
+            lineNumbersMinChars: 0,
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            automaticLayout: true,
+            fontSize: 14,
+            fontFamily: 'monospace',
+        });
+
+        // Ctrl+Enter to evaluate
+        expressionEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+            evaluate();
+        });
+
+        // Resource editor for single mode
+        resourceEditor = monaco.editor.create(document.getElementById('resource-editor'), {
+            value: JSON.stringify({
+                "resourceType": "Patient",
+                "id": "example",
+                "name": [
+                    {
+                        "use": "official",
+                        "family": "Smith",
+                        "given": ["John", "William"]
+                    }
+                ],
+                "gender": "male",
+                "birthDate": "1990-01-15"
+            }, null, 2),
+            language: 'json',
+            theme: 'vs',
+            minimap: { enabled: false },
+            automaticLayout: true,
+            tabSize: 2,
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+        });
+    });
+
+    function setMode(mode) {
+        currentMode = mode;
+
+        // Update tab styling
+        document.getElementById('mode-single').classList.toggle('text-fhir-600', mode === 'single');
+        document.getElementById('mode-single').classList.toggle('border-b-2', mode === 'single');
+        document.getElementById('mode-single').classList.toggle('border-fhir-600', mode === 'single');
+        document.getElementById('mode-single').classList.toggle('text-gray-500', mode !== 'single');
+
+        document.getElementById('mode-search').classList.toggle('text-fhir-600', mode === 'search');
+        document.getElementById('mode-search').classList.toggle('border-b-2', mode === 'search');
+        document.getElementById('mode-search').classList.toggle('border-fhir-600', mode === 'search');
+        document.getElementById('mode-search').classList.toggle('text-gray-500', mode !== 'search');
+
+        // Show/hide panels
+        document.getElementById('single-mode').classList.toggle('hidden', mode !== 'single');
+        document.getElementById('search-mode').classList.toggle('hidden', mode !== 'search');
+    }
+
+    function loadExample() {
+        var select = document.getElementById('example-select');
+        if (select.value && expressionEditor) {
+            expressionEditor.setValue(select.value);
+        }
+        select.value = '';
+    }
+
+    async function loadResource() {
+        var select = document.getElementById('resource-select');
+        if (!select.value) return;
+
+        try {
+            var response = await fetch('{{ api_base_path }}/' + select.value);
+            if (response.ok) {
+                var resource = await response.json();
+                resourceEditor.setValue(JSON.stringify(resource, null, 2));
+            }
+        } catch (e) {
+            console.error('Failed to load resource:', e);
+        }
+    }
+
+    function formatResource() {
+        if (!resourceEditor) return;
+        try {
+            var json = JSON.parse(resourceEditor.getValue());
+            resourceEditor.setValue(JSON.stringify(json, null, 2));
+        } catch (e) {
+            // Invalid JSON
+        }
+    }
+
+    function updateSearchPlaceholder() {
+        var type = document.getElementById('search-resource-type').value;
+        var placeholder = '';
+        switch (type) {
+            case 'Patient': placeholder = 'e.g., gender=male&birthdate=gt1990-01-01'; break;
+            case 'Observation': placeholder = 'e.g., code=http://loinc.org|8867-4'; break;
+            case 'Condition': placeholder = 'e.g., clinical-status=active'; break;
+            default: placeholder = 'FHIR search parameters';
+        }
+        document.getElementById('search-params').placeholder = placeholder;
+    }
+
+    async function evaluate() {
+        if (!expressionEditor) return;
+
+        var expression = expressionEditor.getValue().trim();
+        if (!expression) {
+            showError('Please enter a FHIRPath expression');
+            return;
+        }
+
+        // Show loading state
+        document.getElementById('evaluate-btn').disabled = true;
+        document.getElementById('evaluate-btn').innerHTML = `
+            <svg class="animate-spin w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Evaluating...
+        `;
+
+        var startTime = performance.now();
+
+        try {
+            if (currentMode === 'single') {
+                await evaluateSingle(expression, startTime);
+            } else {
+                await evaluateSearch(expression, startTime);
+            }
+        } finally {
+            document.getElementById('evaluate-btn').disabled = false;
+            document.getElementById('evaluate-btn').innerHTML = `
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Evaluate
+            `;
+        }
+    }
+
+    async function evaluateSingle(expression, startTime) {
+        if (!resourceEditor) return;
+
+        var resourceJson = resourceEditor.getValue();
+        var resource;
+        try {
+            resource = JSON.parse(resourceJson);
+        } catch (e) {
+            showError('Invalid JSON in resource: ' + e.message);
+            return;
+        }
+
+        try {
+            var response = await fetch('{{ api_base_path }}/$fhirpath', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    expression: expression,
+                    resource: resource
+                })
+            });
+
+            var endTime = performance.now();
+            document.getElementById('exec-time').textContent = Math.round(endTime - startTime) + 'ms';
+
+            var data = await response.json();
+
+            if (response.ok && data.success) {
+                showSingleResults(data.result);
+            } else {
+                showError(data.error || 'Evaluation failed');
+            }
+        } catch (e) {
+            showError('Request failed: ' + e.message);
+        }
+    }
+
+    async function evaluateSearch(expression, startTime) {
+        var resourceType = document.getElementById('search-resource-type').value;
+        var searchParams = document.getElementById('search-params').value.trim();
+        var limit = document.getElementById('search-limit').value;
+        var outputFormat = document.getElementById('output-format').value;
+
+        try {
+            // First, fetch resources from the store
+            var searchUrl = '{{ api_base_path }}/' + resourceType + '?_count=' + limit;
+            if (searchParams) {
+                searchUrl += '&' + searchParams;
+            }
+
+            var searchResponse = await fetch(searchUrl);
+            if (!searchResponse.ok) {
+                showError('Search failed: ' + searchResponse.statusText);
+                return;
+            }
+
+            var bundle = await searchResponse.json();
+            var resources = (bundle.entry || []).map(e => e.resource);
+
+            if (resources.length === 0) {
+                showError('No resources found matching the search criteria');
+                return;
+            }
+
+            // Evaluate expression against each resource
+            var results = [];
+            for (var i = 0; i < resources.length; i++) {
+                var res = resources[i];
+                try {
+                    var evalResponse = await fetch('{{ api_base_path }}/$fhirpath', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            expression: expression,
+                            resource: res
+                        })
+                    });
+
+                    var evalData = await evalResponse.json();
+                    if (evalData.success) {
+                        results.push({
+                            resourceId: res.resourceType + '/' + res.id,
+                            result: evalData.result
+                        });
+                    } else {
+                        results.push({
+                            resourceId: res.resourceType + '/' + res.id,
+                            error: evalData.error
+                        });
+                    }
+                } catch (e) {
+                    results.push({
+                        resourceId: res.resourceType + '/' + res.id,
+                        error: e.message
+                    });
+                }
+            }
+
+            var endTime = performance.now();
+            document.getElementById('exec-time').textContent = Math.round(endTime - startTime) + 'ms';
+
+            showSearchResults(results, outputFormat, bundle.total || resources.length);
+
+        } catch (e) {
+            showError('Request failed: ' + e.message);
+        }
+    }
+
+    function showSingleResults(result) {
+        currentResults = result;
+        document.getElementById('results-placeholder').classList.add('hidden');
+        document.getElementById('results-error').classList.add('hidden');
+        document.getElementById('results-content').classList.remove('hidden');
+
+        var count = Array.isArray(result) ? result.length : 1;
+        document.getElementById('result-count').textContent = count + ' result' + (count !== 1 ? 's' : '');
+
+        var json = JSON.stringify(result, null, 2);
+        document.getElementById('results-content').innerHTML = '<pre class="text-sm json-content overflow-auto">' + highlightJSON(json) + '</pre>';
+    }
+
+    function showSearchResults(results, format, totalResources) {
+        currentResults = results;
+        document.getElementById('results-placeholder').classList.add('hidden');
+        document.getElementById('results-error').classList.add('hidden');
+        document.getElementById('results-content').classList.remove('hidden');
+
+        var resourceCount = results.length;
+        var valueCount = results.reduce((sum, r) => sum + (Array.isArray(r.result) ? r.result.length : (r.result !== undefined ? 1 : 0)), 0);
+        document.getElementById('result-count').textContent = valueCount + ' values from ' + resourceCount + ' resources (of ' + totalResources + ' total)';
+
+        var html = '';
+
+        if (format === 'grouped') {
+            html = '<div class="space-y-3">';
+            results.forEach(function(r) {
+                html += '<div class="border border-gray-200 rounded-lg overflow-hidden">';
+                html += '<div class="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center">';
+                html += '<span class="font-medium text-sm text-gray-900">' + r.resourceId + '</span>';
+                if (r.error) {
+                    html += '<span class="text-xs text-red-600">Error</span>';
+                } else {
+                    var count = Array.isArray(r.result) ? r.result.length : (r.result !== undefined ? 1 : 0);
+                    html += '<span class="text-xs text-gray-500">' + count + ' value(s)</span>';
+                }
+                html += '</div>';
+                if (r.error) {
+                    html += '<div class="p-3 text-sm text-red-600">' + r.error + '</div>';
+                } else {
+                    html += '<pre class="p-3 text-sm overflow-auto max-h-32 json-content">' + highlightJSON(JSON.stringify(r.result, null, 2)) + '</pre>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        } else if (format === 'flat') {
+            var allValues = [];
+            results.forEach(function(r) {
+                if (r.result !== undefined && !r.error) {
+                    if (Array.isArray(r.result)) {
+                        allValues.push(...r.result);
+                    } else {
+                        allValues.push(r.result);
+                    }
+                }
+            });
+            html = '<pre class="text-sm json-content overflow-auto">' + highlightJSON(JSON.stringify(allValues, null, 2)) + '</pre>';
+        } else if (format === 'table') {
+            html = '<div class="overflow-x-auto">';
+            html += '<table class="min-w-full divide-y divide-gray-200">';
+            html += '<thead class="bg-gray-50"><tr>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Resource</th>';
+            html += '<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Result</th>';
+            html += '</tr></thead>';
+            html += '<tbody class="divide-y divide-gray-200">';
+            results.forEach(function(r) {
+                html += '<tr>';
+                html += '<td class="px-4 py-2 text-sm text-gray-900 whitespace-nowrap">' + r.resourceId + '</td>';
+                if (r.error) {
+                    html += '<td class="px-4 py-2 text-sm text-red-600">' + r.error + '</td>';
+                } else {
+                    var display = JSON.stringify(r.result);
+                    if (display.length > 100) display = display.substring(0, 100) + '...';
+                    html += '<td class="px-4 py-2 text-sm text-gray-600 font-mono">' + display + '</td>';
+                }
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+
+        document.getElementById('results-content').innerHTML = html;
+    }
+
+    function showError(message) {
+        currentResults = null;
+        document.getElementById('results-placeholder').classList.add('hidden');
+        document.getElementById('results-content').classList.add('hidden');
+        document.getElementById('results-error').classList.remove('hidden');
+        document.getElementById('error-message').textContent = message;
+        document.getElementById('result-count').textContent = '';
+    }
+
+    function copyResults() {
+        if (currentResults !== null) {
+            navigator.clipboard.writeText(JSON.stringify(currentResults, null, 2));
+        }
+    }
+</script>
+{% endblock %}

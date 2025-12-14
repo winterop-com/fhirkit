@@ -576,9 +576,16 @@ class PatientGenerator(FHIRResourceGenerator):
             start = birth_date + timedelta(days=min_death_age * 365)
             end = today - timedelta(days=365 * 5)
 
+        # Ensure valid date range
         if start >= end:
             start = birth_date + timedelta(days=365)
             end = today - timedelta(days=1)
+
+        # Final safety check - if still invalid, use a reasonable default
+        if start >= end:
+            # Patient born very recently - set death to yesterday
+            end = today - timedelta(days=1)
+            start = end - timedelta(days=30)  # Death within last 30 days
 
         death_date = self.faker.date_between(start_date=start, end_date=end)
         death_dt = datetime.combine(

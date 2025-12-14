@@ -292,6 +292,242 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         return JSONResponse(content=schema, media_type="application/json")
 
     # =========================================================================
+    # FHIRPath and CQL Evaluation Operations
+    # =========================================================================
+
+    @router.post("/$fhirpath", tags=["Operations"])
+    async def evaluate_fhirpath(request: Request) -> Response:
+        """Evaluate a FHIRPath expression against a FHIR resource.
+
+        Request body:
+        {
+            "expression": "Patient.name.given",
+            "resource": { ... }  // FHIR resource JSON
+            // OR
+            "resourceType": "Patient",
+            "resourceId": "123"  // Load from store
+        }
+
+        Returns:
+        {
+            "success": true,
+            "result": [...],
+            "executionTime": "5ms"
+        }
+        """
+        import time
+
+        from fhir_cql.engine.fhirpath import FHIRPathEvaluator
+
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "Invalid JSON in request body"},
+            )
+
+        expression = body.get("expression")
+        if not expression:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "Missing 'expression' field"},
+            )
+
+        # Get resource from body or load from store
+        resource = body.get("resource")
+        if not resource:
+            resource_type = body.get("resourceType")
+            resource_id = body.get("resourceId")
+            if resource_type and resource_id:
+                resource = store.read(resource_type, resource_id)
+                if not resource:
+                    return JSONResponse(
+                        status_code=404,
+                        content={
+                            "success": False,
+                            "error": f"Resource {resource_type}/{resource_id} not found",
+                        },
+                    )
+            else:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "error": "Missing 'resource' or 'resourceType'/'resourceId'",
+                    },
+                )
+
+        start_time = time.perf_counter()
+        try:
+            evaluator = FHIRPathEvaluator()
+            result = evaluator.evaluate(expression, resource)
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "result": result,
+                    "executionTime": f"{elapsed_ms:.1f}ms",
+                }
+            )
+        except Exception as e:
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": str(e),
+                    "executionTime": f"{elapsed_ms:.1f}ms",
+                },
+            )
+
+    @router.post("/$cql", tags=["Operations"])
+    async def evaluate_cql(request: Request) -> Response:
+        """Evaluate CQL code or a Library resource.
+
+        Request body:
+        {
+            "code": "define X: 1 + 1",  // Inline CQL code
+            // OR
+            "library": "Library/123",   // Reference to Library resource
+            "definitions": ["X", "Y"],  // Optional: specific definitions to evaluate
+            "subject": "Patient/456"    // Optional: patient context
+        }
+
+        Returns:
+        {
+            "success": true,
+            "results": {
+                "X": 2,
+                "Y": [...]
+            },
+            "executionTime": "10ms"
+        }
+        """
+        import base64
+        import time
+
+        from fhir_cql.engine.cql import CQLEvaluator
+
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "Invalid JSON in request body"},
+            )
+
+        code = body.get("code")
+        library_ref = body.get("library")
+        definitions = body.get("definitions")  # Optional list of definitions to evaluate
+        subject_ref = body.get("subject")  # Optional patient context
+
+        if not code and not library_ref:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "Missing 'code' or 'library' field"},
+            )
+
+        # If library reference provided, load CQL from Library resource
+        if library_ref and not code:
+            # Parse reference like "Library/123" or just "123"
+            if "/" in library_ref:
+                _, library_id = library_ref.split("/", 1)
+            else:
+                library_id = library_ref
+
+            library_resource = store.read("Library", library_id)
+            if not library_resource:
+                return JSONResponse(
+                    status_code=404,
+                    content={"success": False, "error": f"Library {library_id} not found"},
+                )
+
+            # Extract CQL from Library content
+            content_list = library_resource.get("content", [])
+            for content in content_list:
+                content_type = content.get("contentType", "")
+                if "cql" in content_type.lower():
+                    data = content.get("data")
+                    if data:
+                        code = base64.b64decode(data).decode("utf-8")
+                        break
+
+            if not code:
+                return JSONResponse(
+                    status_code=400,
+                    content={"success": False, "error": "No CQL content found in Library"},
+                )
+
+        # Load subject resource if provided
+        subject_resource = None
+        if subject_ref:
+            if "/" in subject_ref:
+                subj_type, subj_id = subject_ref.split("/", 1)
+            else:
+                subj_type, subj_id = "Patient", subject_ref
+            subject_resource = store.read(subj_type, subj_id)
+
+        start_time = time.perf_counter()
+        try:
+            evaluator = CQLEvaluator()
+            library = evaluator.compile(code)
+
+            # Determine which definitions to evaluate
+            defs_to_eval = definitions if definitions else list(library.definitions.keys())
+
+            results = {}
+            for def_name in defs_to_eval:
+                if def_name in library.definitions:
+                    try:
+                        result = evaluator.evaluate_definition(
+                            def_name,
+                            resource=subject_resource,
+                            library=library,
+                        )
+                        # Convert result to JSON-serializable format
+                        results[def_name] = _serialize_cql_result(result)
+                    except Exception as e:
+                        results[def_name] = {"error": str(e)}
+
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "results": results,
+                    "definitions": list(library.definitions.keys()),
+                    "executionTime": f"{elapsed_ms:.1f}ms",
+                }
+            )
+        except Exception as e:
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": str(e),
+                    "executionTime": f"{elapsed_ms:.1f}ms",
+                },
+            )
+
+    def _serialize_cql_result(value: Any) -> Any:
+        """Convert CQL result to JSON-serializable format."""
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, list):
+            return [_serialize_cql_result(v) for v in value]
+        if isinstance(value, dict):
+            return {k: _serialize_cql_result(v) for k, v in value.items()}
+        # For custom types, try to get dict representation
+        if hasattr(value, "__dict__"):
+            return _serialize_cql_result(vars(value))
+        return str(value)
+
+    # =========================================================================
     # Bulk Data Export Operations
     # =========================================================================
 

@@ -101,6 +101,72 @@ def create_ui_router(
 
         return templates.TemplateResponse("pages/resource_types.html", context)
 
+    # =========================================================================
+    # FHIRPath, CQL, CDS Hooks, and Measures Routes
+    # NOTE: These MUST be defined BEFORE /{resource_type} to avoid being caught
+    # =========================================================================
+
+    @router.get("/fhirpath", response_class=HTMLResponse, name="ui_fhirpath")
+    async def fhirpath_playground(request: Request) -> HTMLResponse:
+        """FHIRPath expression playground."""
+        # Get sample resources for the dropdown
+        sample_resources: list[dict[str, Any]] = []
+        for resource_type in ["Patient", "Observation", "Condition"]:
+            resources, _ = store.search(resource_type, {}, _count=5)
+            for r in resources:
+                sample_resources.append(
+                    {
+                        "type": resource_type,
+                        "id": r.get("id"),
+                        "display": f"{resource_type}/{r.get('id')}",
+                    }
+                )
+
+        context = get_context(
+            request,
+            sample_resources=sample_resources,
+        )
+        return templates.TemplateResponse("pages/fhirpath.html", context)
+
+    @router.get("/cql", response_class=HTMLResponse, name="ui_cql")
+    async def cql_workbench(request: Request) -> HTMLResponse:
+        """CQL workbench."""
+        # Get available Library resources
+        libraries, _ = store.search("Library", {}, _count=100)
+
+        context = get_context(
+            request,
+            libraries=libraries,
+        )
+        return templates.TemplateResponse("pages/cql.html", context)
+
+    @router.get("/cds-hooks", response_class=HTMLResponse, name="ui_cds_hooks")
+    async def cds_hooks_tester(request: Request) -> HTMLResponse:
+        """CDS Hooks testing interface."""
+        context = get_context(request)
+        return templates.TemplateResponse("pages/cds_hooks.html", context)
+
+    @router.get("/measures", response_class=HTMLResponse, name="ui_measures")
+    async def measures_dashboard(request: Request) -> HTMLResponse:
+        """Measure evaluation dashboard."""
+        # Get available Measure resources
+        measures, _ = store.search("Measure", {}, _count=100)
+
+        # Get patients for subject selection
+        patients, patient_total = store.search("Patient", {}, _count=100)
+
+        context = get_context(
+            request,
+            measures=measures,
+            patients=patients,
+            patient_total=patient_total,
+        )
+        return templates.TemplateResponse("pages/measures.html", context)
+
+    # =========================================================================
+    # Resource CRUD Routes (catch-all must come AFTER specific routes)
+    # =========================================================================
+
     @router.get("/{resource_type}", response_class=HTMLResponse, name="ui_resource_list")
     async def resource_list(
         request: Request,
