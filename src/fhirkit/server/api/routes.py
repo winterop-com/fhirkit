@@ -472,7 +472,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
         start_time = time.perf_counter()
         try:
-            evaluator = CQLEvaluator()
+            evaluator = CQLEvaluator(data_source=store)
             library = evaluator.compile(code)
 
             # Determine which definitions to evaluate

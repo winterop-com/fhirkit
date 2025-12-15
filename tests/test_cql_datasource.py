@@ -473,3 +473,466 @@ class TestPatientReference:
         ref = ds._get_patient_reference(resource)
 
         assert ref is None
+
+    def test_get_patient_reference_medication_request(self) -> None:
+        """Test getting patient reference from MedicationRequest."""
+        ds = InMemoryDataSource()
+        resource = {
+            "resourceType": "MedicationRequest",
+            "subject": {"reference": "Patient/med-patient"},
+        }
+
+        ref = ds._get_patient_reference(resource)
+
+        assert ref == "Patient/med-patient"
+
+    def test_get_patient_reference_encounter(self) -> None:
+        """Test getting patient reference from Encounter."""
+        ds = InMemoryDataSource()
+        resource = {
+            "resourceType": "Encounter",
+            "subject": {"reference": "Patient/enc-patient"},
+        }
+
+        ref = ds._get_patient_reference(resource)
+
+        assert ref == "Patient/enc-patient"
+
+    def test_get_patient_reference_immunization(self) -> None:
+        """Test getting patient reference from Immunization."""
+        ds = InMemoryDataSource()
+        resource = {
+            "resourceType": "Immunization",
+            "patient": {"reference": "Patient/imm-patient"},
+        }
+
+        ref = ds._get_patient_reference(resource)
+
+        assert ref == "Patient/imm-patient"
+
+
+class TestMedicationRequestRetrieval:
+    """Tests for MedicationRequest retrieval with patient context."""
+
+    def test_retrieve_medication_request_by_type(self) -> None:
+        """Test retrieving MedicationRequest by resource type."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {
+                    "resourceType": "MedicationRequest",
+                    "id": "mr1",
+                    "status": "active",
+                    "intent": "order",
+                    "medicationCodeableConcept": {
+                        "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm", "code": "860975"}]
+                    },
+                    "subject": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "MedicationRequest",
+                    "id": "mr2",
+                    "status": "completed",
+                    "intent": "order",
+                    "subject": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        requests = ds.retrieve("MedicationRequest")
+
+        assert len(requests) == 2
+
+    def test_retrieve_medication_request_with_patient_context(self) -> None:
+        """Test retrieving MedicationRequest filtered by patient context."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {"resourceType": "Patient", "id": "p2"},
+                {
+                    "resourceType": "MedicationRequest",
+                    "id": "mr1",
+                    "status": "active",
+                    "subject": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "MedicationRequest",
+                    "id": "mr2",
+                    "status": "active",
+                    "subject": {"reference": "Patient/p2"},
+                },
+            ]
+        )
+
+        context = PatientContext(resource={"resourceType": "Patient", "id": "p1"})
+        requests = ds.retrieve("MedicationRequest", context=context)
+
+        assert len(requests) == 1
+        assert requests[0]["id"] == "mr1"
+
+    def test_medication_request_with_cql_evaluator(self) -> None:
+        """Test MedicationRequest retrieval via CQL evaluator."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {
+                    "resourceType": "MedicationRequest",
+                    "id": "mr1",
+                    "status": "active",
+                    "intent": "order",
+                    "subject": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "MedicationRequest",
+                    "id": "mr2",
+                    "status": "completed",
+                    "intent": "order",
+                    "subject": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        evaluator = CQLEvaluator(data_source=ds)
+        evaluator.compile("""
+            library MedTest version '1.0'
+            using FHIR version '4.0.1'
+
+            context Patient
+
+            define AllMedications: [MedicationRequest]
+            define ActiveMedications: [MedicationRequest] M where M.status = 'active'
+            define ActiveCount: Count(AllMedications M where M.status = 'active')
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1"}
+        all_meds = evaluator.evaluate_definition("AllMedications", resource=patient)
+        active_meds = evaluator.evaluate_definition("ActiveMedications", resource=patient)
+        active_count = evaluator.evaluate_definition("ActiveCount", resource=patient)
+
+        assert len(all_meds) == 2
+        assert len(active_meds) == 1
+        # With alias in where clause, result is wrapped with alias key
+        assert active_meds[0]["M"]["status"] == "active"
+        assert active_count == 1
+
+
+class TestEncounterRetrieval:
+    """Tests for Encounter retrieval with patient context."""
+
+    def test_retrieve_encounter_by_type(self) -> None:
+        """Test retrieving Encounter by resource type."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {
+                    "resourceType": "Encounter",
+                    "id": "e1",
+                    "status": "finished",
+                    "class": {"code": "IMP"},
+                    "subject": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "Encounter",
+                    "id": "e2",
+                    "status": "in-progress",
+                    "class": {"code": "AMB"},
+                    "subject": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        encounters = ds.retrieve("Encounter")
+
+        assert len(encounters) == 2
+
+    def test_retrieve_encounter_with_patient_context(self) -> None:
+        """Test retrieving Encounter filtered by patient context."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {"resourceType": "Patient", "id": "p2"},
+                {
+                    "resourceType": "Encounter",
+                    "id": "e1",
+                    "status": "finished",
+                    "subject": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "Encounter",
+                    "id": "e2",
+                    "status": "finished",
+                    "subject": {"reference": "Patient/p2"},
+                },
+            ]
+        )
+
+        context = PatientContext(resource={"resourceType": "Patient", "id": "p1"})
+        encounters = ds.retrieve("Encounter", context=context)
+
+        assert len(encounters) == 1
+        assert encounters[0]["id"] == "e1"
+
+    def test_encounter_with_cql_evaluator(self) -> None:
+        """Test Encounter retrieval via CQL evaluator."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {
+                    "resourceType": "Encounter",
+                    "id": "e1",
+                    "status": "finished",
+                    "class": {"code": "IMP"},
+                    "subject": {"reference": "Patient/p1"},
+                    "period": {"start": "2024-01-01", "end": "2024-01-05"},
+                },
+                {
+                    "resourceType": "Encounter",
+                    "id": "e2",
+                    "status": "in-progress",
+                    "class": {"code": "AMB"},
+                    "subject": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        evaluator = CQLEvaluator(data_source=ds)
+        evaluator.compile("""
+            library EncTest version '1.0'
+            using FHIR version '4.0.1'
+
+            context Patient
+
+            define AllEncounters: [Encounter]
+            define FinishedEncounters: [Encounter] E where E.status = 'finished'
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1"}
+        all_enc = evaluator.evaluate_definition("AllEncounters", resource=patient)
+        finished = evaluator.evaluate_definition("FinishedEncounters", resource=patient)
+
+        assert len(all_enc) == 2
+        assert len(finished) == 1
+
+
+class TestAllergyIntoleranceRetrieval:
+    """Tests for AllergyIntolerance retrieval with patient context."""
+
+    def test_retrieve_allergy_by_type(self) -> None:
+        """Test retrieving AllergyIntolerance by resource type."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {
+                    "resourceType": "AllergyIntolerance",
+                    "id": "a1",
+                    "clinicalStatus": {"coding": [{"code": "active"}]},
+                    "code": {"coding": [{"display": "Penicillin"}]},
+                    "patient": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        allergies = ds.retrieve("AllergyIntolerance")
+
+        assert len(allergies) == 1
+
+    def test_retrieve_allergy_with_patient_context(self) -> None:
+        """Test retrieving AllergyIntolerance filtered by patient context."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {"resourceType": "Patient", "id": "p2"},
+                {
+                    "resourceType": "AllergyIntolerance",
+                    "id": "a1",
+                    "patient": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "AllergyIntolerance",
+                    "id": "a2",
+                    "patient": {"reference": "Patient/p2"},
+                },
+            ]
+        )
+
+        context = PatientContext(resource={"resourceType": "Patient", "id": "p1"})
+        allergies = ds.retrieve("AllergyIntolerance", context=context)
+
+        assert len(allergies) == 1
+        assert allergies[0]["id"] == "a1"
+
+    def test_allergy_with_cql_evaluator(self) -> None:
+        """Test AllergyIntolerance retrieval via CQL evaluator."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {
+                    "resourceType": "AllergyIntolerance",
+                    "id": "a1",
+                    "clinicalStatus": {"coding": [{"code": "active"}]},
+                    "code": {"coding": [{"display": "Penicillin"}]},
+                    "patient": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "AllergyIntolerance",
+                    "id": "a2",
+                    "clinicalStatus": {"coding": [{"code": "resolved"}]},
+                    "code": {"coding": [{"display": "Aspirin"}]},
+                    "patient": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        evaluator = CQLEvaluator(data_source=ds)
+        evaluator.compile("""
+            library AllergyTest version '1.0'
+            using FHIR version '4.0.1'
+
+            context Patient
+
+            define AllAllergies: [AllergyIntolerance]
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1"}
+        allergies = evaluator.evaluate_definition("AllAllergies", resource=patient)
+
+        assert len(allergies) == 2
+
+
+class TestImmunizationRetrieval:
+    """Tests for Immunization retrieval with patient context."""
+
+    def test_retrieve_immunization_with_patient_context(self) -> None:
+        """Test retrieving Immunization filtered by patient context."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {"resourceType": "Patient", "id": "p2"},
+                {
+                    "resourceType": "Immunization",
+                    "id": "i1",
+                    "status": "completed",
+                    "vaccineCode": {"coding": [{"display": "Influenza"}]},
+                    "patient": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "Immunization",
+                    "id": "i2",
+                    "status": "completed",
+                    "vaccineCode": {"coding": [{"display": "COVID-19"}]},
+                    "patient": {"reference": "Patient/p2"},
+                },
+            ]
+        )
+
+        context = PatientContext(resource={"resourceType": "Patient", "id": "p1"})
+        immunizations = ds.retrieve("Immunization", context=context)
+
+        assert len(immunizations) == 1
+        assert immunizations[0]["id"] == "i1"
+
+    def test_immunization_with_cql_evaluator(self) -> None:
+        """Test Immunization retrieval via CQL evaluator."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {
+                    "resourceType": "Immunization",
+                    "id": "i1",
+                    "status": "completed",
+                    "vaccineCode": {"coding": [{"display": "Influenza"}]},
+                    "patient": {"reference": "Patient/p1"},
+                    "occurrenceDateTime": "2024-10-01",
+                },
+            ]
+        )
+
+        evaluator = CQLEvaluator(data_source=ds)
+        evaluator.compile("""
+            library ImmTest version '1.0'
+            using FHIR version '4.0.1'
+
+            context Patient
+
+            define AllImmunizations: [Immunization]
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1"}
+        immunizations = evaluator.evaluate_definition("AllImmunizations", resource=patient)
+
+        assert len(immunizations) == 1
+        assert immunizations[0]["vaccineCode"]["coding"][0]["display"] == "Influenza"
+
+
+class TestProcedureRetrieval:
+    """Tests for Procedure retrieval with patient context."""
+
+    def test_retrieve_procedure_with_patient_context(self) -> None:
+        """Test retrieving Procedure filtered by patient context."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {
+                    "resourceType": "Procedure",
+                    "id": "proc1",
+                    "status": "completed",
+                    "code": {"coding": [{"display": "Appendectomy"}]},
+                    "subject": {"reference": "Patient/p1"},
+                },
+                {
+                    "resourceType": "Procedure",
+                    "id": "proc2",
+                    "status": "completed",
+                    "subject": {"reference": "Patient/p2"},
+                },
+            ]
+        )
+
+        context = PatientContext(resource={"resourceType": "Patient", "id": "p1"})
+        procedures = ds.retrieve("Procedure", context=context)
+
+        assert len(procedures) == 1
+        assert procedures[0]["id"] == "proc1"
+
+    def test_procedure_with_cql_evaluator(self) -> None:
+        """Test Procedure retrieval via CQL evaluator."""
+        ds = InMemoryDataSource()
+        ds.add_resources(
+            [
+                {"resourceType": "Patient", "id": "p1"},
+                {
+                    "resourceType": "Procedure",
+                    "id": "proc1",
+                    "status": "completed",
+                    "code": {"coding": [{"system": "http://snomed.info/sct", "code": "80146002"}]},
+                    "subject": {"reference": "Patient/p1"},
+                },
+            ]
+        )
+
+        evaluator = CQLEvaluator(data_source=ds)
+        evaluator.compile("""
+            library ProcTest version '1.0'
+            using FHIR version '4.0.1'
+
+            context Patient
+
+            define AllProcedures: [Procedure]
+            define CompletedProcedures: [Procedure] P where P.status = 'completed'
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1"}
+        all_procs = evaluator.evaluate_definition("AllProcedures", resource=patient)
+        completed = evaluator.evaluate_definition("CompletedProcedures", resource=patient)
+
+        assert len(all_procs) == 1
+        assert len(completed) == 1

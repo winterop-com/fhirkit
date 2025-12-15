@@ -662,10 +662,10 @@ define "Latest HbA1c":
   Last([Observation: "Hemoglobin A1c"] O sort by effective)
 
 define "Latest HbA1c Value":
-  (Latest HbA1c).value as Quantity
+  ("Latest HbA1c").value as Quantity
 
 define "HbA1c In Control":
-  (Latest HbA1c Value).value < 7.0
+  ("Latest HbA1c Value").value < 7.0
 
 define "Cholesterol Panel":
   [Observation: "Total Cholesterol"]
@@ -677,13 +677,13 @@ define "Latest LDL":
   (Last([Observation: "LDL Cholesterol"] O sort by effective)).value as Quantity
 
 define "LDL At Goal":
-  (Latest LDL).value < 100
+  ("Latest LDL").value < 100
 
 define "Latest eGFR":
   (Last([Observation: "eGFR"] O sort by effective)).value as Quantity
 
 define "Has CKD Stage 3+":
-  (Latest eGFR).value < 60
+  ("Latest eGFR").value < 60
 `,
 
         'obs-latest': `library LatestObservations version '1.0.0'
@@ -891,7 +891,7 @@ define "All Active Conditions":
     where C.clinicalStatus.coding.code contains 'active'
 
 define "Chronic Conditions":
-  All Active Conditions C
+  "All Active Conditions" C
     where C.code.coding.display contains 'chronic'
       or years between C.onset and Today() >= 1
 
@@ -1220,7 +1220,7 @@ define "Hospice Order":
     and S.authoredOn during "Measurement Period")
 
 define "Hospice Exclusion":
-  Hospice Care or Hospice Order
+  "Hospice Care" or "Hospice Order"
 
 // Palliative Care
 define "Palliative Care":
@@ -1240,13 +1240,13 @@ define "Dementia":
     and C.clinicalStatus.coding.code contains 'active')
 
 define "Advanced Illness Exclusion":
-  AgeInYears() >= 66 and (Frailty or Dementia)
+  AgeInYears() >= 66 and ("Frailty" or "Dementia")
 
 // Combined Exclusions
 define "Denominator Exclusion":
-  Hospice Exclusion
-    or Palliative Care
-    or Advanced Illness Exclusion
+  "Hospice Exclusion"
+    or "Palliative Care"
+    or "Advanced Illness Exclusion"
 `,
 
         'rule-alerts': `library ClinicalAlerts version '1.0.0'
@@ -1359,11 +1359,11 @@ define "Flu Shot Due":
 
 // Summary
 define "Care Gaps":
-  (if HbA1c Due then { 'HbA1c Test Due' } else { })
-    union (if LDL Due then { 'Lipid Panel Due' } else { })
-    union (if Mammogram Due then { 'Mammogram Due' } else { })
-    union (if Colonoscopy Due then { 'Colonoscopy Due' } else { })
-    union (if Flu Shot Due then { 'Flu Vaccine Due' } else { })
+  (if "HbA1c Due" then { 'HbA1c Test Due' } else { })
+    union (if "LDL Due" then { 'Lipid Panel Due' } else { })
+    union (if "Mammogram Due" then { 'Mammogram Due' } else { })
+    union (if "Colonoscopy Due" then { 'Colonoscopy Due' } else { })
+    union (if "Flu Shot Due" then { 'Flu Vaccine Due' } else { })
 `,
 
         'rule-contraindications': `library Contraindications version '1.0.0'
@@ -1411,18 +1411,18 @@ define "Has Bleeding History":
 
 // Drug Contraindications
 define "Metformin Contraindicated":
-  Severe Renal Impairment
+  "Severe Renal Impairment"
 
 define "Statin Contraindicated":
-  Has Liver Disease or Is Pregnant
+  "Has Liver Disease" or "Is Pregnant"
 
 define "NSAID Contraindicated":
-  Has CKD or On Anticoagulant
+  "Has CKD" or "On Anticoagulant"
 
 define "Contraindication Summary": {
-  metformin: Metformin Contraindicated,
-  statin: Statin Contraindicated,
-  nsaid: NSAID Contraindicated
+  metformin: "Metformin Contraindicated",
+  statin: "Statin Contraindicated",
+  nsaid: "NSAID Contraindicated"
 }
 `,
 
@@ -1437,10 +1437,10 @@ define "Observations":
   [Observation] O where O.status = 'final'
 
 define "Observation Count":
-  Count(Observations)
+  Count("Observations")
 
 define "Numeric Values":
-  Observations O
+  "Observations" O
     where O.value is Quantity
     return (O.value as Quantity).value
 
@@ -1506,7 +1506,7 @@ define "Medications":
 
 // Conditions diagnosed during encounter
 define "Encounter Diagnoses":
-  from Encounters E, Conditions C
+  from "Encounters" E, "Conditions" C
     where C.onset during E.period
     return {
       encounter: E.id,
@@ -1516,7 +1516,7 @@ define "Encounter Diagnoses":
 
 // Medications started after diagnosis
 define "Post Diagnosis Medications":
-  from Conditions C, Medications M
+  from "Conditions" C, "Medications" M
     where M.authoredOn after C.onset
     return {
       condition: C.code.coding.first().display,
@@ -1532,11 +1532,11 @@ define "Last Year":
   Interval[Today() - 1 year, Today()]
 
 define "Recent Encounters":
-  Encounters E where E.period starts during "Last 30 Days"
+  "Encounters" E where E.period starts during "Last 30 Days"
 
 // Overlapping conditions
 define "Concurrent Conditions":
-  from Conditions C1, Conditions C2
+  from "Conditions" C1, "Conditions" C2
     where C1 != C2
     and (C1.onset same day as C2.onset
       or days between C1.onset and C2.onset < 30)

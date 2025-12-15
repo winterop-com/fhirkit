@@ -3147,3 +3147,253 @@ class TestInstanceSelector:
         """Test empty instance selector."""
         result = evaluate("Patient { : }")
         assert result == {"resourceType": "Patient"}
+
+
+class TestAgeInYearsWithPatientContext:
+    """Test AgeInYears() function with patient context."""
+
+    def test_age_in_years_with_patient(self) -> None:
+        """Test AgeInYears using patient birthDate."""
+        evaluator = CQLEvaluator()
+        evaluator.compile("""
+            library AgeTest version '1.0'
+            using FHIR version '4.0.1'
+            context Patient
+            define PatientAge: AgeInYears()
+        """)
+
+        # Patient born in 1990, so age should be ~34 in 2024
+        patient = {"resourceType": "Patient", "id": "p1", "birthDate": "1990-06-15"}
+        result = evaluator.evaluate_definition("PatientAge", resource=patient)
+
+        # Age depends on current date, but should be reasonable
+        assert result is not None
+        assert isinstance(result, int)
+        assert result >= 34
+
+    def test_age_in_months_with_patient(self) -> None:
+        """Test AgeInMonths using patient birthDate."""
+        evaluator = CQLEvaluator()
+        evaluator.compile("""
+            library AgeTest version '1.0'
+            using FHIR version '4.0.1'
+            context Patient
+            define PatientAgeMonths: AgeInMonths()
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1", "birthDate": "2023-01-15"}
+        result = evaluator.evaluate_definition("PatientAgeMonths", resource=patient)
+
+        assert result is not None
+        assert isinstance(result, int)
+        assert result >= 12  # At least 12 months old
+
+    def test_age_in_years_null_birthdate(self) -> None:
+        """Test AgeInYears returns null when birthDate is missing."""
+        evaluator = CQLEvaluator()
+        evaluator.compile("""
+            library AgeTest version '1.0'
+            using FHIR version '4.0.1'
+            context Patient
+            define PatientAge: AgeInYears()
+        """)
+
+        patient = {"resourceType": "Patient", "id": "p1"}
+        result = evaluator.evaluate_definition("PatientAge", resource=patient)
+
+        assert result is None
+
+
+class TestCaseExpressionAdvanced:
+    """Test advanced case expression scenarios."""
+
+    def test_case_with_multiple_when_clauses(self) -> None:
+        """Test case expression with multiple when clauses."""
+        result = evaluate("""
+            case
+                when 1 > 2 then 'first'
+                when 2 > 3 then 'second'
+                when 3 > 2 then 'third'
+                when 4 > 3 then 'fourth'
+                else 'none'
+            end
+        """)
+        assert result == "third"
+
+    def test_case_all_conditions_false(self) -> None:
+        """Test case expression when all conditions are false."""
+        result = evaluate("""
+            case
+                when 1 > 2 then 'first'
+                when 2 > 3 then 'second'
+                else 'default'
+            end
+        """)
+        assert result == "default"
+
+    def test_case_with_comparator(self) -> None:
+        """Test simple case expression with comparand."""
+        result = evaluate("""
+            case 2
+                when 1 then 'one'
+                when 2 then 'two'
+                when 3 then 'three'
+                else 'other'
+            end
+        """)
+        assert result == "two"
+
+    def test_case_with_null_handling(self) -> None:
+        """Test case expression handles null values."""
+        result = evaluate("""
+            case
+                when null then 'null true'
+                when true then 'true'
+                else 'else'
+            end
+        """)
+        assert result == "true"
+
+    def test_nested_case_expressions(self) -> None:
+        """Test nested case expressions."""
+        result = evaluate("""
+            case
+                when true then
+                    case
+                        when false then 'inner false'
+                        else 'inner else'
+                    end
+                else 'outer else'
+            end
+        """)
+        assert result == "inner else"
+
+
+class TestComplexFromReturnQueries:
+    """Test complex from...return query expressions."""
+
+    def test_from_single_source_return(self) -> None:
+        """Test from with single source and return."""
+        result = evaluate("""
+            from ({1, 2, 3, 4, 5}) X
+            return X * 2
+        """)
+        assert result == [2, 4, 6, 8, 10]
+
+    def test_from_with_where_and_return(self) -> None:
+        """Test from with where clause and return."""
+        result = evaluate("""
+            from ({1, 2, 3, 4, 5}) X
+            where X > 2
+            return X * 10
+        """)
+        assert result == [30, 40, 50]
+
+    def test_from_with_tuple_return(self) -> None:
+        """Test from returning tuple structures."""
+        result = evaluate("""
+            from ({1, 2, 3}) X
+            return { value: X, doubled: X * 2 }
+        """)
+        assert result == [
+            {"value": 1, "doubled": 2},
+            {"value": 2, "doubled": 4},
+            {"value": 3, "doubled": 6},
+        ]
+
+    def test_from_with_let_clause(self) -> None:
+        """Test from with let clause for intermediate calculation."""
+        result = evaluate("""
+            from ({2, 4, 6}) X
+            let squared: X * X
+            return { original: X, squared: squared }
+        """)
+        assert result == [
+            {"original": 2, "squared": 4},
+            {"original": 4, "squared": 16},
+            {"original": 6, "squared": 36},
+        ]
+
+    def test_from_multiple_sources(self) -> None:
+        """Test from with multiple sources (cross join)."""
+        result = evaluate("""
+            from ({1, 2}) X, ({'a', 'b'}) Y
+            return { num: X, letter: Y }
+        """)
+        # Cross join produces all combinations
+        assert len(result) == 4
+        assert {"num": 1, "letter": "a"} in result
+        assert {"num": 2, "letter": "b"} in result
+
+
+class TestListAggregationsAdvanced:
+    """Test advanced list aggregation scenarios."""
+
+    def test_count_filtered_list(self) -> None:
+        """Test Count of a filtered list."""
+        # Filter then count
+        result = evaluate("Count(({1, 2, 3, 4, 5}) X where X > 2 return X)")
+        assert result == 3
+
+    def test_sum_filtered_list(self) -> None:
+        """Test Sum of a filtered list."""
+        # Filter then sum
+        result = evaluate("Sum(({1, 2, 3, 4, 5}) X where X > 2 return X)")
+        assert result == 12
+
+    def test_avg_of_list(self) -> None:
+        """Test Avg of integer list."""
+        result = evaluate("Avg({10, 20, 30, 40, 50})")
+        assert result == Decimal("30")
+
+    def test_min_max_of_strings(self) -> None:
+        """Test Min/Max with strings."""
+        assert evaluate("Min({'apple', 'banana', 'cherry'})") == "apple"
+        assert evaluate("Max({'apple', 'banana', 'cherry'})") == "cherry"
+
+
+class TestStringFunctionsAdvanced:
+    """Test advanced string function scenarios."""
+
+    def test_string_length_empty(self) -> None:
+        """Test Length of empty string."""
+        assert evaluate("Length('')") == 0
+
+    def test_string_upper_lower(self) -> None:
+        """Test Upper and Lower functions."""
+        assert evaluate("Upper('hello')") == "HELLO"
+        assert evaluate("Lower('HELLO')") == "hello"
+
+    def test_string_indexer(self) -> None:
+        """Test string indexer access."""
+        assert evaluate("'hello'[0]") == "h"
+        assert evaluate("'hello'[4]") == "o"
+
+    def test_string_position_of(self) -> None:
+        """Test PositionOf for substring search."""
+        assert evaluate("PositionOf('world', 'hello world')") == 6
+        # Returns null when not found (CQL semantics)
+        assert evaluate("PositionOf('xyz', 'hello world')") is None
+
+
+class TestBooleanLogicAdvanced:
+    """Test advanced boolean logic scenarios."""
+
+    def test_three_valued_and(self) -> None:
+        """Test three-valued AND logic with null."""
+        assert evaluate("true and null") is None
+        assert evaluate("false and null") is False
+        assert evaluate("null and true") is None
+        assert evaluate("null and false") is False
+
+    def test_three_valued_or(self) -> None:
+        """Test three-valued OR logic with null."""
+        assert evaluate("true or null") is True
+        assert evaluate("false or null") is None
+        assert evaluate("null or true") is True
+        assert evaluate("null or false") is None
+
+    def test_implies_with_null(self) -> None:
+        """Test implies with null values."""
+        assert evaluate("false implies null") is True
+        assert evaluate("true implies null") is None
