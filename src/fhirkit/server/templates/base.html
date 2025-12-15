@@ -93,6 +93,10 @@
                                class="{% if '/ips' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
                                 IPS
                             </a>
+                            <a href="{{ url_for('ui_hierarchy') }}"
+                               class="{% if '/hierarchy' in request.url.path %}bg-fhir-800 text-white{% else %}text-fhir-100 hover:bg-fhir-600{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                                Hierarchy
+                            </a>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">

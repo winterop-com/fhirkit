@@ -159,6 +159,165 @@ def get_resource_display(resource: dict[str, Any]) -> str:
     elif resource_type == "Composition":
         return resource.get("title", f"Composition/{resource_id}")
 
+    elif resource_type == "PractitionerRole":
+        # Try to get role code and specialty
+        parts = []
+        codes = resource.get("code", [])
+        if codes:
+            code_display = codes[0].get("coding", [{}])[0].get("display", "")
+            if code_display:
+                parts.append(code_display)
+        specialties = resource.get("specialty", [])
+        if specialties:
+            spec_display = specialties[0].get("coding", [{}])[0].get("display", "")
+            if spec_display:
+                parts.append(spec_display)
+        if parts:
+            return " - ".join(parts)
+        return f"PractitionerRole/{resource_id}"
+
+    elif resource_type == "Location":
+        return resource.get("name", f"Location/{resource_id}")
+
+    elif resource_type == "Procedure":
+        code = resource.get("code", {})
+        if code.get("text"):
+            return code["text"]
+        codings = code.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"Procedure/{resource_id}")
+        return f"Procedure/{resource_id}"
+
+    elif resource_type == "DiagnosticReport":
+        code = resource.get("code", {})
+        if code.get("text"):
+            return code["text"]
+        codings = code.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"DiagnosticReport/{resource_id}")
+        return f"DiagnosticReport/{resource_id}"
+
+    elif resource_type == "AllergyIntolerance":
+        code = resource.get("code", {})
+        if code.get("text"):
+            return code["text"]
+        codings = code.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"AllergyIntolerance/{resource_id}")
+        return f"AllergyIntolerance/{resource_id}"
+
+    elif resource_type == "Immunization":
+        code = resource.get("vaccineCode", {})
+        if code.get("text"):
+            return code["text"]
+        codings = code.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"Immunization/{resource_id}")
+        return f"Immunization/{resource_id}"
+
+    elif resource_type == "CarePlan":
+        title = resource.get("title")
+        if title:
+            return title
+        categories = resource.get("category", [])
+        if categories:
+            cat_text = categories[0].get("text")
+            if cat_text:
+                return cat_text
+            codings = categories[0].get("coding", [])
+            if codings:
+                return codings[0].get("display", f"CarePlan/{resource_id}")
+        return f"CarePlan/{resource_id}"
+
+    elif resource_type == "CareTeam":
+        return resource.get("name", f"CareTeam/{resource_id}")
+
+    elif resource_type == "Goal":
+        desc = resource.get("description", {})
+        if desc.get("text"):
+            return desc["text"]
+        return f"Goal/{resource_id}"
+
+    elif resource_type == "ServiceRequest":
+        code = resource.get("code", {})
+        if code.get("text"):
+            return code["text"]
+        codings = code.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"ServiceRequest/{resource_id}")
+        return f"ServiceRequest/{resource_id}"
+
+    elif resource_type == "Coverage":
+        type_info = resource.get("type", {})
+        if type_info.get("text"):
+            return type_info["text"]
+        codings = type_info.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"Coverage/{resource_id}")
+        return f"Coverage/{resource_id}"
+
+    elif resource_type == "DocumentReference":
+        desc = resource.get("description")
+        if desc:
+            return desc
+        type_info = resource.get("type", {})
+        if type_info.get("text"):
+            return type_info["text"]
+        codings = type_info.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"DocumentReference/{resource_id}")
+        return f"DocumentReference/{resource_id}"
+
+    elif resource_type == "Questionnaire":
+        return resource.get("title", resource.get("name", f"Questionnaire/{resource_id}"))
+
+    elif resource_type == "QuestionnaireResponse":
+        questionnaire = resource.get("questionnaire", "")
+        if questionnaire:
+            # Extract just the name/id from the reference
+            parts = questionnaire.split("/")
+            return f"Response: {parts[-1][:30]}" if parts else f"QuestionnaireResponse/{resource_id}"
+        return f"QuestionnaireResponse/{resource_id}"
+
+    elif resource_type == "Flag":
+        code = resource.get("code", {})
+        if code.get("text"):
+            return code["text"]
+        codings = code.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"Flag/{resource_id}")
+        return f"Flag/{resource_id}"
+
+    elif resource_type == "Device":
+        names = resource.get("deviceName", [])
+        if names:
+            return names[0].get("name", f"Device/{resource_id}")
+        type_info = resource.get("type", {})
+        if type_info.get("text"):
+            return type_info["text"]
+        codings = type_info.get("coding", [])
+        if codings:
+            return codings[0].get("display", f"Device/{resource_id}")
+        return f"Device/{resource_id}"
+
+    elif resource_type == "RelatedPerson":
+        names = resource.get("name", [])
+        if names:
+            name = names[0]
+            given = " ".join(name.get("given", []))
+            family = name.get("family", "")
+            if given or family:
+                return f"{given} {family}".strip()
+        relationships = resource.get("relationship", [])
+        if relationships:
+            rel = relationships[0]
+            if rel.get("text"):
+                return rel["text"]
+            codings = rel.get("coding", [])
+            if codings:
+                return codings[0].get("display", f"RelatedPerson/{resource_id}")
+        return f"RelatedPerson/{resource_id}"
+
     # Default: use resource type and ID
     return f"{resource_type}/{resource_id}"
 

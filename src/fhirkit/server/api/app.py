@@ -59,6 +59,35 @@ def create_app(
 
             logger.info(f"Generated {len(resources)} resources for {settings.patients} patients")
 
+            # Generate linked organization and location hierarchies for demo
+            from ..generator import LocationGenerator, OrganizationGenerator
+
+            org_gen = OrganizationGenerator(seed=settings.seed)
+            loc_gen = LocationGenerator(seed=settings.seed)
+
+            # Generate 2 linked org→location hierarchies
+            for i in range(2):
+                # Organization hierarchy (Corp → Division → Department)
+                org_hierarchy = org_gen.generate_hierarchy(depth=3)
+                for org in org_hierarchy:
+                    store.create(org)
+
+                # Get root org reference for linking locations
+                root_org_ref = f"Organization/{org_hierarchy[0]['id']}"
+
+                # Location hierarchy managed by the root organization
+                loc_hierarchy = loc_gen.generate_hierarchy(
+                    managing_organization_ref=root_org_ref,
+                    depth=5,
+                )
+                for loc in loc_hierarchy:
+                    store.create(loc)
+
+                logger.info(
+                    f"Generated hierarchy {i + 1}: {len(org_hierarchy)} org levels + "
+                    f"{len(loc_hierarchy)} location levels (managed by {org_hierarchy[0]['name']})"
+                )
+
         # Store references in app state
         app.state.store = store
         app.state.settings = settings

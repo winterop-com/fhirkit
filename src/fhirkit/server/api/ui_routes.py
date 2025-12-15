@@ -17,6 +17,188 @@ from .routes import SUPPORTED_TYPES
 from .search import SEARCH_PARAMS
 
 
+def _build_hierarchy_tree(
+    resources: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]], dict[str, dict[str, Any]]]:
+    """Build a tree structure from hierarchical resources.
+
+    Args:
+        resources: List of FHIR resources with partOf references
+
+    Returns:
+        Tuple of (root_nodes, children_map, by_id_map)
+    """
+    # Index resources by ID
+    by_id: dict[str, dict[str, Any]] = {}
+    for r in resources:
+        by_id[r.get("id", "")] = r
+
+    # Build simplified node info
+    nodes: dict[str, dict[str, Any]] = {}
+    for r in resources:
+        resource_id = r.get("id", "")
+        nodes[resource_id] = {
+            "id": resource_id,
+            "name": r.get("name", ""),
+            "type_display": _get_type_display(r),
+        }
+
+    # Build parent-child relationships
+    children_map: dict[str, list[dict[str, Any]]] = {}
+    roots: list[dict[str, Any]] = []
+
+    for r in resources:
+        resource_id = r.get("id", "")
+        parent_ref = r.get("partOf", {}).get("reference", "")
+
+        if parent_ref:
+            # Extract parent ID from reference
+            parent_id = parent_ref.split("/")[-1] if "/" in parent_ref else parent_ref
+            if parent_id in by_id:
+                if parent_id not in children_map:
+                    children_map[parent_id] = []
+                children_map[parent_id].append(nodes[resource_id])
+            else:
+                # Parent not found, treat as root
+                roots.append(nodes[resource_id])
+        else:
+            roots.append(nodes[resource_id])
+
+    return roots, children_map, by_id
+
+
+def _get_type_display(resource: dict[str, Any]) -> str:
+    """Extract type display from resource."""
+    # For Organization, check type field
+    types = resource.get("type", [])
+    if types and isinstance(types, list):
+        coding = types[0].get("coding", [])
+        if coding:
+            return coding[0].get("display", "")
+
+    # For Location, check physicalType
+    phys_type = resource.get("physicalType", {})
+    coding = phys_type.get("coding", [])
+    if coding:
+        return coding[0].get("display", "")
+
+    return ""
+
+
+def _build_unified_hierarchy(
+    organizations: list[dict[str, Any]],
+    locations: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    """Build a unified tree combining Organizations and Locations.
+
+    Organizations are at the top, with their child orgs (via partOf) and
+    managed locations (via managingOrganization) as children.
+    Locations then have their own children (via partOf).
+
+    Args:
+        organizations: List of Organization resources
+        locations: List of Location resources
+
+    Returns:
+        Tuple of (root_nodes, children_map)
+    """
+    # Index all resources
+    org_by_id: dict[str, dict[str, Any]] = {}
+    for org in organizations:
+        org_by_id[org.get("id", "")] = org
+
+    loc_by_id: dict[str, dict[str, Any]] = {}
+    for loc in locations:
+        loc_by_id[loc.get("id", "")] = loc
+
+    # Build node info for each resource
+    nodes: dict[str, dict[str, Any]] = {}
+
+    for org in organizations:
+        org_id = org.get("id", "")
+        nodes[f"Organization/{org_id}"] = {
+            "id": org_id,
+            "name": org.get("name", "Unknown"),
+            "resource_type": "Organization",
+            "type_display": _get_type_display(org),
+            "node_key": f"Organization/{org_id}",
+        }
+
+    for loc in locations:
+        loc_id = loc.get("id", "")
+        nodes[f"Location/{loc_id}"] = {
+            "id": loc_id,
+            "name": loc.get("name", "Unknown"),
+            "resource_type": "Location",
+            "type_display": _get_type_display(loc),
+            "node_key": f"Location/{loc_id}",
+        }
+
+    # Build children map
+    children_map: dict[str, list[dict[str, Any]]] = {}
+    roots: list[dict[str, Any]] = []
+
+    # Process Organizations - check for partOf
+    for org in organizations:
+        org_id = org.get("id", "")
+        node_key = f"Organization/{org_id}"
+        parent_ref = org.get("partOf", {}).get("reference", "")
+
+        if parent_ref:
+            # Has parent org
+            parent_key = parent_ref if "/" in parent_ref else f"Organization/{parent_ref}"
+            if parent_key in nodes:
+                if parent_key not in children_map:
+                    children_map[parent_key] = []
+                children_map[parent_key].append(nodes[node_key])
+            else:
+                # Parent not found, treat as root
+                roots.append(nodes[node_key])
+        else:
+            # Root organization
+            roots.append(nodes[node_key])
+
+    # Process Locations - check for partOf AND managingOrganization
+    for loc in locations:
+        loc_id = loc.get("id", "")
+        node_key = f"Location/{loc_id}"
+        parent_ref = loc.get("partOf", {}).get("reference", "")
+        managing_org_ref = loc.get("managingOrganization", {}).get("reference", "")
+
+        if parent_ref:
+            # Location has parent location
+            parent_key = parent_ref if "/" in parent_ref else f"Location/{parent_ref}"
+            if parent_key in nodes:
+                if parent_key not in children_map:
+                    children_map[parent_key] = []
+                children_map[parent_key].append(nodes[node_key])
+            elif managing_org_ref:
+                # Parent location not found, fall back to managing org
+                org_key = managing_org_ref if "/" in managing_org_ref else f"Organization/{managing_org_ref}"
+                if org_key in nodes:
+                    if org_key not in children_map:
+                        children_map[org_key] = []
+                    children_map[org_key].append(nodes[node_key])
+                else:
+                    roots.append(nodes[node_key])
+            else:
+                roots.append(nodes[node_key])
+        elif managing_org_ref:
+            # Location managed by an organization (attach to org)
+            org_key = managing_org_ref if "/" in managing_org_ref else f"Organization/{managing_org_ref}"
+            if org_key in nodes:
+                if org_key not in children_map:
+                    children_map[org_key] = []
+                children_map[org_key].append(nodes[node_key])
+            else:
+                roots.append(nodes[node_key])
+        else:
+            # Standalone location (no parent, no managing org)
+            roots.append(nodes[node_key])
+
+    return roots, children_map
+
+
 def create_ui_router(
     templates: Jinja2Templates,
     store: FHIRStore,
@@ -181,6 +363,25 @@ def create_ui_router(
         """International Patient Summary (IPS) generator and viewer."""
         context = get_context(request)
         return templates.TemplateResponse("pages/ips.html", context)
+
+    @router.get("/hierarchy", response_class=HTMLResponse, name="ui_hierarchy")
+    async def hierarchy_page(request: Request) -> HTMLResponse:
+        """Organization and Location hierarchy explorer."""
+        # Get all organizations and locations
+        organizations, _ = store.search("Organization", {}, _count=1000)
+        locations, _ = store.search("Location", {}, _count=1000)
+
+        # Build unified tree structure
+        roots, children_map = _build_unified_hierarchy(organizations, locations)
+
+        context = get_context(
+            request,
+            roots=roots,
+            children_map=children_map,
+            org_count=len(organizations),
+            loc_count=len(locations),
+        )
+        return templates.TemplateResponse("pages/hierarchy.html", context)
 
     # =========================================================================
     # Resource CRUD Routes (catch-all must come AFTER specific routes)

@@ -97,6 +97,7 @@ SEARCH_PARAMS: dict[str, dict[str, dict[str, Any]]] = {
         "address": {"path": "address", "type": "string", "search_address": True},
         "address-city": {"path": "address.city", "type": "string"},
         "address-state": {"path": "address.state", "type": "string"},
+        "partof": {"path": "partOf.reference", "type": "reference"},
     },
     "ValueSet": {
         "_id": {"path": "id", "type": "token"},

@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Hierarchy Explorer - FHIR Server{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Tree structure styling */
+.tree-view {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 14px;
+}
+
+.tree-node {
+    margin-left: 0;
+}
+
+.tree-children {
+    margin-left: 20px;
+    border-left: 1px dashed #d1d5db;
+    padding-left: 12px;
+}
+
+.tree-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 2px 0;
+    transition: background-color 0.15s;
+}
+
+.tree-item:hover {
+    background-color: #f3f4f6;
+}
+
+.tree-item.selected {
+    background-color: #dbeafe;
+}
+
+.tree-toggle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    color: #6b7280;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.tree-toggle.expanded svg {
+    transform: rotate(90deg);
+}
+
+.tree-toggle.no-children {
+    visibility: hidden;
+}
+
+.tree-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.tree-icon.organization {
+    color: #7c3aed;
+}
+
+.tree-icon.location {
+    color: #059669;
+}
+
+.tree-label {
+    flex-grow: 1;
+    font-weight: 500;
+}
+
+.tree-type {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-left: 8px;
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.resource-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+.resource-badge.org {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.resource-badge.loc {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.tree-children.collapsed {
+    display: none;
+}
+
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-left: 8px;
+}
+
+.stat-badge.org {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.stat-badge.loc {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #6b7280;
+}
+
+.empty-state svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    color: #d1d5db;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% macro render_tree_node(node, children_map) %}
+<div class="tree-node">
+    <div class="tree-item" id="node-{{ node.node_key | replace('/', '-') }}" onclick="showDetails('{{ node.resource_type }}', '{{ node.id }}')">
+        <span class="tree-toggle {% if children_map.get(node.node_key) %}expanded{% else %}no-children{% endif %}"
+              id="toggle-{{ node.node_key | replace('/', '-') }}"
+              onclick="event.stopPropagation(); toggleNode('{{ node.node_key | replace('/', '-') }}')">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </span>
+        <span class="tree-icon {{ node.resource_type | lower }}">
+            {% if node.resource_type == 'Organization' %}
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            {% else %}
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {% endif %}
+        </span>
+        <span class="tree-label">{{ node.name or node.id }}</span>
+        <span class="resource-badge {% if node.resource_type == 'Organization' %}org{% else %}loc{% endif %}">
+            {{ node.resource_type[:3] | upper }}
+        </span>
+        {% if node.type_display %}
+        <span class="tree-type">{{ node.type_display }}</span>
+        {% endif %}
+    </div>
+    {% if children_map.get(node.node_key) %}
+    <div class="tree-children" id="children-{{ node.node_key | replace('/', '-') }}">
+        {% for child in children_map[node.node_key] %}
+            {{ render_tree_node(child, children_map) }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-bold leading-7 text-gray-900">
+                Hierarchy Explorer
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Unified view of Organizations and their managed Locations
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0 items-center space-x-4">
+            <div class="flex items-center space-x-2 text-sm">
+                <span class="stat-badge org">{{ org_count }}</span>
+                <span class="text-gray-500">Organizations</span>
+                <span class="stat-badge loc">{{ loc_count }}</span>
+                <span class="text-gray-500">Locations</span>
+            </div>
+            <button onclick="expandAll()" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Expand All
+            </button>
+            <button onclick="collapseAll()" class="ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Collapse All
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tree Panel -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg p-6">
+                <div id="unified-tree" class="tree-view">
+                    {% if roots %}
+                        {% for root in roots %}
+                            {{ render_tree_node(root, children_map) }}
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <p class="font-medium">No hierarchies found</p>
+                            <p class="text-sm mt-1">Organizations and Locations with partOf relationships will appear here</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="lg:col-span-1">
+            <div id="detail-panel" class="bg-white shadow rounded-lg p-6 sticky top-6">
+                <div id="detail-placeholder" class="text-center py-12 text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="mt-2 text-sm">Click a node to view details</p>
+                </div>
+                <div id="detail-content" class="hidden">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 id="detail-title" class="text-lg font-medium text-gray-900"></h3>
+                            <p id="detail-type" class="text-sm text-gray-500"></p>
+                        </div>
+                        <a id="detail-link" href="#" class="text-fhir-600 hover:text-fhir-700 text-sm font-medium">
+                            View Full
+                        </a>
+                    </div>
+                    <div class="border-t border-gray-200 pt-4">
+                        <dl class="space-y-3">
+                            <div id="detail-id-row">
+                                <dt class="text-xs font-medium text-gray-500 uppercase">ID</dt>
+                                <dd id="detail-id" class="mt-1 text-sm text-gray-900 font-mono"></dd>
+                            </div>
+                            <div id="detail-resource-type-row">
+                                <dt class="text-xs font-medium text-gray-500 uppercase">Resource Type</dt>
+                                <dd id="detail-resource-type" class="mt-1 text-sm text-gray-900"></dd>
+                            </div>
+                            <div id="detail-children-row" class="hidden">
+                                <dt class="text-xs font-medium text-gray-500 uppercase">Children</dt>
+                                <dd id="detail-children" class="mt-1 text-sm text-gray-900"></dd>
+                            </div>
+                        </dl>
+                    </div>
+                    <div class="border-t border-gray-200 mt-4 pt-4">
+                        <details>
+                            <summary class="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                                Raw JSON
+                            </summary>
+                            <pre id="detail-json" class="mt-2 json-content bg-gray-50 p-3 rounded text-xs overflow-auto max-h-64">Loading...</pre>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle expand/collapse
+function toggleNode(nodeKey) {
+    const children = document.getElementById('children-' + nodeKey);
+    const toggle = document.getElementById('toggle-' + nodeKey);
+
+    if (children) {
+        children.classList.toggle('collapsed');
+        toggle.classList.toggle('expanded');
+    }
+}
+
+// Expand all nodes
+function expandAll() {
+    document.querySelectorAll('#unified-tree .tree-children').forEach(el => {
+        el.classList.remove('collapsed');
+    });
+    document.querySelectorAll('#unified-tree .tree-toggle').forEach(el => {
+        if (!el.classList.contains('no-children')) {
+            el.classList.add('expanded');
+        }
+    });
+}
+
+// Collapse all nodes
+function collapseAll() {
+    document.querySelectorAll('#unified-tree .tree-children').forEach(el => {
+        el.classList.add('collapsed');
+    });
+    document.querySelectorAll('#unified-tree .tree-toggle').forEach(el => {
+        el.classList.remove('expanded');
+    });
+}
+
+// Show resource details (fetch from API)
+async function showDetails(resourceType, resourceId) {
+    // Update detail panel
+    document.getElementById('detail-placeholder').classList.add('hidden');
+    document.getElementById('detail-content').classList.remove('hidden');
+
+    // Set basic info immediately
+    document.getElementById('detail-title').textContent = resourceId;
+    document.getElementById('detail-type').textContent = resourceType;
+    document.getElementById('detail-id').textContent = resourceId;
+    document.getElementById('detail-resource-type').textContent = resourceType;
+    document.getElementById('detail-link').href = '{{ ui_mount_path }}/' + resourceType + '/' + resourceId;
+    document.getElementById('detail-json').textContent = 'Loading...';
+
+    // Highlight selected node
+    const nodeKey = resourceType + '-' + resourceId;
+    document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('selected'));
+    document.getElementById('node-' + nodeKey)?.classList.add('selected');
+
+    // Fetch full resource from API
+    try {
+        const response = await fetch('{{ api_base_path }}/' + resourceType + '/' + resourceId);
+        if (response.ok) {
+            const resource = await response.json();
+
+            // Update title with name if available
+            document.getElementById('detail-title').textContent = resource.name || resourceId;
+
+            // Raw JSON
+            const jsonEl = document.getElementById('detail-json');
+            jsonEl.textContent = JSON.stringify(resource, null, 2);
+            jsonEl.innerHTML = highlightJSON(jsonEl.textContent);
+        } else {
+            document.getElementById('detail-json').textContent = 'Error loading resource';
+        }
+    } catch (error) {
+        document.getElementById('detail-json').textContent = 'Error: ' + error.message;
+    }
+}
+</script>
+{% endblock %}
