@@ -120,33 +120,23 @@ class IPSSummaryGenerator:
         patient_ref = f"Patient/{patient_id}"
 
         # Allergies
-        allergies, _ = self.store.search(
-            "AllergyIntolerance", {"patient": patient_ref}, _count=100
-        )
+        allergies, _ = self.store.search("AllergyIntolerance", {"patient": patient_ref}, _count=100)
         data["allergies"] = allergies
 
         # Medications
-        medications, _ = self.store.search(
-            "MedicationRequest", {"patient": patient_ref}, _count=100
-        )
+        medications, _ = self.store.search("MedicationRequest", {"patient": patient_ref}, _count=100)
         data["medications"] = medications
 
         # Problems/Conditions
-        conditions, _ = self.store.search(
-            "Condition", {"patient": patient_ref}, _count=100
-        )
+        conditions, _ = self.store.search("Condition", {"patient": patient_ref}, _count=100)
         data["problems"] = conditions
 
         # Immunizations
-        immunizations, _ = self.store.search(
-            "Immunization", {"patient": patient_ref}, _count=100
-        )
+        immunizations, _ = self.store.search("Immunization", {"patient": patient_ref}, _count=100)
         data["immunizations"] = immunizations
 
         # Procedures
-        procedures, _ = self.store.search(
-            "Procedure", {"patient": patient_ref}, _count=100
-        )
+        procedures, _ = self.store.search("Procedure", {"patient": patient_ref}, _count=100)
         data["procedures"] = procedures
 
         # Lab Results
@@ -221,9 +211,7 @@ class IPSSummaryGenerator:
 
         return composition
 
-    def _build_section(
-        self, section_info: dict[str, str], resources: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _build_section(self, section_info: dict[str, str], resources: list[dict[str, Any]]) -> dict[str, Any]:
         """Build an IPS section.
 
         Args:
@@ -252,9 +240,7 @@ class IPSSummaryGenerator:
             for resource in resources:
                 resource_type = resource.get("resourceType", "")
                 resource_id = resource.get("id", "")
-                section["entry"].append(
-                    {"reference": f"{resource_type}/{resource_id}"}
-                )
+                section["entry"].append({"reference": f"{resource_type}/{resource_id}"})
 
             # Generate narrative
             section["text"] = self._generate_section_narrative(section_info, resources)
@@ -269,9 +255,10 @@ class IPSSummaryGenerator:
                     }
                 ]
             }
+            title_lower = section_info["title"].lower()
             section["text"] = {
                 "status": "generated",
-                "div": f'<div xmlns="http://www.w3.org/1999/xhtml"><p>No {section_info["title"].lower()} on file.</p></div>',
+                "div": f'<div xmlns="http://www.w3.org/1999/xhtml"><p>No {title_lower} on file.</p></div>',
             }
 
         return section
@@ -444,7 +431,6 @@ class IPSSummaryGenerator:
 
     def _create_entry(self, resource: dict[str, Any]) -> dict[str, Any]:
         """Create a bundle entry."""
-        resource_type = resource.get("resourceType", "")
         resource_id = resource.get("id", "")
 
         return {

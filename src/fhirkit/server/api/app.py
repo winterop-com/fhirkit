@@ -191,7 +191,9 @@ def create_app(
                 cond_names = []
                 for c in conditions[:5]:
                     code = c.get("code", {})
-                    text = code.get("text") or (code.get("coding", [{}])[0].get("display") if code.get("coding") else None)
+                    text = code.get("text") or (
+                        code.get("coding", [{}])[0].get("display") if code.get("coding") else None
+                    )
                     if text:
                         cond_names.append(text)
                 if cond_names:
@@ -274,9 +276,7 @@ def create_app(
             # Get patient's current medications
             current_meds = []
             if patient_id:
-                medications, _ = store.search(
-                    "MedicationRequest", {"patient": f"Patient/{patient_id}"}, _count=20
-                )
+                medications, _ = store.search("MedicationRequest", {"patient": f"Patient/{patient_id}"}, _count=20)
                 for m in medications:
                     med = m.get("medicationCodeableConcept", {})
                     med_name = med.get("text") or (
@@ -315,7 +315,9 @@ def create_app(
                 # Show what was checked
                 detail = f"Checked **{new_med_name.title() if new_med_name else 'selected medication'}** against "
                 if current_meds:
-                    detail += f"{len(current_meds)} current medication(s): {', '.join(m.title() for m in current_meds[:5])}"
+                    detail += (
+                        f"{len(current_meds)} current medication(s): {', '.join(m.title() for m in current_meds[:5])}"
+                    )
                     if len(current_meds) > 5:
                         detail += f" (+{len(current_meds) - 5} more)"
                 else:

@@ -365,10 +365,10 @@ class PatientRecordGenerator:
         # Generate immunizations
         num_imm = self.faker.random_int(min=num_immunizations[0], max=num_immunizations[1])
         for i in range(num_imm):
-            encounter = encounters[i % len(encounters)] if encounters else None
+            enc = encounters[i % len(encounters)] if encounters else None
             immunization = self.immunization_gen.generate(
                 patient_ref=patient_ref,
-                encounter_ref=f"Encounter/{encounter['id']}" if encounter else None,
+                encounter_ref=f"Encounter/{enc['id']}" if enc else None,
                 performer_ref=practitioner_ref,
             )
             resources.append(immunization)
@@ -376,18 +376,16 @@ class PatientRecordGenerator:
         # Generate diagnostic reports (referencing observations)
         num_dr = self.faker.random_int(min=num_diagnostic_reports[0], max=num_diagnostic_reports[1])
         for i in range(num_dr):
-            encounter = encounters[i % len(encounters)] if encounters else None
+            enc = encounters[i % len(encounters)] if encounters else None
             # Get lab observations for this encounter
             lab_obs = [
-                o
-                for o in observations
-                if o.get("category", [{}])[0].get("coding", [{}])[0].get("code") == "laboratory"
+                o for o in observations if o.get("category", [{}])[0].get("coding", [{}])[0].get("code") == "laboratory"
             ]
             result_refs = [f"Observation/{o['id']}" for o in lab_obs[:3]]
 
             diagnostic_report = self.diagnostic_report_gen.generate(
                 patient_ref=patient_ref,
-                encounter_ref=f"Encounter/{encounter['id']}" if encounter else None,
+                encounter_ref=f"Encounter/{enc['id']}" if enc else None,
                 performer_ref=practitioner_ref,
                 result_refs=result_refs if result_refs else None,
             )
@@ -425,10 +423,10 @@ class PatientRecordGenerator:
         # Generate service requests
         num_sr = self.faker.random_int(min=num_service_requests[0], max=num_service_requests[1])
         for i in range(num_sr):
-            encounter = encounters[i % len(encounters)] if encounters else None
+            enc = encounters[i % len(encounters)] if encounters else None
             service_request = self.service_request_gen.generate(
                 patient_ref=patient_ref,
-                encounter_ref=f"Encounter/{encounter['id']}" if encounter else None,
+                encounter_ref=f"Encounter/{enc['id']}" if enc else None,
                 requester_ref=practitioner_ref,
             )
             resources.append(service_request)
@@ -436,10 +434,10 @@ class PatientRecordGenerator:
         # Generate document references
         num_doc = self.faker.random_int(min=num_document_refs[0], max=num_document_refs[1])
         for i in range(num_doc):
-            encounter = encounters[i % len(encounters)] if encounters else None
+            enc = encounters[i % len(encounters)] if encounters else None
             doc_ref = self.document_ref_gen.generate(
                 patient_ref=patient_ref,
-                encounter_ref=f"Encounter/{encounter['id']}" if encounter else None,
+                encounter_ref=f"Encounter/{enc['id']}" if enc else None,
                 author_ref=practitioner_ref,
                 custodian_ref=organization_ref,
             )
@@ -462,11 +460,11 @@ class PatientRecordGenerator:
         for _ in range(num_cp):
             condition_refs = [f"Condition/{c['id']}" for c in conditions[:2]] if conditions else None
             goal_refs = [f"Goal/{g['id']}" for g in goals[:2]] if goals else None
-            encounter = encounters[-1] if encounters else None
+            enc = encounters[-1] if encounters else None
 
             careplan = self.careplan_gen.generate(
                 patient_ref=patient_ref,
-                encounter_ref=f"Encounter/{encounter['id']}" if encounter else None,
+                encounter_ref=f"Encounter/{enc['id']}" if enc else None,
                 author_ref=practitioner_ref,
                 addresses_refs=condition_refs,
                 goal_refs=goal_refs,
@@ -513,8 +511,6 @@ class PatientRecordGenerator:
 
         # Generate claims and EOBs (if coverage exists)
         if coverages and encounters:
-            coverage_ref = f"Coverage/{coverages[0]['id']}"
-
             # Generate claim for first encounter
             claim = self.claim_gen.generate(
                 patient_ref=patient_ref,

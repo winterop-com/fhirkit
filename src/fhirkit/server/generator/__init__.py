@@ -46,6 +46,9 @@ from .nutrition_order import NutritionOrderGenerator
 from .observation import ObservationGenerator
 from .organization import OrganizationGenerator
 from .patient import PatientGenerator
+
+# Orchestrator (in separate module)
+from .patient_record import PatientRecordGenerator
 from .practitioner import PractitionerGenerator
 from .practitioner_role import PractitionerRoleGenerator
 from .procedure import ProcedureGenerator
@@ -60,9 +63,6 @@ from .slot import SlotGenerator
 from .specimen import SpecimenGenerator
 from .task import TaskGenerator
 from .value_set import ValueSetGenerator
-
-# Orchestrator (in separate module)
-from .patient_record import PatientRecordGenerator
 
 __all__ = [
     # Base

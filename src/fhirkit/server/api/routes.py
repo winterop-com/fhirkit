@@ -13,6 +13,7 @@ from ..models.responses import (
     BundleLink,
     CapabilityStatement,
     OperationOutcome,
+    OperationOutcomeIssue,
 )
 from ..storage.fhir_store import FHIRStore
 
@@ -1141,9 +1142,7 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
         # Validate it's a document bundle
         if body.get("resourceType") != "Bundle" or body.get("type") != "document":
-            outcome = OperationOutcome.error(
-                "Expected a Document Bundle (type='document')", code="invalid"
-            )
+            outcome = OperationOutcome.error("Expected a Document Bundle (type='document')", code="invalid")
             return JSONResponse(
                 content=outcome.model_dump(exclude_none=True),
                 status_code=400,
@@ -1187,12 +1186,12 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
         outcome = OperationOutcome(
             resourceType="OperationOutcome",
             issue=[
-                {
-                    "severity": "information",
-                    "code": "informational",
-                    "diagnostics": f"Successfully imported {imported_count} resources from IPS document"
+                OperationOutcomeIssue(
+                    severity="information",
+                    code="informational",
+                    diagnostics=f"Successfully imported {imported_count} resources from IPS document"
                     + (f" for Patient/{patient_id}" if patient_id else ""),
-                }
+                )
             ],
         )
 
