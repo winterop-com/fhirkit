@@ -605,7 +605,7 @@ define "Latest Heart Rate":
   Last([Observation: "Heart Rate"] O sort by effective)
 
 define "Latest Heart Rate Value":
-  (Latest Heart Rate).value as Quantity
+  ("Latest Heart Rate").value as Quantity
 
 define "Blood Pressure Observations":
   [Observation: "Blood Pressure Systolic"]
@@ -703,13 +703,13 @@ define "Latest Observation":
   Last([Observation] O sort by effective)
 
 define "Latest Observation Date":
-  (Latest Observation).effective
+  ("Latest Observation").effective
 
 define "Latest Observation Code":
-  (Latest Observation).code.coding.first().display
+  ("Latest Observation").code.coding.first().display
 
 define "Latest Observation Value":
-  (Latest Observation).value
+  ("Latest Observation").value
 
 define "Observations Last 30 Days":
   [Observation] O
@@ -777,7 +777,7 @@ define "Out Of Range":
       or (O.value as Quantity).value < O.referenceRange.first().low.value
 
 define "Recent Abnormal":
-  Abnormal Observations O
+  "Abnormal Observations" O
     where O.effective in Interval[Today() - 30 days, Today()]
 `,
 
@@ -820,14 +820,14 @@ define "Encounter Diagnoses":
     where C.category.coding.code contains 'encounter-diagnosis'
 
 define "Active Problem List":
-  Problem List C
+  "Problem List" C
     where C.clinicalStatus.coding.code contains 'active'
 
 define "Condition Names":
-  Active Conditions C return C.code.coding.first().display
+  "Active Conditions" C return C.code.coding.first().display
 
 define "Conditions By Onset":
-  Active Conditions C sort by onset
+  "Active Conditions" C sort by onset
 `,
 
         'cond-diabetes': `library DiabetesCheck version '1.0.0'
@@ -854,14 +854,14 @@ define "All Diabetes Conditions":
       or C.code.coding.display contains 'diabetes'
 
 define "Has Diabetes":
-  exists All Diabetes Conditions
+  exists "All Diabetes Conditions"
 
 define "Active Diabetes":
-  All Diabetes Conditions C
+  "All Diabetes Conditions" C
     where C.clinicalStatus.coding.code contains 'active'
 
 define "Has Active Diabetes":
-  exists Active Diabetes
+  exists "Active Diabetes"
 
 define "Type 1 Diabetes":
   [Condition] C where C.code.coding.code contains 'E10'
@@ -869,14 +869,14 @@ define "Type 1 Diabetes":
 define "Type 2 Diabetes":
   [Condition] C where C.code.coding.code contains 'E11'
 
-define "Has Type 1": exists Type 1 Diabetes
-define "Has Type 2": exists Type 2 Diabetes
+define "Has Type 1": exists "Type 1 Diabetes"
+define "Has Type 2": exists "Type 2 Diabetes"
 
 define "Diabetes Onset Date":
-  Min(All Diabetes Conditions C return C.onset)
+  Min("All Diabetes Conditions" C return C.onset)
 
 define "Years With Diabetes":
-  years between Diabetes Onset Date and Today()
+  years between "Diabetes Onset Date" and Today()
 `,
 
         'cond-chronic': `library ChronicConditions version '1.0.0'
@@ -922,10 +922,10 @@ define "Has CKD":
       or C.code.coding.display contains 'kidney disease')
 
 define "Chronic Condition Count":
-  Count(Chronic Conditions)
+  Count("Chronic Conditions")
 
 define "Has Multiple Chronic":
-  Chronic Condition Count >= 2
+  "Chronic Condition Count" >= 2
 `,
 
         'med-active': `library ActiveMedications version '1.0.0'
@@ -943,17 +943,17 @@ define "Active Medications":
     where M.status = 'active'
 
 define "Active Medication Count":
-  Count(Active Medications)
+  Count("Active Medications")
 
 define "Medication Names":
-  Active Medications M
+  "Active Medications" M
     return Coalesce(
       M.medication.coding.first().display,
       M.medication.text
     )
 
 define "Medications With Dosage":
-  Active Medications M
+  "Active Medications" M
     return {
       name: M.medication.coding.first().display,
       dosage: M.dosageInstruction.first().text,
@@ -961,17 +961,17 @@ define "Medications With Dosage":
     }
 
 define "On Polypharmacy":
-  Active Medication Count >= 5
+  "Active Medication Count" >= 5
 
 define "Stopped Medications":
   [MedicationRequest] M where M.status = 'stopped'
 
 define "Recently Started":
-  Active Medications M
+  "Active Medications" M
     where M.authoredOn in Interval[Today() - 30 days, Today()]
 
 define "Long Term Medications":
-  Active Medications M
+  "Active Medications" M
     where M.authoredOn before Today() - 1 year
 `,
 
@@ -998,13 +998,13 @@ define "Opioid Medications":
       )
 
 define "On Opioids":
-  exists Opioid Medications
+  exists "Opioid Medications"
 
 define "Opioid Count":
-  Count(Opioid Medications)
+  Count("Opioid Medications")
 
 define "On Multiple Opioids":
-  Opioid Count > 1
+  "Opioid Count" > 1
 
 define "Benzodiazepines":
   [MedicationRequest] M
@@ -1018,13 +1018,13 @@ define "Benzodiazepines":
       )
 
 define "On Benzodiazepines":
-  exists Benzodiazepines
+  exists "Benzodiazepines"
 
 define "Opioid Benzo Overlap":
-  On Opioids and On Benzodiazepines
+  "On Opioids" and "On Benzodiazepines"
 
 define "High Risk Combination":
-  Opioid Benzo Overlap
+  "Opioid Benzo Overlap"
 `,
 
         'med-interactions': `library DrugClassCheck version '1.0.0'
@@ -1038,7 +1038,7 @@ define "Active Medications":
   [MedicationRequest] M where M.status = 'active'
 
 define "Antihypertensives":
-  Active Medications M
+  "Active Medications" M
     where M.medication.coding.display contains 'lisinopril'
       or M.medication.coding.display contains 'amlodipine'
       or M.medication.coding.display contains 'metoprolol'
@@ -1046,37 +1046,37 @@ define "Antihypertensives":
       or M.medication.coding.display contains 'hydrochlorothiazide'
 
 define "Statins":
-  Active Medications M
+  "Active Medications" M
     where M.medication.coding.display contains 'atorvastatin'
       or M.medication.coding.display contains 'simvastatin'
       or M.medication.coding.display contains 'rosuvastatin'
       or M.medication.coding.display contains 'pravastatin'
 
 define "Anticoagulants":
-  Active Medications M
+  "Active Medications" M
     where M.medication.coding.display contains 'warfarin'
       or M.medication.coding.display contains 'apixaban'
       or M.medication.coding.display contains 'rivaroxaban'
       or M.medication.coding.display contains 'dabigatran'
 
 define "Antiplatelets":
-  Active Medications M
+  "Active Medications" M
     where M.medication.coding.display contains 'aspirin'
       or M.medication.coding.display contains 'clopidogrel'
       or M.medication.coding.display contains 'ticagrelor'
 
 define "NSAIDs":
-  Active Medications M
+  "Active Medications" M
     where M.medication.coding.display contains 'ibuprofen'
       or M.medication.coding.display contains 'naproxen'
       or M.medication.coding.display contains 'diclofenac'
 
-define "On Anticoagulant": exists Anticoagulants
-define "On NSAID": exists NSAIDs
-define "Bleeding Risk": On Anticoagulant and On NSAID
+define "On Anticoagulant": exists "Anticoagulants"
+define "On NSAID": exists "NSAIDs"
+define "Bleeding Risk": "On Anticoagulant" and "On NSAID"
 
-define "On Statin": exists Statins
-define "Statin Needed": not On Statin
+define "On Statin": exists "Statins"
+define "Statin Needed": not "On Statin"
 `,
 
         'measure-ipp': `library MeasureIPP version '1.0.0'
@@ -1108,12 +1108,12 @@ define "Had Qualifying Encounter":
     and E.status = 'finished')
 
 define "Initial Population":
-  Age 18 to 75
-    and Has Diabetes Diagnosis
-    and Had Qualifying Encounter
+  "Age 18 to 75"
+    and "Has Diabetes Diagnosis"
+    and "Had Qualifying Encounter"
 
 define "In Initial Population":
-  Initial Population
+  "Initial Population"
 `,
 
         'measure-denom': `library MeasureDenominator version '1.0.0'
@@ -1136,20 +1136,20 @@ define "Has Diabetes":
     and C.clinicalStatus.coding.code contains 'active')
 
 define "Initial Population":
-  Age 18 to 75 and Has Diabetes
+  "Age 18 to 75" and "Has Diabetes"
 
 define "Denominator":
-  Initial Population
+  "Initial Population"
 
 define "Hospice":
   exists ([Encounter] E
     where E.type.coding.code contains 'hospice')
 
 define "Denominator Exclusion":
-  Hospice
+  "Hospice"
 
 define "In Denominator":
-  Denominator and not Denominator Exclusion
+  "Denominator" and not "Denominator Exclusion"
 `,
 
         'measure-numer': `library MeasureNumerator version '1.0.0'
@@ -1172,7 +1172,7 @@ define "Has Diabetes":
     and C.clinicalStatus.coding.code contains 'active')
 
 define "Denominator":
-  AgeInYears() >= 18 and Has Diabetes
+  AgeInYears() >= 18 and "Has Diabetes"
 
 define "HbA1c Tests During Period":
   [Observation: "HbA1c"] O
@@ -1180,20 +1180,20 @@ define "HbA1c Tests During Period":
     and O.status = 'final'
 
 define "Most Recent HbA1c":
-  Last(HbA1c Tests During Period O sort by effective)
+  Last("HbA1c Tests During Period" O sort by effective)
 
 define "Most Recent HbA1c Value":
-  (Most Recent HbA1c).value as Quantity
+  ("Most Recent HbA1c").value as Quantity
 
 define "HbA1c Less Than 8":
-  (Most Recent HbA1c Value).value < 8.0
+  ("Most Recent HbA1c Value").value < 8.0
 
 define "Numerator":
-  Denominator and HbA1c Less Than 8
+  "Denominator" and "HbA1c Less Than 8"
 
 define "Performance Rate":
-  if Denominator then
-    if Numerator then 1.0 else 0.0
+  if "Denominator" then
+    if "Numerator" then 1.0 else 0.0
   else null
 `,
 
@@ -1266,20 +1266,20 @@ define "Latest Potassium":
   Last([Observation: "Potassium"] O sort by effective)
 
 define "Critical Potassium":
-  (Latest Potassium).value as Quantity
+  ("Latest Potassium").value as Quantity
 
 define "Potassium Alert":
-  (Critical Potassium).value < 3.0 or (Critical Potassium).value > 6.0
+  ("Critical Potassium").value < 3.0 or ("Critical Potassium").value > 6.0
 
 // Kidney Function Alerts
 define "Latest eGFR":
   (Last([Observation: "eGFR"] O sort by effective)).value as Quantity
 
 define "Severe CKD Alert":
-  (Latest eGFR).value < 30
+  ("Latest eGFR").value < 30
 
 define "Moderate CKD Alert":
-  (Latest eGFR).value < 60 and (Latest eGFR).value >= 30
+  ("Latest eGFR").value < 60 and ("Latest eGFR").value >= 30
 
 // Drug-Disease Interactions
 define "On NSAIDs":
@@ -1289,7 +1289,7 @@ define "On NSAIDs":
       or M.medication.coding.display contains 'naproxen'))
 
 define "CKD With NSAID Alert":
-  Moderate CKD Alert and On NSAIDs
+  "Moderate CKD Alert" and "On NSAIDs"
 
 // Allergy Alerts
 define "Has Penicillin Allergy":
@@ -1298,9 +1298,9 @@ define "Has Penicillin Allergy":
 
 // Summary
 define "Active Alerts":
-  (if Potassium Alert then { 'Critical Potassium' } else { })
-    union (if Severe CKD Alert then { 'Severe CKD' } else { })
-    union (if CKD With NSAID Alert then { 'NSAID with CKD' } else { })
+  (if "Potassium Alert" then { 'Critical Potassium' } else { })
+    union (if "Severe CKD Alert" then { 'Severe CKD' } else { })
+    union (if "CKD With NSAID Alert" then { 'NSAID with CKD' } else { })
 `,
 
         'rule-reminders': `library CareReminders version '1.0.0'
@@ -1324,9 +1324,9 @@ define "Last HbA1c Date":
   (Last([Observation: "HbA1c"] O sort by effective)).effective
 
 define "HbA1c Due":
-  Has Diabetes and (
-    Last HbA1c Date is null
-    or Last HbA1c Date before Today() - 3 months
+  "Has Diabetes" and (
+    "Last HbA1c Date" is null
+    or "Last HbA1c Date" before Today() - 3 months
   )
 
 // Cholesterol Screening
@@ -1334,8 +1334,8 @@ define "Last LDL Date":
   (Last([Observation: "LDL"] O sort by effective)).effective
 
 define "LDL Due":
-  Last LDL Date is null
-    or Last LDL Date before Today() - 1 year
+  "Last LDL Date" is null
+    or "Last LDL Date" before Today() - 1 year
 
 // Cancer Screening (age-based)
 define "Mammogram Due":
@@ -1445,45 +1445,45 @@ define "Numeric Values":
     return (O.value as Quantity).value
 
 define "Sum of Values":
-  Sum(Numeric Values)
+  Sum("Numeric Values")
 
 define "Average Value":
-  Avg(Numeric Values)
+  Avg("Numeric Values")
 
 define "Minimum Value":
-  Min(Numeric Values)
+  Min("Numeric Values")
 
 define "Maximum Value":
-  Max(Numeric Values)
+  Max("Numeric Values")
 
 define "Standard Deviation":
-  StdDev(Numeric Values)
+  StdDev("Numeric Values")
 
 define "Variance":
-  Variance(Numeric Values)
+  Variance("Numeric Values")
 
 define "Median":
-  Median(Numeric Values)
+  Median("Numeric Values")
 
 define "Population Standard Deviation":
-  PopulationStdDev(Numeric Values)
+  PopulationStdDev("Numeric Values")
 
 // Aggregate with Filter
 define "Recent Observations":
-  Observations O
+  "Observations" O
     where O.effective after Today() - 30 days
 
 define "Recent Count":
-  Count(Recent Observations)
+  Count("Recent Observations")
 
 // Custom Aggregation
 define "Value Distribution":
-  from Observations O
+  from "Observations" O
     let val: (O.value as Quantity).value
     return {
       code: O.code.coding.first().display,
       value: val,
-      aboveAvg: val > Avg(Numeric Values)
+      aboveAvg: val > Avg("Numeric Values")
     }
 `,
 
