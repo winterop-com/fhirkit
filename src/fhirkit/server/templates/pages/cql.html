@@ -573,7 +573,7 @@ define "Has Email": exists (Patient.telecom T where T.system = 'email')
 define "Emergency Contacts": Patient.contact
 define "Emergency Contact Name": Patient.contact.first().name.text
 define "Emergency Contact Phone":
-  Patient.contact.first().telecom T where T.system = 'phone' return T.value
+  (Patient.contact.first().telecom) T where T.system = 'phone' return T.value
 `,
 
         'obs-vitals': `library VitalSigns version '1.0.0'
