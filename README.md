@@ -21,7 +21,7 @@ This project provides complete implementations of:
 - **CLI Tools**: Command-line interfaces for evaluation, AST visualization, validation, and server management
 - **Python API**: Programmatic access to evaluators for integration into applications
 
-**Current test count: 2313+ passing tests**
+**Current test count: 2457+ passing tests**
 
 ## Requirements
 

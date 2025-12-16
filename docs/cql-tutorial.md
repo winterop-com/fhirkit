@@ -923,6 +923,71 @@ define HasDiabetes:
     exists(ActiveConditions)
 ```
 
+### Using FHIRHelpers
+
+FHIRKit includes a built-in **FHIRHelpers** library that provides standard conversion functions for working with FHIR data. It's automatically available.
+
+Save as `fhirhelpers-example.cql`:
+
+```cql
+library FHIRHelpersExample version '1.0.0'
+
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+
+context Patient
+
+// Get all observations
+define Observations: [Observation]
+
+// Get the latest HbA1c observation
+define LatestHbA1c:
+    Last([Observation] O
+        where O.code.coding.code = '4548-4'
+        sort by effective)
+
+// Use FHIRHelpers to convert FHIR Quantity to CQL Quantity
+define LatestHbA1cValue:
+    FHIRHelpers.ToQuantity(LatestHbA1c.value as FHIR.Quantity)
+
+// Check if HbA1c is controlled (< 7%)
+define HbA1cControlled:
+    LatestHbA1cValue < 7.0 '%'
+```
+
+```bash
+fhir cql run fhirhelpers-example.cql --data patient-bundle.json
+```
+
+#### Common FHIRHelpers Functions
+
+| Function | Purpose |
+|----------|---------|
+| `ToQuantity()` | Convert FHIR Quantity to CQL Quantity |
+| `ToCode()` | Convert FHIR Coding to CQL Code |
+| `ToConcept()` | Convert CodeableConcept to Concept |
+| `ToInterval()` | Convert FHIR Period to Interval |
+| `ToString()` | Extract string value |
+| `ToDateTime()` | Convert to DateTime |
+| `ToDate()` | Convert to Date |
+
+#### Using an Alias
+
+```cql
+library AliasExample version '1.0.0'
+
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FH
+
+context Patient
+
+// Shorter reference with alias
+define Weight:
+    FH.ToQuantity(
+        (Last([Observation] O where O.code.coding.code = '29463-7')).value as FHIR.Quantity
+    )
+```
+
 ### What You Learned
 
 - `using FHIR version '4.0.1'` declares FHIR model
@@ -930,6 +995,8 @@ define HasDiabetes:
 - Access patient properties with `Patient.property`
 - `[ResourceType]` retrieves resources
 - `--data` loads JSON data
+- `include FHIRHelpers` provides type conversion functions
+- FHIRHelpers is built-in and automatically available
 
 ---
 

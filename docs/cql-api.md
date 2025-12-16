@@ -285,6 +285,160 @@ result = evaluator.evaluate_definition(
 )
 ```
 
+## Built-in FHIRHelpers Library
+
+FHIRKit includes a built-in FHIRHelpers library that is automatically available without any configuration. FHIRHelpers provides standard conversion functions from FHIR types to CQL types.
+
+### Basic Usage
+
+Simply include FHIRHelpers in your CQL library:
+
+```cql
+library MyLibrary version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+
+context Patient
+
+define LatestWeight:
+    (Last([Observation] O where O.code.coding.code = '29463-7' sort by effective)).value
+```
+
+### Available Functions
+
+FHIRHelpers provides these conversion functions:
+
+#### Type Conversion Functions
+
+| Function | Description |
+|----------|-------------|
+| `ToQuantity(FHIR.Quantity)` | Convert FHIR Quantity to CQL Quantity |
+| `ToCode(FHIR.Coding)` | Convert FHIR Coding to CQL Code |
+| `ToConcept(FHIR.CodeableConcept)` | Convert FHIR CodeableConcept to CQL Concept |
+| `ToInterval(FHIR.Period)` | Convert FHIR Period to `Interval<DateTime>` |
+| `ToInterval(FHIR.Range)` | Convert FHIR Range to `Interval<Quantity>` |
+
+#### Primitive Conversion Functions
+
+| Function | Description |
+|----------|-------------|
+| `ToString(FHIR.string)` | Extract string value |
+| `ToString(FHIR.code)` | Extract code as string |
+| `ToString(FHIR.uri)` | Extract URI as string |
+| `ToString(FHIR.id)` | Extract ID as string |
+| `ToDateTime(FHIR.dateTime)` | Convert to CQL DateTime |
+| `ToDateTime(FHIR.instant)` | Convert instant to CQL DateTime |
+| `ToDate(FHIR.date)` | Convert to CQL Date |
+| `ToTime(FHIR.time)` | Convert to CQL Time |
+| `ToBoolean(FHIR.boolean)` | Extract boolean value |
+| `ToInteger(FHIR.integer)` | Extract integer value |
+| `ToInteger(FHIR.positiveInt)` | Extract positive integer |
+| `ToInteger(FHIR.unsignedInt)` | Extract unsigned integer |
+| `ToDecimal(FHIR.decimal)` | Extract decimal value |
+
+### Examples
+
+#### Converting Quantities
+
+```cql
+library QuantityExample version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+
+context Patient
+
+define LatestWeightObs:
+    Last([Observation] O
+        where O.code.coding.code = '29463-7'
+        sort by effective)
+
+// Use ToQuantity to convert FHIR Quantity
+define LatestWeight:
+    FHIRHelpers.ToQuantity(LatestWeightObs.value as FHIR.Quantity)
+
+// Compare quantities
+define IsOverweight:
+    LatestWeight > 100 'kg'
+```
+
+#### Converting Codes and Concepts
+
+```cql
+library CodeExample version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+
+context Patient
+
+define Conditions: [Condition]
+
+// Convert CodeableConcept to Concept for comparison
+define DiabetesConditions:
+    Conditions C
+        where FHIRHelpers.ToConcept(C.code) ~ Concept {
+            codes: { Code '44054006' from "SNOMED" }
+        }
+```
+
+#### Converting Periods to Intervals
+
+```cql
+library PeriodExample version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1'
+
+context Patient
+
+define Encounters: [Encounter]
+
+// Convert FHIR Period to CQL Interval for date operations
+define RecentEncounters:
+    Encounters E
+        where FHIRHelpers.ToInterval(E.period) overlaps Interval[Today() - 30 days, Today()]
+```
+
+### Using Aliases
+
+You can use an alias for shorter references:
+
+```cql
+library AliasExample version '1.0'
+using FHIR version '4.0.1'
+include FHIRHelpers version '4.0.1' called FH
+
+context Patient
+
+define Weight: FH.ToQuantity(...)
+```
+
+### Without FHIRHelpers
+
+If you need to disable the automatic loading of FHIRHelpers (e.g., to provide your own version):
+
+```python
+from fhirkit.engine.cql import CQLEvaluator
+
+# Disable built-in libraries
+evaluator = CQLEvaluator(include_builtins=False)
+
+# Now you must provide FHIRHelpers yourself if needed
+```
+
+### Python API
+
+The built-in resolver can be accessed directly:
+
+```python
+from fhirkit.engine.cql.builtins import get_builtin_resolver
+
+# Get the resolver with FHIRHelpers loaded
+resolver = get_builtin_resolver()
+
+# Check available libraries
+source = resolver.resolve("FHIRHelpers", "4.0.1")
+print(source)  # FHIRHelpers CQL source
+```
+
 ## CQL Types
 
 ### Intervals
