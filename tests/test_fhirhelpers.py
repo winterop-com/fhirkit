@@ -72,7 +72,7 @@ class TestFHIRHelpersAutoLoad:
         evaluator = CQLEvaluator(include_builtins=False)
 
         # Compile should work but FHIRHelpers functions won't be available
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestInclude version '1.0'
             include FHIRHelpers version '4.0.1'
 
@@ -99,7 +99,7 @@ class TestFHIRHelpersConversions:
 
     def test_to_quantity_function_exists(self, evaluator: CQLEvaluator) -> None:
         """ToQuantity function should be available."""
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestConversions version '1.0'
             include FHIRHelpers version '4.0.1'
 
@@ -111,7 +111,7 @@ class TestFHIRHelpersConversions:
 
     def test_to_code_function_exists(self, evaluator: CQLEvaluator) -> None:
         """ToCode function should be available."""
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestConversions version '1.0'
             include FHIRHelpers version '4.0.1'
 
@@ -123,7 +123,7 @@ class TestFHIRHelpersConversions:
 
     def test_to_concept_function_exists(self, evaluator: CQLEvaluator) -> None:
         """ToConcept function should be available."""
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestConversions version '1.0'
             include FHIRHelpers version '4.0.1'
 
@@ -135,7 +135,7 @@ class TestFHIRHelpersConversions:
 
     def test_to_interval_function_exists(self, evaluator: CQLEvaluator) -> None:
         """ToInterval function should be available."""
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestConversions version '1.0'
             include FHIRHelpers version '4.0.1'
 
@@ -155,31 +155,24 @@ class TestFHIRHelpersWithData:
         ds = InMemoryDataSource()
 
         # Add a patient
-        ds.add_resource({
-            "resourceType": "Patient",
-            "id": "test-patient",
-            "birthDate": "1990-01-15",
-        })
+        ds.add_resource(
+            {
+                "resourceType": "Patient",
+                "id": "test-patient",
+                "birthDate": "1990-01-15",
+            }
+        )
 
         # Add an observation with quantity
-        ds.add_resource({
-            "resourceType": "Observation",
-            "id": "obs-1",
-            "subject": {"reference": "Patient/test-patient"},
-            "code": {
-                "coding": [{
-                    "system": "http://loinc.org",
-                    "code": "29463-7",
-                    "display": "Body weight"
-                }]
-            },
-            "valueQuantity": {
-                "value": 70.5,
-                "unit": "kg",
-                "system": "http://unitsofmeasure.org",
-                "code": "kg"
+        ds.add_resource(
+            {
+                "resourceType": "Observation",
+                "id": "obs-1",
+                "subject": {"reference": "Patient/test-patient"},
+                "code": {"coding": [{"system": "http://loinc.org", "code": "29463-7", "display": "Body weight"}]},
+                "valueQuantity": {"value": 70.5, "unit": "kg", "system": "http://unitsofmeasure.org", "code": "kg"},
             }
-        })
+        )
 
         return ds
 
@@ -228,7 +221,7 @@ class TestFHIRHelpersEdgeCases:
         evaluator = CQLEvaluator()
 
         # This tests that FHIRHelpers plays well with other includes
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestMultiple version '1.0'
             using FHIR version '4.0.1'
             include FHIRHelpers version '4.0.1'
@@ -243,7 +236,7 @@ class TestFHIRHelpersEdgeCases:
         """Should work with alias for FHIRHelpers."""
         evaluator = CQLEvaluator()
 
-        library = evaluator.compile("""
+        evaluator.compile("""
             library TestAlias version '1.0'
             using FHIR version '4.0.1'
             include FHIRHelpers version '4.0.1' called FH
