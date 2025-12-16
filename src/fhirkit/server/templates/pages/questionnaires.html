@@ -694,25 +694,25 @@
         switch (item.type) {
             case 'string':
                 html += '<input type="text" name="' + inputName + '" ' + required + ' ' + readonly + ' ' + maxLength + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'string\')">';
                 break;
 
             case 'text':
                 html += '<textarea name="' + inputName + '" rows="3" ' + required + ' ' + readonly + ' ' + maxLength + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'text\')"></textarea>';
                 break;
 
             case 'integer':
                 html += '<input type="number" name="' + inputName + '" step="1" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', parseInt(this.value), \'integer\')">';
                 break;
 
             case 'decimal':
                 html += '<input type="number" name="' + inputName + '" step="any" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', parseFloat(this.value), \'decimal\')">';
                 break;
 
@@ -735,25 +735,25 @@
 
             case 'date':
                 html += '<input type="date" name="' + inputName + '" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'date\')">';
                 break;
 
             case 'dateTime':
                 html += '<input type="datetime-local" name="' + inputName + '" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'dateTime\')">';
                 break;
 
             case 'time':
                 html += '<input type="time" name="' + inputName + '" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'time\')">';
                 break;
 
             case 'url':
                 html += '<input type="url" name="' + inputName + '" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'placeholder="https://..." ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'url\')">';
                 break;
@@ -778,7 +778,7 @@
                     } else {
                         // Dropdown for many options
                         html += '<select name="' + inputName + '" ' + required + ' ' + readonly + ' ';
-                        html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                        html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                         html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', JSON.parse(this.value), \'choice\')">';
                         html += '<option value="">-- Select --</option>';
                         item.answerOption.forEach(function(opt) {
@@ -793,7 +793,7 @@
                     if (item.type === 'open-choice') {
                         html += '<div class="mt-2">';
                         html += '<input type="text" name="' + inputName + '_other" placeholder="Other (specify)" ';
-                        html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                        html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                         html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'string\')">';
                         html += '</div>';
                     }
@@ -803,11 +803,11 @@
             case 'quantity':
                 html += '<div class="flex space-x-2">';
                 html += '<input type="number" name="' + inputName + '_value" step="any" ' + required + ' ' + readonly + ' ';
-                html += 'class="flex-1 text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="flex-1 text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'placeholder="Value" ';
                 html += 'onchange="updateQuantityAnswer(\'' + escapeHtml(item.linkId) + '\')">';
                 html += '<input type="text" name="' + inputName + '_unit" ' + readonly + ' ';
-                html += 'class="w-24 text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-24 text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'placeholder="Unit" ';
                 html += 'onchange="updateQuantityAnswer(\'' + escapeHtml(item.linkId) + '\')">';
                 html += '</div>';
@@ -816,7 +816,7 @@
             default:
                 // Fallback to text input
                 html += '<input type="text" name="' + inputName + '" ' + required + ' ' + readonly + ' ';
-                html += 'class="w-full text-sm border-gray-300 rounded-md focus:ring-fhir-500 focus:border-fhir-500" ';
+                html += 'class="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-fhir-500 focus:border-fhir-500" ';
                 html += 'onchange="updateAnswer(\'' + escapeHtml(item.linkId) + '\', this.value, \'string\')">';
         }
 
