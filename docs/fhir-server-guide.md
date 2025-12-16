@@ -627,7 +627,46 @@ curl -X POST http://localhost:8080 \
 
 ### Conditional Operations
 
-FHIR conditional operations allow creating, updating, and deleting resources based on search criteria instead of resource IDs.
+FHIR conditional operations allow creating, updating, and deleting resources based on search criteria instead of resource IDs. Conditional read enables efficient caching.
+
+#### Conditional Read (Caching)
+
+Use conditional read headers to avoid transferring unchanged resources:
+
+**If-None-Match** - Compare ETags (resource versions):
+
+```bash
+# First, get the resource and note the ETag
+curl -i http://localhost:8080/baseR4/Patient/123
+# Response headers include: ETag: W/"1"
+
+# Later, check if resource changed
+curl -i -H 'If-None-Match: W/"1"' http://localhost:8080/baseR4/Patient/123
+# Returns 304 Not Modified if unchanged, 200 with body if changed
+```
+
+**If-Modified-Since** - Compare timestamps:
+
+```bash
+curl -i -H 'If-Modified-Since: Mon, 16 Dec 2024 00:00:00 GMT' \
+  http://localhost:8080/baseR4/Patient/123
+# Returns 304 if not modified since that date
+```
+
+| Header | Value | Result |
+|--------|-------|--------|
+| If-None-Match | `W/"version"` | 304 if ETag matches current version |
+| If-None-Match | `*` | 304 if resource exists |
+| If-Modified-Since | HTTP date | 304 if not modified since date |
+| (none) | - | 200 with full resource |
+
+**Multiple ETags:**
+
+```bash
+curl -i -H 'If-None-Match: W/"1", W/"2", W/"3"' \
+  http://localhost:8080/baseR4/Patient/123
+# Returns 304 if current version matches any listed ETag
+```
 
 #### Conditional Create
 
