@@ -318,6 +318,31 @@ def get_resource_display(resource: dict[str, Any]) -> str:
                 return codings[0].get("display", f"RelatedPerson/{resource_id}")
         return f"RelatedPerson/{resource_id}"
 
+    elif resource_type == "Schedule":
+        # Use specialty + service type for display
+        specialties = resource.get("specialty", [])
+        service_types = resource.get("serviceType", [])
+        parts = []
+        if specialties:
+            spec_text = specialties[0].get("text")
+            if spec_text:
+                parts.append(spec_text)
+            else:
+                codings = specialties[0].get("coding", [])
+                if codings:
+                    parts.append(codings[0].get("display", ""))
+        if service_types:
+            svc_text = service_types[0].get("text")
+            if svc_text:
+                parts.append(svc_text)
+            else:
+                codings = service_types[0].get("coding", [])
+                if codings:
+                    parts.append(codings[0].get("display", ""))
+        if parts:
+            return " - ".join(filter(None, parts))
+        return f"Schedule/{resource_id}"
+
     # Default: use resource type and ID
     return f"{resource_type}/{resource_id}"
 
