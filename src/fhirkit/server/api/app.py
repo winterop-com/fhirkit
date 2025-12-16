@@ -64,9 +64,18 @@ def create_app(
 
             questionnaire_gen = QuestionnaireGenerator(seed=settings.seed)
             questionnaire_templates = [
-                "phq-9", "gad-7", "health-intake", "pain-assessment", "covid-screening",
-                "audit-c", "falls-risk", "sdoh", "medication-adherence",
-                "patient-satisfaction", "brief-mental-status", "surgical-preop"
+                "phq-9",
+                "gad-7",
+                "health-intake",
+                "pain-assessment",
+                "covid-screening",
+                "audit-c",
+                "falls-risk",
+                "sdoh",
+                "medication-adherence",
+                "patient-satisfaction",
+                "brief-mental-status",
+                "surgical-preop",
             ]
             for template_name in questionnaire_templates:
                 questionnaire = questionnaire_gen.generate(template=template_name)

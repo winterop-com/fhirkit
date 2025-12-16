@@ -133,9 +133,7 @@ class TestQuestionnaireCRUD:
 
     def test_search_questionnaire_by_url(self, client_with_questionnaire):
         """Test searching questionnaires by url."""
-        response = client_with_questionnaire.get(
-            "/Questionnaire?url=http://example.org/fhir/Questionnaire/phq-9"
-        )
+        response = client_with_questionnaire.get("/Questionnaire?url=http://example.org/fhir/Questionnaire/phq-9")
         assert response.status_code == 200
 
         data = response.json()
@@ -218,9 +216,7 @@ class TestQuestionnaireResponseCRUD:
 
     def test_search_response_by_questionnaire(self, client_with_questionnaire):
         """Test searching responses by questionnaire reference."""
-        response = client_with_questionnaire.get(
-            "/QuestionnaireResponse?questionnaire=Questionnaire/phq-9"
-        )
+        response = client_with_questionnaire.get("/QuestionnaireResponse?questionnaire=Questionnaire/phq-9")
         assert response.status_code == 200
 
         data = response.json()
@@ -229,9 +225,7 @@ class TestQuestionnaireResponseCRUD:
 
     def test_search_response_by_patient(self, client_with_questionnaire):
         """Test searching responses by patient."""
-        response = client_with_questionnaire.get(
-            "/QuestionnaireResponse?patient=Patient/test-patient-1"
-        )
+        response = client_with_questionnaire.get("/QuestionnaireResponse?patient=Patient/test-patient-1")
         assert response.status_code == 200
 
         data = response.json()
