@@ -153,6 +153,8 @@ greeting = evaluator.evaluate_definition("Greeting")  # 'Hello, CQL!'
 - [FHIRPath API](fhirpath-api.md) - Python API for FHIRPath
 - [CQL API](cql-api.md) - Python API for CQL
 - [ELM Guide](elm-guide.md) - ELM loading, evaluation, and CQL-to-ELM export
+- [ELM API](elm-api.md) - Python API for ELM (loading, evaluation, serialization)
+- [ELM Reference](elm-reference.md) - Complete ELM expression types reference (168 types)
 - [CDS Hooks Guide](cds-hooks-guide.md) - Building clinical decision support services
 - [FHIRPath & CQL Reference](fhirpath-cql-tutorial.md) - Deep dive reference with examples
 

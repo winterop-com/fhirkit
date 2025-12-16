@@ -614,6 +614,8 @@ For complete CLI documentation, see the [CLI Reference](cli.md#elm-cli).
 
 ## Next Steps
 
+- [ELM API](elm-api.md) - Complete Python API reference
+- [ELM Reference](elm-reference.md) - All 168 expression types with examples
 - [CQL Tutorial](cql-tutorial.md) - Learn CQL syntax
 - [CQL API](cql-api.md) - Direct CQL evaluation (source code)
 - [CDS Hooks Guide](cds-hooks-guide.md) - Using ELM with CDS Hooks
