@@ -358,6 +358,9 @@ def get_resource_display(resource: dict[str, Any]) -> str:
             return " - ".join(parts)
         return f"MeasureReport/{resource_id}"
 
+    elif resource_type == "Group":
+        return resource.get("name", f"Group/{resource_id}")
+
     # Default: use resource type and ID
     return f"{resource_type}/{resource_id}"
 
