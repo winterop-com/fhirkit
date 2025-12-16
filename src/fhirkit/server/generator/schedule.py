@@ -82,7 +82,7 @@ class ScheduleGenerator(FHIRResourceGenerator):
             "identifier": [
                 self._generate_identifier(
                     system="http://example.org/schedule-ids",
-                    value=f"SCHED-{self.faker.numerify('######')}",
+                    value=f"{specialty['display']} - {service_type['display']}",
                 ),
             ],
             "active": True,
@@ -93,7 +93,7 @@ class ScheduleGenerator(FHIRResourceGenerator):
                 "start": now.isoformat(),
                 "end": planning_end.isoformat(),
             },
-            "comment": f"Schedule for {service_type['display']} services",
+            "comment": f"{specialty['display']} - {service_type['display']} Schedule",
             "actor": [],
         }
 
@@ -107,6 +107,6 @@ class ScheduleGenerator(FHIRResourceGenerator):
 
         # Ensure at least one actor (FHIR requires it)
         if not schedule["actor"]:
-            schedule["actor"].append({"display": "General Schedule"})
+            schedule["actor"].append({"display": f"{specialty['display']} Schedule"})
 
         return schedule
