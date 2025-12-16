@@ -343,6 +343,21 @@ def get_resource_display(resource: dict[str, Any]) -> str:
             return " - ".join(filter(None, parts))
         return f"Schedule/{resource_id}"
 
+    elif resource_type == "MeasureReport":
+        # Use type + measure name for display
+        report_type = resource.get("type", "")
+        measure = resource.get("measure", "")
+        parts = []
+        if report_type:
+            parts.append(report_type.replace("-", " ").title())
+        if measure:
+            # Extract measure name from canonical URL
+            measure_name = measure.split("/")[-1] if "/" in measure else measure
+            parts.append(measure_name)
+        if parts:
+            return " - ".join(parts)
+        return f"MeasureReport/{resource_id}"
+
     # Default: use resource type and ID
     return f"{resource_type}/{resource_id}"
 
