@@ -95,6 +95,10 @@ identifier
         | 'contains'
         | 'in'
         | 'is'
+        // Allow dateTimePrecision keywords as identifiers for functions like year(), month(), etc.
+        | 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond'
+        // Allow aggregate function names
+        | 'min' | 'max' | 'sum' | 'avg'
         ;
 
 

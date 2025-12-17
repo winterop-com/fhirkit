@@ -529,6 +529,88 @@ print(result)  # [<current date>]
 
 result = evaluate_fhirpath("now()", {})
 print(result)  # [<current datetime>]
+
+# Extract date/time components
+result = evaluate_fhirpath("@2024-06-15.year()", {})
+print(result)  # [2024]
+
+result = evaluate_fhirpath("@2024-06-15.month()", {})
+print(result)  # [6]
+
+result = evaluate_fhirpath("@2024-06-15.day()", {})
+print(result)  # [15]
+
+# Extract time components
+result = evaluate_fhirpath("@2024-06-15T10:30:45.hour()", {})
+print(result)  # [10]
+
+result = evaluate_fhirpath("@2024-06-15T10:30:45.minute()", {})
+print(result)  # [30]
+
+result = evaluate_fhirpath("@2024-06-15T10:30:45.second()", {})
+print(result)  # [45]
+
+# From resource dates
+patient = {"resourceType": "Patient", "birthDate": "1985-06-15"}
+result = evaluate_fhirpath("Patient.birthDate.year()", patient)
+print(result)  # [1985]
+```
+
+## Aggregate Functions
+
+```python
+from fhirkit import evaluate_fhirpath
+
+# min - returns minimum value
+result = evaluate_fhirpath("(3 | 1 | 4 | 1 | 5).min()", {})
+print(result)  # [1]
+
+# max - returns maximum value
+result = evaluate_fhirpath("(3 | 1 | 4 | 1 | 5).max()", {})
+print(result)  # [5]
+
+# sum - returns sum of numeric values
+result = evaluate_fhirpath("(1 | 2 | 3 | 4 | 5).sum()", {})
+print(result)  # [15]
+
+# avg - returns average of numeric values
+result = evaluate_fhirpath("(1 | 2 | 3 | 4 | 5).avg()", {})
+print(result)  # [3.0]
+
+# Works with resource data
+observation = {
+    "resourceType": "Observation",
+    "component": [
+        {"valueQuantity": {"value": 120}},  # systolic
+        {"valueQuantity": {"value": 80}}    # diastolic
+    ]
+}
+
+result = evaluate_fhirpath(
+    "Observation.component.valueQuantity.value.min()",
+    observation
+)
+print(result)  # [80]
+
+result = evaluate_fhirpath(
+    "Observation.component.valueQuantity.value.max()",
+    observation
+)
+print(result)  # [120]
+
+# Works with strings (alphabetical ordering)
+result = evaluate_fhirpath("('banana' | 'apple' | 'cherry').min()", {})
+print(result)  # ['apple']
+
+# Empty collection behavior
+result = evaluate_fhirpath("{}.min()", {})
+print(result)  # []
+
+result = evaluate_fhirpath("{}.sum()", {})
+print(result)  # [0]
+
+result = evaluate_fhirpath("{}.avg()", {})
+print(result)  # []
 ```
 
 ## Error Handling

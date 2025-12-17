@@ -1194,3 +1194,206 @@ def filter_resources_advanced(
     filtered = filter_resources_with_has(filtered, resource_type, params, store)
 
     return filtered
+
+
+# =============================================================================
+# Sorting
+# =============================================================================
+
+
+def parse_sort_param(sort_param: str) -> list[tuple[str, bool]]:
+    """Parse a _sort parameter value.
+
+    Supports comma-separated fields and - prefix for descending order.
+    Example: "_sort=date,-name" -> [("date", False), ("name", True)]
+
+    Args:
+        sort_param: The _sort parameter value
+
+    Returns:
+        List of (field_name, descending) tuples
+    """
+    sort_fields = []
+    for field in sort_param.split(","):
+        field = field.strip()
+        if not field:
+            continue
+        descending = field.startswith("-")
+        field_name = field.lstrip("-")
+        sort_fields.append((field_name, descending))
+    return sort_fields
+
+
+def get_sort_key(
+    resource: dict[str, Any],
+    field: str,
+    resource_type: str,
+) -> Any:
+    """Get the sort key value for a resource.
+
+    Uses search parameter definitions to resolve paths.
+
+    Args:
+        resource: The FHIR resource
+        field: The sort field name
+        resource_type: The resource type
+
+    Returns:
+        The sortable value (or None for missing values)
+    """
+    # Get search parameter definitions
+    type_params = SEARCH_PARAMS.get(resource_type, {})
+
+    # Add common params
+    common_params = {
+        "_id": {"path": "id", "type": "token"},
+        "_lastUpdated": {"path": "meta.lastUpdated", "type": "date"},
+    }
+    all_params = {**common_params, **type_params}
+
+    # Check if field is a search parameter
+    param_def = all_params.get(field)
+    if param_def:
+        path = param_def["path"]
+        param_type = param_def["type"]
+        value = get_nested_value(resource, path)
+    else:
+        # Try direct field access
+        value = get_nested_value(resource, field)
+        param_type = None
+
+    # Handle None values - sort to end
+    if value is None:
+        return (1, "")  # Tuple ensures None sorts last
+
+    # Convert to sortable format based on type
+    if param_type == "date" or (isinstance(value, str) and _looks_like_date(value)):
+        return (0, _normalize_date(value))
+
+    if isinstance(value, (int, float)):
+        return (0, value)
+
+    if isinstance(value, list):
+        # For lists, use first value for sorting
+        if value:
+            first_val = value[0]
+            if isinstance(first_val, dict):
+                # Handle complex types like Coding
+                if "code" in first_val:
+                    return (0, str(first_val.get("code", "")))
+                if "value" in first_val:
+                    return (0, str(first_val.get("value", "")))
+                if "family" in first_val:
+                    return (0, str(first_val.get("family", "")))
+            return (0, str(first_val))
+        return (1, "")
+
+    if isinstance(value, dict):
+        # Handle complex types
+        if "value" in value:
+            return (0, value["value"])
+        if "code" in value:
+            return (0, str(value["code"]))
+        if "family" in value:
+            return (0, str(value["family"]))
+
+    return (0, str(value).lower())
+
+
+def _looks_like_date(value: str) -> bool:
+    """Check if a string looks like a date/datetime."""
+    if not isinstance(value, str):
+        return False
+    # ISO date patterns
+    return bool(re.match(r"^\d{4}(-\d{2})?(-\d{2})?(T.*)?$", value))
+
+
+def _normalize_date(value: Any) -> str:
+    """Normalize a date value for sorting."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        # Already ISO format, just ensure consistent format
+        return value
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return str(value)
+
+
+def sort_resources(
+    resources: list[dict[str, Any]],
+    sort_param: str,
+    resource_type: str,
+) -> list[dict[str, Any]]:
+    """Sort resources according to _sort parameter.
+
+    Supports:
+    - Multiple fields: "_sort=date,-name"
+    - Descending order with - prefix: "_sort=-date"
+    - Search parameter paths: "_sort=birthdate" resolves to "birthDate"
+    - Direct paths: "_sort=meta.lastUpdated"
+
+    Args:
+        resources: List of FHIR resources to sort
+        sort_param: The _sort parameter value
+        resource_type: The resource type
+
+    Returns:
+        Sorted list of resources
+    """
+    if not resources or not sort_param:
+        return resources
+
+    sort_fields = parse_sort_param(sort_param)
+    if not sort_fields:
+        return resources
+
+    # Create a multi-key sort function
+    def multi_sort_key(resource: dict[str, Any]) -> tuple[Any, ...]:
+        keys = []
+        for field, descending in sort_fields:
+            key = get_sort_key(resource, field, resource_type)
+            if descending:
+                # For descending, we need to invert the comparison
+                # We use a wrapper class for this
+                key = _DescendingKey(key)
+            keys.append(key)
+        return tuple(keys)
+
+    try:
+        return sorted(resources, key=multi_sort_key)
+    except TypeError:
+        # Fall back to original order if sorting fails
+        return resources
+
+
+class _DescendingKey:
+    """Wrapper to invert comparison for descending sort."""
+
+    __slots__ = ("key",)
+
+    def __init__(self, key: Any):
+        self.key = key
+
+    def __lt__(self, other: "_DescendingKey") -> bool:
+        try:
+            return self.key > other.key
+        except TypeError:
+            return False
+
+    def __gt__(self, other: "_DescendingKey") -> bool:
+        try:
+            return self.key < other.key
+        except TypeError:
+            return False
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, _DescendingKey):
+            return self.key == other.key
+        return False
+
+    def __le__(self, other: "_DescendingKey") -> bool:
+        return self == other or self < other
+
+    def __ge__(self, other: "_DescendingKey") -> bool:
+        return self == other or self > other

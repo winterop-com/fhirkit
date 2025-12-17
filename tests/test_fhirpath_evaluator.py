@@ -1656,3 +1656,204 @@ class TestEdgeCases:
     def test_integer_division_by_zero(self, evaluator):
         result = evaluator.evaluate("5 div 0", None)
         assert result == []
+
+
+# ==============================================================================
+# Aggregate Function Tests (min, max, sum, avg)
+# ==============================================================================
+
+
+class TestAggregateFunctions:
+    """Tests for aggregate functions."""
+
+    def test_min_integers(self, evaluator):
+        result = evaluator.evaluate("(1 | 3 | 2 | 5 | 4).min()", None)
+        assert result == [1]
+
+    def test_min_single_value(self, evaluator):
+        result = evaluator.evaluate("(42).min()", None)
+        assert result == [42]
+
+    def test_min_empty(self, evaluator):
+        result = evaluator.evaluate("{}.min()", None)
+        assert result == []
+
+    def test_min_decimals(self, evaluator):
+        result = evaluator.evaluate("(1.5 | 0.5 | 2.5).min()", None)
+        assert len(result) == 1
+        assert float(result[0]) == 0.5
+
+    def test_min_strings(self, evaluator):
+        result = evaluator.evaluate("('banana' | 'apple' | 'cherry').min()", None)
+        assert result == ["apple"]
+
+    def test_max_integers(self, evaluator):
+        result = evaluator.evaluate("(1 | 3 | 2 | 5 | 4).max()", None)
+        assert result == [5]
+
+    def test_max_single_value(self, evaluator):
+        result = evaluator.evaluate("(42).max()", None)
+        assert result == [42]
+
+    def test_max_empty(self, evaluator):
+        result = evaluator.evaluate("{}.max()", None)
+        assert result == []
+
+    def test_max_decimals(self, evaluator):
+        result = evaluator.evaluate("(1.5 | 0.5 | 2.5).max()", None)
+        assert len(result) == 1
+        assert float(result[0]) == 2.5
+
+    def test_max_strings(self, evaluator):
+        result = evaluator.evaluate("('banana' | 'apple' | 'cherry').max()", None)
+        assert result == ["cherry"]
+
+    def test_sum_integers(self, evaluator):
+        result = evaluator.evaluate("(1 | 2 | 3 | 4 | 5).sum()", None)
+        assert result == [15]
+
+    def test_sum_empty(self, evaluator):
+        result = evaluator.evaluate("{}.sum()", None)
+        assert result == [0]
+
+    def test_sum_single_value(self, evaluator):
+        result = evaluator.evaluate("(42).sum()", None)
+        assert result == [42]
+
+    def test_sum_decimals(self, evaluator):
+        result = evaluator.evaluate("(1.5 | 2.5 | 3.0).sum()", None)
+        assert len(result) == 1
+        assert float(result[0]) == 7.0
+
+    def test_avg_integers(self, evaluator):
+        result = evaluator.evaluate("(1 | 2 | 3 | 4 | 5).avg()", None)
+        assert len(result) == 1
+        assert float(result[0]) == 3.0
+
+    def test_avg_empty(self, evaluator):
+        result = evaluator.evaluate("{}.avg()", None)
+        assert result == []
+
+    def test_avg_single_value(self, evaluator):
+        result = evaluator.evaluate("(10).avg()", None)
+        assert len(result) == 1
+        assert float(result[0]) == 10.0
+
+    def test_avg_decimals(self, evaluator):
+        result = evaluator.evaluate("(1.0 | 2.0 | 3.0).avg()", None)
+        assert len(result) == 1
+        assert float(result[0]) == 2.0
+
+    def test_min_from_resource(self, evaluator, observation_bp):
+        """Test min on values extracted from a resource."""
+        result = evaluator.evaluate("Observation.component.valueQuantity.value.min()", observation_bp)
+        assert len(result) == 1
+        # Blood pressure typically has two values, min should return the lower one
+
+    def test_max_from_resource(self, evaluator, observation_bp):
+        """Test max on values extracted from a resource."""
+        result = evaluator.evaluate("Observation.component.valueQuantity.value.max()", observation_bp)
+        assert len(result) == 1
+
+
+# ==============================================================================
+# Date/Time Component Extraction Tests
+# ==============================================================================
+
+
+class TestDateTimeComponents:
+    """Tests for date/time component extraction functions."""
+
+    def test_year_from_date(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15.year()", None)
+        assert result == [2024]
+
+    def test_month_from_date(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15.month()", None)
+        assert result == [3]
+
+    def test_day_from_date(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15.day()", None)
+        assert result == [15]
+
+    def test_year_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.year()", None)
+        assert result == [2024]
+
+    def test_month_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.month()", None)
+        assert result == [3]
+
+    def test_day_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.day()", None)
+        assert result == [15]
+
+    def test_hour_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.hour()", None)
+        assert result == [10]
+
+    def test_minute_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.minute()", None)
+        assert result == [30]
+
+    def test_second_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.second()", None)
+        assert result == [45]
+
+    def test_millisecond_from_datetime(self, evaluator):
+        result = evaluator.evaluate("@2024-03-15T10:30:45.123.millisecond()", None)
+        assert result == [123]
+
+    def test_hour_from_time(self, evaluator):
+        result = evaluator.evaluate("@T14:30:00.hour()", None)
+        assert result == [14]
+
+    def test_minute_from_time(self, evaluator):
+        result = evaluator.evaluate("@T14:30:00.minute()", None)
+        assert result == [30]
+
+    def test_second_from_time(self, evaluator):
+        result = evaluator.evaluate("@T14:30:45.second()", None)
+        assert result == [45]
+
+    def test_year_empty_input(self, evaluator):
+        result = evaluator.evaluate("{}.year()", None)
+        assert result == []
+
+    def test_year_from_partial_date(self, evaluator):
+        """Year-only date should still return the year."""
+        result = evaluator.evaluate("@2024.year()", None)
+        assert result == [2024]
+
+    def test_month_from_partial_date(self, evaluator):
+        """Year-only date has no month precision."""
+        result = evaluator.evaluate("@2024.month()", None)
+        assert result == []
+
+    def test_day_from_year_month_date(self, evaluator):
+        """Year-month date has no day precision."""
+        result = evaluator.evaluate("@2024-03.day()", None)
+        assert result == []
+
+    def test_hour_from_date(self, evaluator):
+        """Date has no hour component."""
+        result = evaluator.evaluate("@2024-03-15.hour()", None)
+        assert result == []
+
+    def test_year_from_resource_date(self, evaluator, patient):
+        """Test extracting year from a resource's date field."""
+        result = evaluator.evaluate("Patient.birthDate.year()", patient)
+        assert len(result) == 1
+        assert isinstance(result[0], int)
+
+    def test_month_from_resource_date(self, evaluator, patient):
+        """Test extracting month from a resource's date field."""
+        result = evaluator.evaluate("Patient.birthDate.month()", patient)
+        assert len(result) == 1
+        assert isinstance(result[0], int)
+
+    def test_day_from_resource_date(self, evaluator, patient):
+        """Test extracting day from a resource's date field."""
+        result = evaluator.evaluate("Patient.birthDate.day()", patient)
+        assert len(result) == 1
+        assert isinstance(result[0], int)

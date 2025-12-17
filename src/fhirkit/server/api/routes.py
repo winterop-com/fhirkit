@@ -2721,16 +2721,9 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
 
         # Apply sorting if specified
         if _sort:
-            reverse = _sort.startswith("-")
-            sort_field = _sort.lstrip("-")
-            try:
-                resources = sorted(
-                    resources,
-                    key=lambda r: r.get(sort_field, "") or "",
-                    reverse=reverse,
-                )
-            except (TypeError, KeyError):
-                pass  # Ignore sort errors
+            from .search import sort_resources
+
+            resources = sort_resources(resources, _sort, resource_type)
 
         # Handle _contained parameter
         # _contained=false (default): only top-level resources

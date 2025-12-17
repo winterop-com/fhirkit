@@ -559,3 +559,224 @@ class TestTransaction:
         # Should be rolled back to original
         patient = store.read("Patient", "rollback-patient")
         assert patient["name"][0]["family"] == "Original"
+
+
+class TestSort:
+    """Tests for _sort parameter."""
+
+    @pytest.fixture
+    def client_with_patients(self, store):
+        """Create test client with multiple patients for sorting tests."""
+        # Add patients with different birth dates and names
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "sort-patient-1",
+                "name": [{"family": "Zeta", "given": ["Alice"]}],
+                "gender": "female",
+                "birthDate": "1985-03-15",
+            }
+        )
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "sort-patient-2",
+                "name": [{"family": "Alpha", "given": ["Bob"]}],
+                "gender": "male",
+                "birthDate": "1990-07-20",
+            }
+        )
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "sort-patient-3",
+                "name": [{"family": "Mu", "given": ["Carol"]}],
+                "gender": "female",
+                "birthDate": "1975-01-10",
+            }
+        )
+
+        settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
+        app = create_app(settings=settings, store=store)
+        return TestClient(app)
+
+    def test_sort_by_birthdate_ascending(self, client_with_patients):
+        """Test sorting patients by birthdate ascending."""
+        response = client_with_patients.get("/Patient?_sort=birthdate")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+        assert len(entries) == 3
+
+        # Should be ordered: 1975, 1985, 1990
+        birth_dates = [e["resource"]["birthDate"] for e in entries]
+        assert birth_dates == ["1975-01-10", "1985-03-15", "1990-07-20"]
+
+    def test_sort_by_birthdate_descending(self, client_with_patients):
+        """Test sorting patients by birthdate descending."""
+        response = client_with_patients.get("/Patient?_sort=-birthdate")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+        assert len(entries) == 3
+
+        # Should be ordered: 1990, 1985, 1975
+        birth_dates = [e["resource"]["birthDate"] for e in entries]
+        assert birth_dates == ["1990-07-20", "1985-03-15", "1975-01-10"]
+
+    def test_sort_by_family_name(self, client_with_patients):
+        """Test sorting patients by family name."""
+        response = client_with_patients.get("/Patient?_sort=family")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+        assert len(entries) == 3
+
+        # Should be ordered alphabetically: Alpha, Mu, Zeta
+        families = [e["resource"]["name"][0]["family"] for e in entries]
+        assert families == ["Alpha", "Mu", "Zeta"]
+
+    def test_sort_multiple_fields(self, client_with_patients, store):
+        """Test sorting by multiple fields."""
+        # Add another patient with same birthdate
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "sort-patient-4",
+                "name": [{"family": "Beta", "given": ["David"]}],
+                "gender": "male",
+                "birthDate": "1985-03-15",  # Same as patient-1
+            }
+        )
+
+        response = client_with_patients.get("/Patient?_sort=birthdate,family")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+        # Should have 4 patients now
+        assert len(entries) == 4
+
+
+class TestIncludeRevinclude:
+    """Tests for _include and _revinclude parameters."""
+
+    @pytest.fixture
+    def client_with_related(self, store):
+        """Create test client with related resources."""
+        # Create a patient
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "inc-patient-1",
+                "name": [{"family": "Include", "given": ["Test"]}],
+                "generalPractitioner": [{"reference": "Practitioner/inc-practitioner-1"}],
+            }
+        )
+        # Create a practitioner referenced by the patient
+        store.create(
+            {
+                "resourceType": "Practitioner",
+                "id": "inc-practitioner-1",
+                "name": [{"family": "Doctor", "given": ["Test"]}],
+            }
+        )
+        # Create conditions referencing the patient
+        store.create(
+            {
+                "resourceType": "Condition",
+                "id": "inc-condition-1",
+                "subject": {"reference": "Patient/inc-patient-1"},
+                "code": {"coding": [{"code": "123", "display": "Test Condition"}]},
+            }
+        )
+        store.create(
+            {
+                "resourceType": "Condition",
+                "id": "inc-condition-2",
+                "subject": {"reference": "Patient/inc-patient-1"},
+                "code": {"coding": [{"code": "456", "display": "Another Condition"}]},
+            }
+        )
+
+        settings = FHIRServerSettings(patients=0, enable_docs=False, enable_ui=False, api_base_path="")
+        app = create_app(settings=settings, store=store)
+        return TestClient(app)
+
+    def test_include_practitioner(self, client_with_related):
+        """Test _include to get referenced practitioner."""
+        response = client_with_related.get("/Patient?_include=Patient:general-practitioner")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+
+        # Should have patient (match) and practitioner (include)
+        resource_types = {e["resource"]["resourceType"] for e in entries}
+        assert "Patient" in resource_types
+        assert "Practitioner" in resource_types
+
+        # Check search mode annotations
+        match_entries = [e for e in entries if e.get("search", {}).get("mode") == "match"]
+        include_entries = [e for e in entries if e.get("search", {}).get("mode") == "include"]
+
+        assert len(match_entries) >= 1
+        assert len(include_entries) >= 1
+
+    def test_revinclude_conditions(self, client_with_related):
+        """Test _revinclude to get conditions referencing patient."""
+        response = client_with_related.get("/Patient?_revinclude=Condition:patient")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+
+        # Should have patient (match) and conditions (include)
+        resource_types = [e["resource"]["resourceType"] for e in entries]
+        assert "Patient" in resource_types
+        assert "Condition" in resource_types
+
+        # Should have 2 conditions included
+        condition_count = sum(1 for e in entries if e["resource"]["resourceType"] == "Condition")
+        assert condition_count == 2
+
+    def test_include_and_revinclude_together(self, client_with_related):
+        """Test using both _include and _revinclude."""
+        response = client_with_related.get(
+            "/Patient?_include=Patient:general-practitioner&_revinclude=Condition:patient"
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+
+        resource_types = {e["resource"]["resourceType"] for e in entries}
+        assert "Patient" in resource_types
+        assert "Practitioner" in resource_types
+        assert "Condition" in resource_types
+
+    def test_include_no_match(self, client_with_related, store):
+        """Test _include when referenced resource doesn't exist."""
+        # Create a patient referencing a non-existent practitioner
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "inc-patient-orphan",
+                "name": [{"family": "Orphan", "given": ["Test"]}],
+                "generalPractitioner": [{"reference": "Practitioner/non-existent"}],
+            }
+        )
+
+        response = client_with_related.get("/Patient?_id=inc-patient-orphan&_include=Patient:general-practitioner")
+        assert response.status_code == 200
+
+        data = response.json()
+        entries = data.get("entry", [])
+
+        # Should only have the patient, no practitioner
+        resource_types = [e["resource"]["resourceType"] for e in entries]
+        assert "Patient" in resource_types
+        assert "Practitioner" not in resource_types
