@@ -1420,12 +1420,12 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
         """Provide context to resolvers."""
         return {"store": store}
 
-    # Default query to show in GraphiQL
+    # Default query to show in GraphiQL with multiple examples
     default_query = """\
-# FHIR GraphQL API
-# Try these example queries:
+# FHIR GraphQL API - Example Queries
+# Press the Play button or Ctrl+Enter to run
 
-# List first 5 patients
+# 1. List patients (first 5)
 {
   PatientList(_count: 5) {
     id
@@ -1434,7 +1434,11 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
   }
 }
 
-# Or search by gender:
+# ============================================
+# More example queries (uncomment to try):
+# ============================================
+
+# 2. Search patients by gender
 # {
 #   PatientList(gender: "female", _count: 5) {
 #     id
@@ -1442,15 +1446,12 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
 #   }
 # }
 
-# Or use cursor pagination:
+# 3. Cursor-based pagination
 # {
-#   PatientConnection(first: 5) {
+#   PatientConnection(first: 3) {
 #     edges {
 #       cursor
-#       node {
-#         id
-#         data
-#       }
+#       node { id data }
 #     }
 #     pageInfo {
 #       hasNextPage
@@ -1459,25 +1460,128 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
 #     total
 #   }
 # }
+
+# 4. Get a specific patient by ID
+# {
+#   Patient(_id: "PATIENT_ID_HERE") {
+#     id
+#     data
+#   }
+# }
+
+# 5. List observations for a patient
+# {
+#   ObservationList(patient: "Patient/PATIENT_ID", _count: 10) {
+#     id
+#     data
+#   }
+# }
+
+# 6. List conditions with clinical status
+# {
+#   ConditionList(clinicalStatus: "active", _count: 10) {
+#     id
+#     data
+#   }
+# }
+
+# 7. Search practitioners
+# {
+#   PractitionerList(_count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# 8. List organizations
+# {
+#   OrganizationList(_count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# 9. Search encounters by status
+# {
+#   EncounterList(status: "finished", _count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# 10. List medication requests
+# {
+#   MedicationRequestList(_count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# 11. Search questionnaires
+# {
+#   QuestionnaireList(_count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# 12. Create a new patient (mutation)
+# mutation {
+#   PatientCreate(data: {
+#     resourceType: "Patient",
+#     name: [{family: "Smith", given: ["John"]}],
+#     gender: "male",
+#     birthDate: "1990-01-15"
+#   }) {
+#     id
+#     data
+#   }
+# }
+
+# 13. Fetch multiple resource types at once
+# {
+#   patients: PatientList(_count: 3) { id data }
+#   practitioners: PractitionerList(_count: 3) { id data }
+#   organizations: OrganizationList(_count: 3) { id data }
+# }
+
+# 14. List locations
+# {
+#   LocationList(_count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# 15. Search immunizations
+# {
+#   ImmunizationList(_count: 5) {
+#     id
+#     data
+#   }
+# }
 """
 
-    router = GraphQLRouter(
-        schema=schema,
-        context_getter=get_context,
-        graphql_ide="graphiql",  # Enable GraphiQL playground
-    )
-
-    # Override the GET handler to include default query in GraphiQL
-    from fastapi import Request
+    import json
     from fastapi.responses import HTMLResponse
 
-    @router.get("", response_class=HTMLResponse, include_in_schema=False)
-    async def graphiql_ide(request: Request) -> HTMLResponse:
-        """Serve GraphiQL IDE with default query."""
-        import json
+    # Custom GraphQL router with default query in GraphiQL
+    class FHIRGraphQLRouter(GraphQLRouter):
+        """GraphQL router with custom GraphiQL default query."""
 
-        html = f"""
-<!DOCTYPE html>
+        _custom_html: str = ""
+
+        async def render_graphql_ide(self, request) -> HTMLResponse:
+            return HTMLResponse(self._custom_html)
+
+    router = FHIRGraphQLRouter(
+        schema=schema,
+        context_getter=get_context,
+        graphql_ide="graphiql",
+    )
+
+    # Set custom GraphiQL HTML with default query
+    router._custom_html = f"""<!DOCTYPE html>
 <html>
 <head>
     <title>FHIR GraphQL</title>
@@ -1508,9 +1612,7 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
         );
     </script>
 </body>
-</html>
-"""
-        return HTMLResponse(content=html)
+</html>"""
 
     logger.info("GraphQL schema created with %d resource types", len(SUPPORTED_TYPES))
 
