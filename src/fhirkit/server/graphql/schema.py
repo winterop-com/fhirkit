@@ -1420,11 +1420,97 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
         """Provide context to resolvers."""
         return {"store": store}
 
+    # Default query to show in GraphiQL
+    default_query = """\
+# FHIR GraphQL API
+# Try these example queries:
+
+# List first 5 patients
+{
+  PatientList(_count: 5) {
+    id
+    resourceType
+    data
+  }
+}
+
+# Or search by gender:
+# {
+#   PatientList(gender: "female", _count: 5) {
+#     id
+#     data
+#   }
+# }
+
+# Or use cursor pagination:
+# {
+#   PatientConnection(first: 5) {
+#     edges {
+#       cursor
+#       node {
+#         id
+#         data
+#       }
+#     }
+#     pageInfo {
+#       hasNextPage
+#       endCursor
+#     }
+#     total
+#   }
+# }
+"""
+
     router = GraphQLRouter(
         schema=schema,
         context_getter=get_context,
         graphql_ide="graphiql",  # Enable GraphiQL playground
     )
+
+    # Override the GET handler to include default query in GraphiQL
+    from fastapi import Request
+    from fastapi.responses import HTMLResponse
+
+    @router.get("", response_class=HTMLResponse, include_in_schema=False)
+    async def graphiql_ide(request: Request) -> HTMLResponse:
+        """Serve GraphiQL IDE with default query."""
+        import json
+
+        html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FHIR GraphQL</title>
+    <style>
+        body {{ height: 100%; margin: 0; width: 100%; overflow: hidden; }}
+        #graphiql {{ height: 100vh; }}
+    </style>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/graphiql@3/graphiql.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/graphiql@3/graphiql.min.css" />
+</head>
+<body>
+    <div id="graphiql"></div>
+    <script>
+        const fetcher = GraphiQL.createFetcher({{
+            url: window.location.href,
+        }});
+
+        const defaultQuery = {json.dumps(default_query)};
+
+        const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+        root.render(
+            React.createElement(GraphiQL, {{
+                fetcher: fetcher,
+                defaultQuery: defaultQuery,
+            }})
+        );
+    </script>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html)
 
     logger.info("GraphQL schema created with %d resource types", len(SUPPORTED_TYPES))
 
