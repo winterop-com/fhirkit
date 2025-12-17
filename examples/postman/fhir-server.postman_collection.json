@@ -835,9 +835,11 @@
     },
     {
       "name": "Batch/Transaction",
+      "description": "Batch processes entries independently. Transaction processes entries atomically with rollback on failure.",
       "item": [
         {
           "name": "Batch Request",
+          "description": "Batch operations process each entry independently - failures in one entry do not affect others",
           "request": {
             "method": "POST",
             "header": [
@@ -846,6 +848,36 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"resourceType\": \"Bundle\",\n  \"type\": \"batch\",\n  \"entry\": [\n    {\n      \"request\": {\n        \"method\": \"GET\",\n        \"url\": \"Patient/{{patientId}}\"\n      }\n    },\n    {\n      \"request\": {\n        \"method\": \"GET\",\n        \"url\": \"Condition?patient=Patient/{{patientId}}\"\n      }\n    },\n    {\n      \"request\": {\n        \"method\": \"GET\",\n        \"url\": \"MedicationRequest?patient=Patient/{{patientId}}\"\n      }\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/"
+          }
+        },
+        {
+          "name": "Transaction Request (Atomic)",
+          "description": "Transaction operations process all entries atomically - if any entry fails, ALL changes are rolled back",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Bundle\",\n  \"type\": \"transaction\",\n  \"entry\": [\n    {\n      \"resource\": {\n        \"resourceType\": \"Patient\",\n        \"id\": \"txn-patient-1\",\n        \"name\": [{\"family\": \"Transaction\", \"given\": [\"Test\"]}],\n        \"gender\": \"male\"\n      },\n      \"request\": {\n        \"method\": \"PUT\",\n        \"url\": \"Patient/txn-patient-1\"\n      }\n    },\n    {\n      \"resource\": {\n        \"resourceType\": \"Observation\",\n        \"id\": \"txn-obs-1\",\n        \"status\": \"final\",\n        \"code\": {\"coding\": [{\"system\": \"http://loinc.org\", \"code\": \"8480-6\", \"display\": \"Systolic BP\"}]},\n        \"subject\": {\"reference\": \"Patient/txn-patient-1\"},\n        \"valueQuantity\": {\"value\": 120, \"unit\": \"mmHg\"}\n      },\n      \"request\": {\n        \"method\": \"PUT\",\n        \"url\": \"Observation/txn-obs-1\"\n      }\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/"
+          }
+        },
+        {
+          "name": "Transaction with Create",
+          "description": "Transaction with POST (create) operations - all resources created atomically",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/fhir+json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Bundle\",\n  \"type\": \"transaction\",\n  \"entry\": [\n    {\n      \"resource\": {\n        \"resourceType\": \"Patient\",\n        \"name\": [{\"family\": \"Atomic\", \"given\": [\"Create\"]}],\n        \"gender\": \"female\"\n      },\n      \"request\": {\n        \"method\": \"POST\",\n        \"url\": \"Patient\"\n      }\n    },\n    {\n      \"resource\": {\n        \"resourceType\": \"Condition\",\n        \"code\": {\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"44054006\", \"display\": \"Diabetes\"}]},\n        \"clinicalStatus\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/condition-clinical\", \"code\": \"active\"}]}\n      },\n      \"request\": {\n        \"method\": \"POST\",\n        \"url\": \"Condition\"\n      }\n    }\n  ]\n}"
             },
             "url": "{{baseUrl}}/"
           }

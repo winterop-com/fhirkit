@@ -3,11 +3,23 @@
 Extends InMemoryDataSource with full CRUD operations, versioning, and search.
 """
 
+import copy
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Generator
 
 from fhirkit.engine.cql.datasource import InMemoryDataSource
+
+
+class TransactionError(Exception):
+    """Exception raised when a transaction operation fails."""
+
+    def __init__(self, message: str, entry_index: int | None = None, original_error: Exception | None = None):
+        self.message = message
+        self.entry_index = entry_index
+        self.original_error = original_error
+        super().__init__(message)
 
 
 class FHIRStore(InMemoryDataSource):
@@ -20,6 +32,64 @@ class FHIRStore(InMemoryDataSource):
         self._version_history: dict[str, list[dict[str, Any]]] = {}
         # Deleted resources marker
         self._deleted: set[str] = set()
+        # Transaction snapshot for rollback
+        self._transaction_snapshot: dict[str, Any] | None = None
+
+    def begin_transaction(self) -> None:
+        """Begin a transaction by creating a snapshot of current state.
+
+        This enables rollback if the transaction fails.
+        """
+        self._transaction_snapshot = {
+            "resources": copy.deepcopy(self._resources),
+            "by_id": copy.deepcopy(self._by_id),
+            "version_history": copy.deepcopy(self._version_history),
+            "deleted": copy.copy(self._deleted),
+        }
+
+    def commit_transaction(self) -> None:
+        """Commit the current transaction.
+
+        Clears the snapshot since changes are already applied.
+        """
+        self._transaction_snapshot = None
+
+    def rollback_transaction(self) -> None:
+        """Rollback to the state before the transaction began.
+
+        Restores all data structures from the snapshot.
+        """
+        if self._transaction_snapshot is None:
+            return  # No transaction to rollback
+
+        self._resources = self._transaction_snapshot["resources"]
+        self._by_id = self._transaction_snapshot["by_id"]
+        self._version_history = self._transaction_snapshot["version_history"]
+        self._deleted = self._transaction_snapshot["deleted"]
+        self._transaction_snapshot = None
+
+    @contextmanager
+    def transaction(self) -> Generator[None, None, None]:
+        """Context manager for atomic transactions.
+
+        Usage:
+            with store.transaction():
+                store.create(resource1)
+                store.create(resource2)
+                # If any operation fails, all changes are rolled back
+
+        Raises:
+            TransactionError: If any operation fails, rolls back and re-raises
+        """
+        self.begin_transaction()
+        try:
+            yield
+            self.commit_transaction()
+        except Exception as e:
+            self.rollback_transaction()
+            if isinstance(e, TransactionError):
+                raise
+            raise TransactionError(str(e), original_error=e) from e
 
     def create(self, resource: dict[str, Any]) -> dict[str, Any]:
         """Create a new resource.

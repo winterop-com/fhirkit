@@ -594,7 +594,11 @@ Returns a specific version.
 curl http://localhost:8080/baseR4/Patient/patient-001/_history/2
 ```
 
-### Batch Operations
+### Batch and Transaction Operations
+
+The server supports both `batch` and `transaction` Bundle types with different processing semantics.
+
+#### Batch Operations
 
 ```http
 POST /
@@ -607,7 +611,7 @@ Content-Type: application/fhir+json
 }
 ```
 
-Process multiple operations in a single request.
+Process multiple operations independently. Failures in one entry do not affect others.
 
 ```bash
 curl -X POST http://localhost:8080 \
@@ -626,6 +630,50 @@ curl -X POST http://localhost:8080 \
     ]
   }'
 ```
+
+#### Transaction Operations (Atomic)
+
+```http
+POST /
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [...]
+}
+```
+
+Process all operations atomically (all-or-nothing). If any entry fails, ALL changes are rolled back.
+
+```bash
+curl -X POST http://localhost:8080/baseR4 \
+  -H "Content-Type: application/fhir+json" \
+  -d '{
+    "resourceType": "Bundle",
+    "type": "transaction",
+    "entry": [
+      {
+        "resource": {"resourceType": "Patient", "id": "p1", "name": [{"family": "Smith"}]},
+        "request": {"method": "PUT", "url": "Patient/p1"}
+      },
+      {
+        "resource": {"resourceType": "Observation", "id": "o1", "status": "final", "code": {"text": "Test"}, "subject": {"reference": "Patient/p1"}},
+        "request": {"method": "PUT", "url": "Observation/o1"}
+      }
+    ]
+  }'
+```
+
+| Feature | Batch | Transaction |
+|---------|-------|-------------|
+| Atomicity | No | Yes |
+| Rollback on failure | No | Yes |
+| Independent entries | Yes | No |
+| Response type | batch-response | transaction-response |
+| Use case | Bulk operations | Related changes |
+
+See [Transactions](fhir-server/transactions.md) for detailed documentation on transaction atomicity.
 
 ### Conditional Operations
 

@@ -376,3 +376,186 @@ class TestFHIRStore:
 
         history = store.history("Patient", "test")
         assert len(history) == 3
+
+
+class TestTransaction:
+    """Tests for transaction atomicity."""
+
+    def test_transaction_success(self, client):
+        """Test successful transaction commits all changes."""
+        transaction = {
+            "resourceType": "Bundle",
+            "type": "transaction",
+            "entry": [
+                {
+                    "resource": {
+                        "resourceType": "Patient",
+                        "id": "txn-patient-1",
+                        "name": [{"family": "Transaction1"}],
+                    },
+                    "request": {"method": "PUT", "url": "Patient/txn-patient-1"},
+                },
+                {
+                    "resource": {
+                        "resourceType": "Patient",
+                        "id": "txn-patient-2",
+                        "name": [{"family": "Transaction2"}],
+                    },
+                    "request": {"method": "PUT", "url": "Patient/txn-patient-2"},
+                },
+            ],
+        }
+
+        response = client.post("/", json=transaction)
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["resourceType"] == "Bundle"
+        assert data["type"] == "transaction-response"
+
+        # Verify both patients were created
+        response1 = client.get("/Patient/txn-patient-1")
+        assert response1.status_code == 200
+
+        response2 = client.get("/Patient/txn-patient-2")
+        assert response2.status_code == 200
+
+    def test_transaction_rollback_on_failure(self, client, store):
+        """Test that failed transaction rolls back all changes."""
+        # First create a patient
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "existing-patient",
+                "name": [{"family": "Original"}],
+            }
+        )
+
+        # Transaction with one valid and one invalid entry
+        # The invalid entry references a non-existent resource type endpoint
+        transaction = {
+            "resourceType": "Bundle",
+            "type": "transaction",
+            "entry": [
+                {
+                    "resource": {
+                        "resourceType": "Patient",
+                        "id": "new-patient",
+                        "name": [{"family": "New"}],
+                    },
+                    "request": {"method": "PUT", "url": "Patient/new-patient"},
+                },
+                {
+                    "resource": {
+                        "resourceType": "Patient",
+                        "id": "another-patient",
+                        "name": [{"family": "Another"}],
+                    },
+                    "request": {
+                        "method": "GET",
+                        "url": "Patient/nonexistent-for-get",
+                    },  # GET on non-existent
+                },
+            ],
+        }
+
+        response = client.post("/", json=transaction)
+        # Transaction should fail
+        assert response.status_code in (400, 404, 500)
+
+        # Verify the new patient was NOT created (rolled back)
+        response = client.get("/Patient/new-patient")
+        assert response.status_code == 404
+
+    def test_batch_does_not_rollback(self, client):
+        """Test that batch processes independently without rollback."""
+        batch = {
+            "resourceType": "Bundle",
+            "type": "batch",
+            "entry": [
+                {
+                    "resource": {
+                        "resourceType": "Patient",
+                        "id": "batch-patient-1",
+                        "name": [{"family": "Batch1"}],
+                    },
+                    "request": {"method": "PUT", "url": "Patient/batch-patient-1"},
+                },
+                {
+                    "request": {"method": "GET", "url": "Patient/nonexistent"},
+                },  # This will fail
+            ],
+        }
+
+        response = client.post("/", json=batch)
+        # Batch should succeed overall
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["type"] == "batch-response"
+
+        # First entry should have succeeded
+        response = client.get("/Patient/batch-patient-1")
+        assert response.status_code == 200
+
+    def test_store_transaction_context_manager(self):
+        """Test FHIRStore transaction context manager."""
+        store = FHIRStore()
+
+        # Create initial resource
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "ctx-patient",
+                "name": [{"family": "Original"}],
+            }
+        )
+
+        # Test successful transaction
+        with store.transaction():
+            store.update(
+                "Patient",
+                "ctx-patient",
+                {
+                    "resourceType": "Patient",
+                    "id": "ctx-patient",
+                    "name": [{"family": "Updated"}],
+                },
+            )
+
+        # Should be updated
+        patient = store.read("Patient", "ctx-patient")
+        assert patient["name"][0]["family"] == "Updated"
+
+    def test_store_transaction_rollback(self):
+        """Test FHIRStore transaction rollback on exception."""
+        store = FHIRStore()
+
+        # Create initial resource
+        store.create(
+            {
+                "resourceType": "Patient",
+                "id": "rollback-patient",
+                "name": [{"family": "Original"}],
+            }
+        )
+
+        # Test failed transaction
+        try:
+            with store.transaction():
+                store.update(
+                    "Patient",
+                    "rollback-patient",
+                    {
+                        "resourceType": "Patient",
+                        "id": "rollback-patient",
+                        "name": [{"family": "Modified"}],
+                    },
+                )
+                raise ValueError("Simulated failure")
+        except Exception:
+            pass
+
+        # Should be rolled back to original
+        patient = store.read("Patient", "rollback-patient")
+        assert patient["name"][0]["family"] == "Original"

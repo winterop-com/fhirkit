@@ -3535,12 +3535,122 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
     # Batch/Transaction
     # =========================================================================
 
+    def _process_bundle_entry(entry: dict[str, Any], entry_index: int, is_transaction: bool) -> dict[str, Any]:
+        """Process a single bundle entry.
+
+        Args:
+            entry: The bundle entry to process
+            entry_index: Index of entry in bundle (for error reporting)
+            is_transaction: Whether this is part of a transaction (affects error handling)
+
+        Returns:
+            Response entry dict
+
+        Raises:
+            Exception: If is_transaction and operation fails
+        """
+        from ..storage.fhir_store import TransactionError
+
+        resource = entry.get("resource")
+        req = entry.get("request", {})
+        method = req.get("method", "").upper()
+        url = req.get("url", "")
+
+        # Parse URL to get resource type and ID
+        url_parts = url.strip("/").split("/")
+        resource_type = url_parts[0] if url_parts else ""
+        resource_id = url_parts[1] if len(url_parts) > 1 else None
+
+        response_entry: dict[str, Any] = {"response": {}}
+
+        try:
+            if method == "GET":
+                if resource_id:
+                    result = store.read(resource_type, resource_id)
+                    if result:
+                        response_entry["resource"] = result
+                        response_entry["response"]["status"] = "200 OK"
+                    else:
+                        if is_transaction:
+                            raise TransactionError(
+                                f"Resource {resource_type}/{resource_id} not found", entry_index=entry_index
+                            )
+                        response_entry["response"]["status"] = "404 Not Found"
+                else:
+                    # Search - simplified
+                    resources, total = store.search(resource_type, {})
+                    response_entry["resource"] = {
+                        "resourceType": "Bundle",
+                        "type": "searchset",
+                        "total": total,
+                        "entry": [{"resource": r} for r in resources[:100]],
+                    }
+                    response_entry["response"]["status"] = "200 OK"
+
+            elif method == "POST":
+                if resource and resource_type:
+                    created = store.create(resource)
+                    response_entry["resource"] = created
+                    response_entry["response"]["status"] = "201 Created"
+                    response_entry["response"]["location"] = f"{resource_type}/{created['id']}"
+                else:
+                    if is_transaction:
+                        raise TransactionError("Missing resource or resource type for POST", entry_index=entry_index)
+                    response_entry["response"]["status"] = "400 Bad Request"
+
+            elif method == "PUT":
+                if resource and resource_type and resource_id:
+                    updated = store.update(resource_type, resource_id, resource)
+                    response_entry["resource"] = updated
+                    response_entry["response"]["status"] = "200 OK"
+                else:
+                    if is_transaction:
+                        raise TransactionError("Missing resource, type, or ID for PUT", entry_index=entry_index)
+                    response_entry["response"]["status"] = "400 Bad Request"
+
+            elif method == "DELETE":
+                if resource_type and resource_id:
+                    deleted = store.delete(resource_type, resource_id)
+                    if deleted:
+                        response_entry["response"]["status"] = "204 No Content"
+                    else:
+                        if is_transaction:
+                            raise TransactionError(
+                                f"Resource {resource_type}/{resource_id} not found for DELETE",
+                                entry_index=entry_index,
+                            )
+                        response_entry["response"]["status"] = "404 Not Found"
+                else:
+                    if is_transaction:
+                        raise TransactionError("Missing type or ID for DELETE", entry_index=entry_index)
+                    response_entry["response"]["status"] = "400 Bad Request"
+
+            else:
+                if is_transaction:
+                    raise TransactionError(f"Unsupported method: {method}", entry_index=entry_index)
+                response_entry["response"]["status"] = "400 Bad Request"
+
+        except Exception as e:
+            if is_transaction:
+                # Re-raise for transaction rollback
+                raise
+            response_entry["response"]["status"] = "500 Internal Server Error"
+            response_entry["response"]["outcome"] = OperationOutcome.error(str(e)).model_dump(exclude_none=True)
+
+        return response_entry
+
     @router.post("/", tags=["Batch"])
     async def batch_transaction(request: Request) -> Response:
         """Process a batch or transaction Bundle.
 
-        Processes all entries in the bundle and returns results.
+        For batch bundles: Each entry is processed independently. Failures in one
+        entry do not affect other entries.
+
+        For transaction bundles: All entries are processed atomically. If any entry
+        fails, all changes are rolled back and the entire transaction fails.
         """
+        from ..storage.fhir_store import TransactionError
+
         try:
             body = await request.json()
         except Exception as e:
@@ -3571,73 +3681,50 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
             )
 
         entries = body.get("entry", [])
-        response_entries = []
+        response_entries: list[dict[str, Any]] = []
+        is_transaction = bundle_type == "transaction"
 
-        for entry in entries:
-            resource = entry.get("resource")
-            req = entry.get("request", {})
-            method = req.get("method", "").upper()
-            url = req.get("url", "")
-
-            # Parse URL to get resource type and ID
-            url_parts = url.strip("/").split("/")
-            resource_type = url_parts[0] if url_parts else ""
-            resource_id = url_parts[1] if len(url_parts) > 1 else None
-
-            response_entry: dict[str, Any] = {"response": {}}
-
+        if is_transaction:
+            # Transaction: atomic processing with rollback on failure
             try:
-                if method == "GET":
-                    if resource_id:
-                        result = store.read(resource_type, resource_id)
-                        if result:
-                            response_entry["resource"] = result
-                            response_entry["response"]["status"] = "200 OK"
-                        else:
-                            response_entry["response"]["status"] = "404 Not Found"
-                    else:
-                        # Search - simplified
-                        resources, total = store.search(resource_type, {})
-                        response_entry["resource"] = {
-                            "resourceType": "Bundle",
-                            "type": "searchset",
-                            "total": total,
-                            "entry": [{"resource": r} for r in resources[:100]],
-                        }
-                        response_entry["response"]["status"] = "200 OK"
-
-                elif method == "POST":
-                    if resource and resource_type:
-                        created = store.create(resource)
-                        response_entry["resource"] = created
-                        response_entry["response"]["status"] = "201 Created"
-                        response_entry["response"]["location"] = f"{resource_type}/{created['id']}"
-                    else:
-                        response_entry["response"]["status"] = "400 Bad Request"
-
-                elif method == "PUT":
-                    if resource and resource_type and resource_id:
-                        updated = store.update(resource_type, resource_id, resource)
-                        response_entry["resource"] = updated
-                        response_entry["response"]["status"] = "200 OK"
-                    else:
-                        response_entry["response"]["status"] = "400 Bad Request"
-
-                elif method == "DELETE":
-                    if resource_type and resource_id:
-                        deleted = store.delete(resource_type, resource_id)
-                        response_entry["response"]["status"] = "204 No Content" if deleted else "404 Not Found"
-                    else:
-                        response_entry["response"]["status"] = "400 Bad Request"
-
-                else:
-                    response_entry["response"]["status"] = "400 Bad Request"
-
+                with store.transaction():
+                    for idx, entry in enumerate(entries):
+                        response_entry = _process_bundle_entry(entry, idx, is_transaction=True)
+                        response_entries.append(response_entry)
+            except TransactionError as e:
+                # Transaction failed - all changes rolled back
+                outcome = OperationOutcome(
+                    issue=[
+                        OperationOutcomeIssue(
+                            severity="error",
+                            code="processing",
+                            diagnostics=f"Transaction failed at entry {e.entry_index}: {e.message}. "
+                            "All changes have been rolled back.",
+                            location=[f"Bundle.entry[{e.entry_index}]"] if e.entry_index is not None else [],
+                        )
+                    ]
+                )
+                return JSONResponse(
+                    content=outcome.model_dump(exclude_none=True),
+                    status_code=400,
+                    media_type=FHIR_JSON,
+                )
             except Exception as e:
-                response_entry["response"]["status"] = "500 Internal Server Error"
-                response_entry["response"]["outcome"] = OperationOutcome.error(str(e)).model_dump(exclude_none=True)
-
-            response_entries.append(response_entry)
+                # Unexpected error - transaction rolled back
+                outcome = OperationOutcome.error(
+                    f"Transaction failed: {e}. All changes have been rolled back.",
+                    code="processing",
+                )
+                return JSONResponse(
+                    content=outcome.model_dump(exclude_none=True),
+                    status_code=500,
+                    media_type=FHIR_JSON,
+                )
+        else:
+            # Batch: independent processing, failures don't affect other entries
+            for idx, entry in enumerate(entries):
+                response_entry = _process_bundle_entry(entry, idx, is_transaction=False)
+                response_entries.append(response_entry)
 
         response_bundle = {
             "resourceType": "Bundle",
