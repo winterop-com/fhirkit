@@ -9,6 +9,7 @@ from .allergy_intolerance import AllergyIntoleranceGenerator
 from .appointment import AppointmentGenerator
 from .audit_event import AuditEventGenerator
 from .base import FHIRResourceGenerator
+from .binary import BinaryGenerator
 from .care_team import CareTeamGenerator
 from .careplan import CarePlanGenerator
 from .claim import ClaimGenerator
@@ -107,10 +108,11 @@ __all__ = [
     "ExplanationOfBenefitGenerator",
     # Devices
     "DeviceGenerator",
-    # Documents
+    # Documents & Binary
     "ServiceRequestGenerator",
     "DocumentReferenceGenerator",
     "MediaGenerator",
+    "BinaryGenerator",
     # Quality Measures
     "MeasureGenerator",
     "MeasureReportGenerator",

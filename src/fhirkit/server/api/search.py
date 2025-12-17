@@ -459,6 +459,11 @@ SEARCH_PARAMS: dict[str, dict[str, dict[str, Any]]] = {
         "based-on": {"path": "basedOn.reference", "type": "reference"},
         "part-of": {"path": "partOf.reference", "type": "reference"},
     },
+    # === Binary ===
+    "Binary": {
+        "_id": {"path": "id", "type": "token"},
+        "contenttype": {"path": "contentType", "type": "token"},
+    },
 }
 
 

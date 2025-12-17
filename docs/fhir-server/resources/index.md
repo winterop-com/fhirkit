@@ -4,7 +4,7 @@ This page provides an overview of all FHIR R4 resource types supported by the fh
 
 ## Resource Categories
 
-The server supports **53 resource types** organized into the following categories:
+The server supports **54 resource types** organized into the following categories:
 
 | Category | Resources | Count |
 |----------|-----------|-------|
@@ -15,7 +15,7 @@ The server supports **53 resource types** organized into the following categorie
 | [Scheduling](#scheduling-resources) | Appointment, Schedule, Slot, HealthcareService | 4 |
 | [Financial](#financial-resources) | Coverage, Claim, ExplanationOfBenefit | 3 |
 | [Devices](#device-resources) | Device | 1 |
-| [Documents](#document-resources) | ServiceRequest, DocumentReference, Media | 3 |
+| [Documents](#document-resources) | ServiceRequest, DocumentReference, Media, Binary | 4 |
 | [Forms & Consent](#forms--consent-resources) | Questionnaire, QuestionnaireResponse, Consent | 3 |
 | [Quality Measures](#quality-measure-resources) | Measure, MeasureReport, Library | 3 |
 | [Terminology](#terminology-resources) | ValueSet, CodeSystem | 2 |
@@ -928,6 +928,39 @@ Clinical images, videos, and audio recordings.
 ```
 
 [FHIR R4 Specification](https://hl7.org/fhir/R4/media.html)
+
+---
+
+### Binary
+
+Raw binary content like PDFs, images, and files.
+
+See [detailed documentation](binary.md)
+
+**Key Fields:**
+- `contentType` - MIME type (required)
+- `data` - Base64-encoded content
+- `securityContext` - Access control reference
+
+**Content Negotiation:**
+- Request with `Accept: application/fhir+json` to get JSON with base64 data
+- Request with native MIME type (e.g., `Accept: application/pdf`) to get raw content
+
+**Common Search Parameters:**
+- `_id` - Resource ID
+- `contenttype` - MIME type filter
+
+**Example:**
+```json
+{
+  "resourceType": "Binary",
+  "id": "binary-001",
+  "contentType": "application/pdf",
+  "data": "JVBERi0xLjQKJeLj..."
+}
+```
+
+[FHIR R4 Specification](https://hl7.org/fhir/R4/binary.html)
 
 ---
 

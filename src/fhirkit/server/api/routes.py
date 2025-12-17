@@ -55,9 +55,10 @@ SUPPORTED_TYPES = [
     "ExplanationOfBenefit",
     # Devices
     "Device",
-    # Documents
+    # Documents & Binary
     "ServiceRequest",
     "DocumentReference",
+    "Binary",
     # Quality Measures
     "Measure",
     "MeasureReport",
@@ -2894,6 +2895,27 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
                 status_code=304,
                 headers={"ETag": etag},
             )
+
+        # Special handling for Binary resources - content negotiation
+        if resource_type == "Binary":
+            accept = request.headers.get("Accept", FHIR_JSON)
+            content_type = resource.get("contentType", "application/octet-stream")
+
+            # If Accept header requests non-FHIR format, return raw binary content
+            if accept not in (FHIR_JSON, "application/json", "*/*") and "fhir" not in accept.lower():
+                import base64
+
+                data = resource.get("data", "")
+                try:
+                    raw_content = base64.b64decode(data) if data else b""
+                except Exception:
+                    raw_content = b""
+
+                return Response(
+                    content=raw_content,
+                    media_type=content_type,
+                    headers={"ETag": etag},
+                )
 
         return JSONResponse(
             content=resource,
