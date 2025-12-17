@@ -3085,6 +3085,24 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
                 media_type=FHIR_JSON,
             )
 
+        # Validate contained resources if present
+        if "contained" in body:
+            from .contained import normalize_contained_ids, validate_contained_resources
+
+            issues = validate_contained_resources(body)
+            if issues:
+                outcome = OperationOutcome.error(
+                    f"Invalid contained resources: {'; '.join(issues)}",
+                    code="invalid",
+                )
+                return JSONResponse(
+                    content=outcome.model_dump(exclude_none=True),
+                    status_code=400,
+                    media_type=FHIR_JSON,
+                )
+            # Normalize contained IDs
+            body = normalize_contained_ids(body)
+
         # Handle conditional create with If-None-Exist header
         if_none_exist = request.headers.get("If-None-Exist")
         if if_none_exist:
@@ -3321,6 +3339,24 @@ def create_router(store: FHIRStore, base_url: str = "") -> APIRouter:
                 status_code=400,
                 media_type=FHIR_JSON,
             )
+
+        # Validate contained resources if present
+        if "contained" in body:
+            from .contained import normalize_contained_ids, validate_contained_resources
+
+            issues = validate_contained_resources(body)
+            if issues:
+                outcome = OperationOutcome.error(
+                    f"Invalid contained resources: {'; '.join(issues)}",
+                    code="invalid",
+                )
+                return JSONResponse(
+                    content=outcome.model_dump(exclude_none=True),
+                    status_code=400,
+                    media_type=FHIR_JSON,
+                )
+            # Normalize contained IDs
+            body = normalize_contained_ids(body)
 
         # Check if creating or updating
         existing = store.read(resource_type, resource_id)
