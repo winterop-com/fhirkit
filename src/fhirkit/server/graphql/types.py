@@ -85,7 +85,7 @@ class Reference:
         self,
         info: strawberry.Info,
         optional: bool = False,
-    ) -> Optional[JSON]:
+    ) -> Optional[JSON]:  # type: ignore[valid-type]
         """Resolve reference to the actual resource.
 
         This implements the FHIR GraphQL reference resolution pattern where
@@ -112,7 +112,7 @@ class Reference:
             ref_type, ref_id = self.reference.split("/", 1)
         else:
             # If no type in reference, use the type field
-            ref_type = self.type
+            ref_type = self.type  # type: ignore[assignment]
             ref_id = self.reference
 
         if not ref_type:
@@ -244,7 +244,7 @@ class Resource:
     _raw_data: strawberry.Private[dict[str, Any]]
 
     @strawberry.field(description="Full resource as JSON")
-    def data(self) -> JSON:
+    def data(self) -> JSON:  # type: ignore[valid-type]
         """Return the full resource as JSON."""
         return self._raw_data
 
@@ -381,7 +381,7 @@ class ResourceInput:
     """
 
     resourceType: str = strawberry.field(description="The type of resource")
-    data: JSON = strawberry.field(description="Full resource data as JSON")
+    data: JSON = strawberry.field(description="Full resource data as JSON")  # type: ignore[valid-type]
 
 
 # =============================================================================

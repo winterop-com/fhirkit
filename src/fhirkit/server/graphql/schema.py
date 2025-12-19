@@ -1280,7 +1280,7 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
         def resourceCreate(
             self,
             resourceType: str,
-            data: JSON,
+            data: JSON,  # type: ignore[valid-type]
         ) -> Resource:
             """Generic resource create mutation."""
             if resourceType not in SUPPORTED_TYPES:
@@ -1292,7 +1292,7 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             self,
             resourceType: str,
             _id: str,
-            data: JSON,
+            data: JSON,  # type: ignore[valid-type]
         ) -> Optional[Resource]:
             """Generic resource update mutation."""
             if resourceType not in SUPPORTED_TYPES:
@@ -1315,11 +1315,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
         # =====================================================================
 
         @strawberry.mutation(description="Create a Patient resource")
-        def createPatient(self, data: JSON) -> Resource:
+        def createPatient(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("Patient", dict(data))
 
         @strawberry.mutation(description="Update a Patient resource")
-        def updatePatient(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updatePatient(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("Patient", _id, dict(data))
 
         @strawberry.mutation(description="Delete a Patient resource")
@@ -1327,11 +1327,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             return mutation_resolver.delete("Patient", _id)
 
         @strawberry.mutation(description="Create a Practitioner resource")
-        def createPractitioner(self, data: JSON) -> Resource:
+        def createPractitioner(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("Practitioner", dict(data))
 
         @strawberry.mutation(description="Update a Practitioner resource")
-        def updatePractitioner(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updatePractitioner(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("Practitioner", _id, dict(data))
 
         @strawberry.mutation(description="Delete a Practitioner resource")
@@ -1339,11 +1339,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             return mutation_resolver.delete("Practitioner", _id)
 
         @strawberry.mutation(description="Create an Organization resource")
-        def createOrganization(self, data: JSON) -> Resource:
+        def createOrganization(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("Organization", dict(data))
 
         @strawberry.mutation(description="Update an Organization resource")
-        def updateOrganization(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updateOrganization(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("Organization", _id, dict(data))
 
         @strawberry.mutation(description="Delete an Organization resource")
@@ -1351,11 +1351,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             return mutation_resolver.delete("Organization", _id)
 
         @strawberry.mutation(description="Create an Observation resource")
-        def createObservation(self, data: JSON) -> Resource:
+        def createObservation(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("Observation", dict(data))
 
         @strawberry.mutation(description="Update an Observation resource")
-        def updateObservation(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updateObservation(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("Observation", _id, dict(data))
 
         @strawberry.mutation(description="Delete an Observation resource")
@@ -1363,11 +1363,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             return mutation_resolver.delete("Observation", _id)
 
         @strawberry.mutation(description="Create a Condition resource")
-        def createCondition(self, data: JSON) -> Resource:
+        def createCondition(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("Condition", dict(data))
 
         @strawberry.mutation(description="Update a Condition resource")
-        def updateCondition(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updateCondition(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("Condition", _id, dict(data))
 
         @strawberry.mutation(description="Delete a Condition resource")
@@ -1375,11 +1375,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             return mutation_resolver.delete("Condition", _id)
 
         @strawberry.mutation(description="Create an Encounter resource")
-        def createEncounter(self, data: JSON) -> Resource:
+        def createEncounter(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("Encounter", dict(data))
 
         @strawberry.mutation(description="Update an Encounter resource")
-        def updateEncounter(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updateEncounter(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("Encounter", _id, dict(data))
 
         @strawberry.mutation(description="Delete an Encounter resource")
@@ -1387,11 +1387,11 @@ def create_schema(store: FHIRStore) -> strawberry.Schema:
             return mutation_resolver.delete("Encounter", _id)
 
         @strawberry.mutation(description="Create a MedicationRequest resource")
-        def createMedicationRequest(self, data: JSON) -> Resource:
+        def createMedicationRequest(self, data: JSON) -> Resource:  # type: ignore[valid-type]
             return mutation_resolver.create("MedicationRequest", dict(data))
 
         @strawberry.mutation(description="Update a MedicationRequest resource")
-        def updateMedicationRequest(self, _id: FhirId, data: JSON) -> Optional[Resource]:
+        def updateMedicationRequest(self, _id: FhirId, data: JSON) -> Optional[Resource]:  # type: ignore[valid-type]
             return mutation_resolver.update("MedicationRequest", _id, dict(data))
 
         @strawberry.mutation(description="Delete a MedicationRequest resource")
@@ -1423,6 +1423,7 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
     import json
 
     from fastapi.responses import HTMLResponse
+    from starlette.requests import Request
 
     # Custom GraphQL router with default query in GraphiQL
     class FHIRGraphQLRouter(GraphQLRouter):
@@ -1430,12 +1431,12 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
 
         _custom_html: str = ""
 
-        async def render_graphql_ide(self, request) -> HTMLResponse:
+        async def render_graphql_ide(self, request: Request) -> HTMLResponse:
             return HTMLResponse(self._custom_html)
 
     router = FHIRGraphQLRouter(
         schema=schema,
-        context_getter=get_context,
+        context_getter=get_context,  # type: ignore[arg-type]
         graphql_ide="graphiql",
     )
 
