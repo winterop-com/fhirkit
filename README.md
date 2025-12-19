@@ -277,9 +277,9 @@ fhir terminology <command> # Terminology Service commands
 | `16_clinical_calculations.cql` | BMI, eGFR, etc. |
 | `17_type_conversions.cql` | Type conversions |
 
-### FHIR Resources (72 types)
+### FHIR Resources (90 types)
 
-**72 supported resource types** with example JSON files in `examples/fhir/`:
+**90 supported resource types** with example JSON files in `examples/fhir/`:
 
 | Category | Example Resources |
 |----------|-------------------|
@@ -302,7 +302,7 @@ fhir terminology <command> # Terminology Service commands
 | Safety | AdverseEvent |
 | Infrastructure | Bundle, Provenance, AuditEvent |
 
-See [Supported Resources](docs/fhir-server/resources/index.md) for complete documentation of all 72 resource types.
+See [Supported Resources](docs/fhir-server/resources/index.md) for complete documentation of all 90 resource types.
 
 ## Documentation
 
@@ -319,7 +319,7 @@ See [Supported Resources](docs/fhir-server/resources/index.md) for complete docu
 - [CQL API](docs/cql-api.md)
 - [ELM Guide](docs/elm-guide.md) - ELM loading, evaluation, and CQL-to-ELM export
 - [FHIR Server Guide](docs/fhir-server-guide.md) - REST API, synthetic data, terminology operations
-- [Supported Resources](docs/fhir-server/resources/index.md) - All 72 supported FHIR resource types
+- [Supported Resources](docs/fhir-server/resources/index.md) - All 90 supported FHIR resource types
 - [GraphQL API](docs/fhir-server/graphql.md) - FHIR GraphQL interface with GraphiQL explorer
 - [Audit Logging](docs/fhir-server/audit.md) - Automatic AuditEvent generation
 - [Profile Validation](docs/fhir-server/profile-validation.md) - StructureDefinition validation
