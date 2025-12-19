@@ -4191,12 +4191,30 @@
               }
             },
             {
-              "name": "Verify Data Loaded - Count Patients",
-              "description": "Verify that all 10 showcase patients were loaded",
+              "name": "Verify Data Loaded - Get Patient 1",
+              "description": "Verify showcase patient 1 was created. If you get 404, the bundle may have failed - check the bundle response for errors.",
+              "request": {
+                "method": "GET",
+                "header": [{"key": "Accept", "value": "application/fhir+json"}],
+                "url": "{{baseUrl}}/Patient/showcase-p1"
+              }
+            },
+            {
+              "name": "Verify Data Loaded - Count All Showcase Patients",
+              "description": "Count all showcase patients (should be 10). Uses _summary=count for efficiency.",
               "request": {
                 "method": "GET",
                 "header": [{"key": "Accept", "value": "application/fhir+json"}],
                 "url": "{{baseUrl}}/Patient?_id=showcase-p1,showcase-p2,showcase-p3,showcase-p4,showcase-p5,showcase-p6,showcase-p7,showcase-p8,showcase-p9,showcase-p10&_summary=count"
+              }
+            },
+            {
+              "name": "Verify Data Loaded - List All Patients",
+              "description": "List all patients in the server to verify showcase patients exist",
+              "request": {
+                "method": "GET",
+                "header": [{"key": "Accept", "value": "application/fhir+json"}],
+                "url": "{{baseUrl}}/Patient?_count=50"
               }
             }
           ]
