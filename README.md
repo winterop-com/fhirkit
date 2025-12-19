@@ -9,6 +9,8 @@
 
 FHIRPath and CQL (Clinical Quality Language) evaluators for Python using ANTLR4.
 
+> **Note**: This is an AI-driven project built for learning and experimentation. It demonstrates how modern AI tools can accelerate healthcare software development while maintaining clinical accuracy. The codebase serves as an educational resource for FHIR, CQL, and healthcare interoperability standards.
+
 ## Overview
 
 This project provides complete implementations of:
@@ -17,11 +19,12 @@ This project provides complete implementations of:
 - **CQL Evaluator**: Parse and evaluate [CQL](https://cql.hl7.org/) (Clinical Quality Language) libraries and expressions
 - **ELM Support**: Load, execute, and export [ELM](https://cql.hl7.org/elm.html) (Expression Logical Model) - the compiled representation of CQL
 - **FHIR R4 Server**: Full FHIR REST API with synthetic data generation, terminology operations, and CQL integration
+- **GraphQL API**: [FHIR GraphQL](https://hl7.org/fhir/graphql.html) interface with custom GraphiQL explorer and example queries
 - **CDS Hooks Server**: Build and deploy [CDS Hooks](https://cds-hooks.hl7.org/) services with CQL-based clinical decision support
 - **CLI Tools**: Command-line interfaces for evaluation, AST visualization, validation, and server management
 - **Python API**: Programmatic access to evaluators for integration into applications
 
-**Current test count: 2516 passing tests**
+**Current test count: 2810 passing tests**
 
 ## Requirements
 
@@ -118,42 +121,46 @@ all_results = evaluator.evaluate_all_definitions()
 
 ## Features
 
-| Feature | FHIRPath | CQL | ELM | FHIR Server | CDS Hooks | Terminology |
-|---------|----------|-----|-----|-------------|-----------|-------------|
-| Parsing | Yes | Yes | - | - | - | - |
-| Evaluation | Yes | Yes | Yes | - | - | - |
-| AST visualization | Yes | Yes | - | - | - | - |
-| Interactive REPL | Yes | Yes | - | - | - | - |
-| Library compilation | - | Yes | - | - | - | - |
-| User-defined functions | - | Yes | Yes | - | - | - |
-| Queries (from/where/return) | - | Yes | Yes | - | - | - |
-| Interval operations | - | Yes | Yes | - | - | - |
-| Temporal operations | - | Yes | Yes | - | - | - |
-| Terminology (codes/valuesets) | - | Yes | Yes | Yes | - | Yes |
-| FHIR data sources | - | Yes | Yes | Yes | - | - |
-| Quality measures | - | Yes | Yes | Yes | - | - |
-| CQL-to-ELM export | - | Yes | - | - | - | - |
-| FHIR REST API (CRUD+PATCH) | - | - | - | Yes | - | - |
-| Search parameters | - | - | - | Yes | - | - |
-| Batch/transaction | - | - | - | Yes | - | - |
-| Conditional operations | - | - | - | Yes | - | - |
-| Synthetic data generation | - | - | - | Yes | - | - |
-| Group resource support | - | - | - | Yes | - | - |
-| $validate | - | - | - | Yes | - | - |
-| $diff | - | - | - | Yes | - | - |
-| $export (Bulk Data) | - | - | - | Yes | - | - |
-| $everything | - | - | - | Yes | - | - |
-| $evaluate-measure | - | - | - | Yes | - | - |
-| $expand, $lookup | - | - | - | Yes | - | Yes |
-| $validate-code | - | - | - | Yes | - | Yes |
-| $subsumes | - | - | - | Yes | - | Yes |
-| $translate (ConceptMap) | - | - | - | Yes | - | Yes |
-| $match (Patient) | - | - | - | Yes | - | - |
-| $document (Composition) | - | - | - | Yes | - | - |
-| YAML-based service config | - | - | - | - | Yes | - |
-| Service discovery | - | - | - | - | Yes | - |
-| Card generation | - | - | - | - | Yes | - |
-| Prefetch templates | - | - | - | - | Yes | - |
+| Feature | FHIRPath | CQL | ELM | FHIR Server | GraphQL | CDS Hooks | Terminology |
+|---------|----------|-----|-----|-------------|---------|-----------|-------------|
+| Parsing | Yes | Yes | - | - | - | - | - |
+| Evaluation | Yes | Yes | Yes | - | - | - | - |
+| AST visualization | Yes | Yes | - | - | - | - | - |
+| Interactive REPL | Yes | Yes | - | - | - | - | - |
+| Library compilation | - | Yes | - | - | - | - | - |
+| User-defined functions | - | Yes | Yes | - | - | - | - |
+| Queries (from/where/return) | - | Yes | Yes | - | Yes | - | - |
+| Interval operations | - | Yes | Yes | - | - | - | - |
+| Temporal operations | - | Yes | Yes | - | - | - | - |
+| Terminology (codes/valuesets) | - | Yes | Yes | Yes | - | - | Yes |
+| FHIR data sources | - | Yes | Yes | Yes | Yes | - | - |
+| Quality measures | - | Yes | Yes | Yes | - | - | - |
+| CQL-to-ELM export | - | Yes | - | - | - | - | - |
+| FHIR REST API (CRUD+PATCH) | - | - | - | Yes | - | - | - |
+| GraphQL queries/mutations | - | - | - | - | Yes | - | - |
+| GraphiQL explorer | - | - | - | - | Yes | - | - |
+| Search parameters | - | - | - | Yes | - | - | - |
+| Batch/transaction | - | - | - | Yes | - | - | - |
+| Conditional operations | - | - | - | Yes | - | - | - |
+| Synthetic data generation | - | - | - | Yes | - | - | - |
+| Group resource support | - | - | - | Yes | - | - | - |
+| Audit logging | - | - | - | Yes | - | - | - |
+| Profile validation | - | - | - | Yes | - | - | - |
+| $validate | - | - | - | Yes | - | - | - |
+| $diff | - | - | - | Yes | - | - | - |
+| $export (Bulk Data) | - | - | - | Yes | - | - | - |
+| $everything | - | - | - | Yes | - | - | - |
+| $evaluate-measure | - | - | - | Yes | - | - | - |
+| $expand, $lookup | - | - | - | Yes | - | - | Yes |
+| $validate-code | - | - | - | Yes | - | - | Yes |
+| $subsumes | - | - | - | Yes | - | - | Yes |
+| $translate (ConceptMap) | - | - | - | Yes | - | - | Yes |
+| $match (Patient) | - | - | - | Yes | - | - | - |
+| $document (Composition) | - | - | - | Yes | - | - | - |
+| YAML-based service config | - | - | - | - | - | Yes | - |
+| Service discovery | - | - | - | - | - | Yes | - |
+| Card generation | - | - | - | - | - | Yes | - |
+| Prefetch templates | - | - | - | - | - | Yes | - |
 
 ## CQL Implementation Status
 
@@ -270,9 +277,9 @@ fhir terminology <command> # Terminology Service commands
 | `16_clinical_calculations.cql` | BMI, eGFR, etc. |
 | `17_type_conversions.cql` | Type conversions |
 
-### FHIR Resources (55 files)
+### FHIR Resources (72 types)
 
-**55 supported resource types** with example JSON files in `examples/fhir/`:
+**72 supported resource types** with example JSON files in `examples/fhir/`:
 
 | Category | Example Resources |
 |----------|-------------------|
@@ -295,7 +302,7 @@ fhir terminology <command> # Terminology Service commands
 | Safety | AdverseEvent |
 | Infrastructure | Bundle, Provenance, AuditEvent |
 
-See [Supported Resources](docs/fhir-server/resources/index.md) for complete documentation.
+See [Supported Resources](docs/fhir-server/resources/index.md) for complete documentation of all 72 resource types.
 
 ## Documentation
 
@@ -312,7 +319,11 @@ See [Supported Resources](docs/fhir-server/resources/index.md) for complete docu
 - [CQL API](docs/cql-api.md)
 - [ELM Guide](docs/elm-guide.md) - ELM loading, evaluation, and CQL-to-ELM export
 - [FHIR Server Guide](docs/fhir-server-guide.md) - REST API, synthetic data, terminology operations
-- [Supported Resources](docs/fhir-server/resources/index.md) - All 55 supported FHIR resource types
+- [Supported Resources](docs/fhir-server/resources/index.md) - All 72 supported FHIR resource types
+- [GraphQL API](docs/fhir-server/graphql.md) - FHIR GraphQL interface with GraphiQL explorer
+- [Audit Logging](docs/fhir-server/audit.md) - Automatic AuditEvent generation
+- [Profile Validation](docs/fhir-server/profile-validation.md) - StructureDefinition validation
+- [Web UI Guide](docs/fhir-server/ui-guide.md) - Built-in web interface for exploring resources
 - [CDS Hooks Guide](docs/cds-hooks-guide.md) - Building clinical decision support services
 - [FHIRPath & CQL Reference](docs/fhirpath-cql-tutorial.md)
 
