@@ -602,6 +602,10 @@ class ProfileValidator:
             return False
 
         if isinstance(pattern, dict):
+            if isinstance(value, list):
+                # If value is a list and pattern is a single object,
+                # pattern matches if ANY element in the list matches
+                return any(self._matches_pattern(v, pattern) for v in value)
             if not isinstance(value, dict):
                 return False
             # All pattern keys must be present in value

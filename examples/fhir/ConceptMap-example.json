@@ -1,0 +1,189 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "conceptmap-example",
+  "url": "http://example.org/fhir/ConceptMap/icd10-to-snomed-diabetes",
+  "identifier": {
+    "system": "http://example.org/fhir/identifier",
+    "value": "icd10-snomed-diabetes-map"
+  },
+  "version": "1.0.0",
+  "name": "ICD10ToSNOMEDDiabetes",
+  "title": "ICD-10 to SNOMED CT Mapping - Diabetes Codes",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-06-15",
+  "publisher": "Example Organization",
+  "contact": [
+    {
+      "name": "Terminology Team",
+      "telecom": [
+        {
+          "system": "email",
+          "value": "terminology@example.org"
+        }
+      ]
+    }
+  ],
+  "description": "A mapping from ICD-10-CM diabetes codes to SNOMED CT concepts. This ConceptMap provides equivalence mappings for common diabetes diagnoses used in clinical practice.",
+  "useContext": [
+    {
+      "code": {
+        "system": "http://terminology.hl7.org/CodeSystem/usage-context-type",
+        "code": "focus"
+      },
+      "valueCodeableConcept": {
+        "coding": [
+          {
+            "system": "http://snomed.info/sct",
+            "code": "73211009",
+            "display": "Diabetes mellitus"
+          }
+        ]
+      }
+    }
+  ],
+  "jurisdiction": [
+    {
+      "coding": [
+        {
+          "system": "urn:iso:std:iso:3166",
+          "code": "US",
+          "display": "United States of America"
+        }
+      ]
+    }
+  ],
+  "purpose": "To provide a consistent mapping between ICD-10-CM and SNOMED CT for diabetes-related diagnoses, enabling interoperability between systems using different code systems.",
+  "copyright": "This ConceptMap is provided for educational purposes.",
+  "sourceUri": "http://hl7.org/fhir/ValueSet/icd-10-cm-diabetes",
+  "targetUri": "http://snomed.info/sct?fhir_vs=isa/73211009",
+  "group": [
+    {
+      "source": "http://hl7.org/fhir/sid/icd-10-cm",
+      "sourceVersion": "2024",
+      "target": "http://snomed.info/sct",
+      "targetVersion": "http://snomed.info/sct/900000000000207008/version/20240101",
+      "element": [
+        {
+          "code": "E11",
+          "display": "Type 2 diabetes mellitus",
+          "target": [
+            {
+              "code": "44054006",
+              "display": "Type 2 diabetes mellitus",
+              "equivalence": "equivalent",
+              "comment": "Direct mapping - Type 2 diabetes parent code"
+            }
+          ]
+        },
+        {
+          "code": "E11.9",
+          "display": "Type 2 diabetes mellitus without complications",
+          "target": [
+            {
+              "code": "44054006",
+              "display": "Type 2 diabetes mellitus",
+              "equivalence": "wider",
+              "comment": "SNOMED code is broader - does not distinguish complication status"
+            }
+          ]
+        },
+        {
+          "code": "E11.65",
+          "display": "Type 2 diabetes mellitus with hyperglycemia",
+          "target": [
+            {
+              "code": "237627000",
+              "display": "Diabetic hyperglycemia",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "E11.21",
+          "display": "Type 2 diabetes mellitus with diabetic nephropathy",
+          "target": [
+            {
+              "code": "127013003",
+              "display": "Diabetic nephropathy",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "E11.311",
+          "display": "Type 2 diabetes mellitus with unspecified diabetic retinopathy with macular edema",
+          "target": [
+            {
+              "code": "232020009",
+              "display": "Diabetic macular edema",
+              "equivalence": "narrower",
+              "comment": "SNOMED code focuses on macular edema specifically"
+            }
+          ]
+        },
+        {
+          "code": "E11.40",
+          "display": "Type 2 diabetes mellitus with diabetic neuropathy, unspecified",
+          "target": [
+            {
+              "code": "230572002",
+              "display": "Diabetic neuropathy",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "E10",
+          "display": "Type 1 diabetes mellitus",
+          "target": [
+            {
+              "code": "46635009",
+              "display": "Type 1 diabetes mellitus",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "E10.9",
+          "display": "Type 1 diabetes mellitus without complications",
+          "target": [
+            {
+              "code": "46635009",
+              "display": "Type 1 diabetes mellitus",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "E13",
+          "display": "Other specified diabetes mellitus",
+          "target": [
+            {
+              "code": "73211009",
+              "display": "Diabetes mellitus",
+              "equivalence": "wider",
+              "comment": "Maps to parent diabetes concept when specific type not available in SNOMED"
+            }
+          ]
+        },
+        {
+          "code": "O24.4",
+          "display": "Gestational diabetes mellitus",
+          "target": [
+            {
+              "code": "11687002",
+              "display": "Gestational diabetes mellitus",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ],
+      "unmapped": {
+        "mode": "fixed",
+        "code": "73211009",
+        "display": "Diabetes mellitus"
+      }
+    }
+  ]
+}

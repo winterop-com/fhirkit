@@ -3358,6 +3358,663 @@
           }
         }
       ]
+    },
+    {
+      "name": "Location",
+      "item": [
+        {
+          "name": "Create Location",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Location\",\n  \"id\": \"location-001\",\n  \"status\": \"active\",\n  \"name\": \"Main Hospital Building A\",\n  \"description\": \"Primary care facility - Building A, 3rd floor\",\n  \"mode\": \"instance\",\n  \"type\": [{\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/v3-RoleCode\", \"code\": \"HOSP\", \"display\": \"Hospital\"}]}],\n  \"telecom\": [{\"system\": \"phone\", \"value\": \"555-123-4567\", \"use\": \"work\"}],\n  \"address\": {\"use\": \"work\", \"line\": [\"123 Healthcare Ave\"], \"city\": \"Springfield\", \"state\": \"IL\", \"postalCode\": \"62701\"},\n  \"physicalType\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/location-physical-type\", \"code\": \"bu\", \"display\": \"Building\"}]},\n  \"managingOrganization\": {\"reference\": \"Organization/{{organizationId}}\"}\n}"
+            },
+            "url": "{{baseUrl}}/Location"
+          }
+        },
+        {
+          "name": "Read Location",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Location/location-001"
+          }
+        },
+        {
+          "name": "Search Locations by Name",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Location?name=Hospital"
+          }
+        },
+        {
+          "name": "Search Locations by Organization",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Location?organization=Organization/{{organizationId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PractitionerRole",
+      "item": [
+        {
+          "name": "Create PractitionerRole",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"PractitionerRole\",\n  \"id\": \"practitioner-role-001\",\n  \"active\": true,\n  \"practitioner\": {\"reference\": \"Practitioner/{{practitionerId}}\", \"display\": \"Dr. Sarah Wilson\"},\n  \"organization\": {\"reference\": \"Organization/{{organizationId}}\"},\n  \"code\": [{\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"59058001\", \"display\": \"General physician\"}]}],\n  \"specialty\": [{\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"394802001\", \"display\": \"General medicine\"}]}],\n  \"location\": [{\"reference\": \"Location/location-001\"}],\n  \"availableTime\": [{\n    \"daysOfWeek\": [\"mon\", \"tue\", \"wed\", \"thu\", \"fri\"],\n    \"availableStartTime\": \"09:00:00\",\n    \"availableEndTime\": \"17:00:00\"\n  }]\n}"
+            },
+            "url": "{{baseUrl}}/PractitionerRole"
+          }
+        },
+        {
+          "name": "Read PractitionerRole",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/PractitionerRole/practitioner-role-001"
+          }
+        },
+        {
+          "name": "Search PractitionerRole by Practitioner",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/PractitionerRole?practitioner=Practitioner/{{practitionerId}}"
+          }
+        },
+        {
+          "name": "Search PractitionerRole by Specialty",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/PractitionerRole?specialty=http://snomed.info/sct|394802001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RelatedPerson",
+      "item": [
+        {
+          "name": "Create RelatedPerson",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"RelatedPerson\",\n  \"id\": \"related-person-001\",\n  \"active\": true,\n  \"patient\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"relationship\": [{\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/v3-RoleCode\", \"code\": \"WIFE\", \"display\": \"wife\"}]}],\n  \"name\": [{\"use\": \"official\", \"family\": \"Smith\", \"given\": [\"Jane\"]}],\n  \"gender\": \"female\",\n  \"birthDate\": \"1972-05-20\",\n  \"telecom\": [{\"system\": \"phone\", \"value\": \"555-234-5678\", \"use\": \"mobile\"}],\n  \"address\": [{\"use\": \"home\", \"line\": [\"123 Main St\"], \"city\": \"Springfield\", \"state\": \"IL\", \"postalCode\": \"62701\"}]\n}"
+            },
+            "url": "{{baseUrl}}/RelatedPerson"
+          }
+        },
+        {
+          "name": "Read RelatedPerson",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/RelatedPerson/related-person-001"
+          }
+        },
+        {
+          "name": "Search RelatedPerson by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/RelatedPerson?patient=Patient/{{patientId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointment",
+      "item": [
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Appointment\",\n  \"id\": \"appointment-001\",\n  \"status\": \"booked\",\n  \"serviceCategory\": [{\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/service-category\", \"code\": \"17\", \"display\": \"General Practice\"}]}],\n  \"serviceType\": [{\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"394802001\", \"display\": \"General medicine\"}]}],\n  \"appointmentType\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/v2-0276\", \"code\": \"ROUTINE\", \"display\": \"Routine appointment\"}]},\n  \"description\": \"Annual physical examination\",\n  \"start\": \"2024-07-15T10:00:00Z\",\n  \"end\": \"2024-07-15T10:30:00Z\",\n  \"minutesDuration\": 30,\n  \"participant\": [\n    {\"actor\": {\"reference\": \"Patient/{{patientId}}\"}, \"status\": \"accepted\"},\n    {\"actor\": {\"reference\": \"Practitioner/{{practitionerId}}\"}, \"status\": \"accepted\"}\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/Appointment"
+          }
+        },
+        {
+          "name": "Read Appointment",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Appointment/appointment-001"
+          }
+        },
+        {
+          "name": "Search Appointments by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Appointment?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Appointments by Date",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Appointment?date=2024-07-15"
+          }
+        },
+        {
+          "name": "Search Appointments by Status",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Appointment?status=booked"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "item": [
+        {
+          "name": "Create Schedule",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Schedule\",\n  \"id\": \"schedule-001\",\n  \"active\": true,\n  \"serviceCategory\": [{\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/service-category\", \"code\": \"17\", \"display\": \"General Practice\"}]}],\n  \"serviceType\": [{\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"394802001\", \"display\": \"General medicine\"}]}],\n  \"actor\": [\n    {\"reference\": \"Practitioner/{{practitionerId}}\", \"display\": \"Dr. Sarah Wilson\"},\n    {\"reference\": \"Location/location-001\", \"display\": \"Main Hospital Building A\"}\n  ],\n  \"planningHorizon\": {\"start\": \"2024-07-01\", \"end\": \"2024-12-31\"},\n  \"comment\": \"General medicine appointments - weekdays only\"\n}"
+            },
+            "url": "{{baseUrl}}/Schedule"
+          }
+        },
+        {
+          "name": "Read Schedule",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Schedule/schedule-001"
+          }
+        },
+        {
+          "name": "Search Schedule by Actor",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Schedule?actor=Practitioner/{{practitionerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Slot",
+      "item": [
+        {
+          "name": "Create Slot",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Slot\",\n  \"id\": \"slot-001\",\n  \"schedule\": {\"reference\": \"Schedule/schedule-001\"},\n  \"status\": \"free\",\n  \"start\": \"2024-07-15T09:00:00Z\",\n  \"end\": \"2024-07-15T09:30:00Z\",\n  \"comment\": \"30-minute appointment slot\"\n}"
+            },
+            "url": "{{baseUrl}}/Slot"
+          }
+        },
+        {
+          "name": "Read Slot",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Slot/slot-001"
+          }
+        },
+        {
+          "name": "Search Slots by Schedule",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Slot?schedule=Schedule/schedule-001"
+          }
+        },
+        {
+          "name": "Search Free Slots",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Slot?status=free"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coverage",
+      "item": [
+        {
+          "name": "Create Coverage",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Coverage\",\n  \"id\": \"coverage-001\",\n  \"status\": \"active\",\n  \"type\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/v3-ActCode\", \"code\": \"HIP\", \"display\": \"health insurance plan policy\"}]},\n  \"subscriber\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"beneficiary\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"relationship\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/subscriber-relationship\", \"code\": \"self\", \"display\": \"Self\"}]},\n  \"period\": {\"start\": \"2024-01-01\", \"end\": \"2024-12-31\"},\n  \"payor\": [{\"display\": \"Blue Cross Blue Shield\"}],\n  \"class\": [{\n    \"type\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/coverage-class\", \"code\": \"plan\", \"display\": \"Plan\"}]},\n    \"value\": \"PPO-500\",\n    \"name\": \"PPO Plan with $500 deductible\"\n  }]\n}"
+            },
+            "url": "{{baseUrl}}/Coverage"
+          }
+        },
+        {
+          "name": "Read Coverage",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Coverage/coverage-001"
+          }
+        },
+        {
+          "name": "Search Coverage by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Coverage?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Active Coverage",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Coverage?status=active"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Claim",
+      "item": [
+        {
+          "name": "Create Claim",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Claim\",\n  \"id\": \"claim-001\",\n  \"status\": \"active\",\n  \"type\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/claim-type\", \"code\": \"professional\", \"display\": \"Professional\"}]},\n  \"use\": \"claim\",\n  \"patient\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"created\": \"2024-06-15\",\n  \"provider\": {\"reference\": \"Organization/{{organizationId}}\"},\n  \"priority\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/processpriority\", \"code\": \"normal\"}]},\n  \"insurance\": [{\n    \"sequence\": 1,\n    \"focal\": true,\n    \"coverage\": {\"reference\": \"Coverage/coverage-001\"}\n  }],\n  \"item\": [{\n    \"sequence\": 1,\n    \"productOrService\": {\"coding\": [{\"system\": \"http://www.ama-assn.org/go/cpt\", \"code\": \"99213\", \"display\": \"Office visit, established patient\"}]},\n    \"servicedDate\": \"2024-06-15\",\n    \"unitPrice\": {\"value\": 150.00, \"currency\": \"USD\"},\n    \"net\": {\"value\": 150.00, \"currency\": \"USD\"}\n  }],\n  \"total\": {\"value\": 150.00, \"currency\": \"USD\"}\n}"
+            },
+            "url": "{{baseUrl}}/Claim"
+          }
+        },
+        {
+          "name": "Read Claim",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Claim/claim-001"
+          }
+        },
+        {
+          "name": "Search Claims by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Claim?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Claims by Status",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Claim?status=active"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ExplanationOfBenefit",
+      "item": [
+        {
+          "name": "Create ExplanationOfBenefit",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"ExplanationOfBenefit\",\n  \"id\": \"eob-001\",\n  \"status\": \"active\",\n  \"type\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/claim-type\", \"code\": \"professional\", \"display\": \"Professional\"}]},\n  \"use\": \"claim\",\n  \"patient\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"created\": \"2024-06-20\",\n  \"insurer\": {\"display\": \"Blue Cross Blue Shield\"},\n  \"provider\": {\"reference\": \"Organization/{{organizationId}}\"},\n  \"outcome\": \"complete\",\n  \"insurance\": [{\n    \"focal\": true,\n    \"coverage\": {\"reference\": \"Coverage/coverage-001\"}\n  }],\n  \"item\": [{\n    \"sequence\": 1,\n    \"productOrService\": {\"coding\": [{\"system\": \"http://www.ama-assn.org/go/cpt\", \"code\": \"99213\", \"display\": \"Office visit\"}]},\n    \"servicedDate\": \"2024-06-15\",\n    \"adjudication\": [\n      {\"category\": {\"coding\": [{\"code\": \"submitted\"}]}, \"amount\": {\"value\": 150.00, \"currency\": \"USD\"}},\n      {\"category\": {\"coding\": [{\"code\": \"benefit\"}]}, \"amount\": {\"value\": 120.00, \"currency\": \"USD\"}}\n    ]\n  }],\n  \"total\": [\n    {\"category\": {\"coding\": [{\"code\": \"submitted\"}]}, \"amount\": {\"value\": 150.00, \"currency\": \"USD\"}},\n    {\"category\": {\"coding\": [{\"code\": \"benefit\"}]}, \"amount\": {\"value\": 120.00, \"currency\": \"USD\"}}\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/ExplanationOfBenefit"
+          }
+        },
+        {
+          "name": "Read ExplanationOfBenefit",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/ExplanationOfBenefit/eob-001"
+          }
+        },
+        {
+          "name": "Search EOB by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/ExplanationOfBenefit?patient=Patient/{{patientId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Device",
+      "item": [
+        {
+          "name": "Create Device",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Device\",\n  \"id\": \"device-001\",\n  \"status\": \"active\",\n  \"deviceName\": [{\"name\": \"Acme Blood Pressure Monitor\", \"type\": \"manufacturer-name\"}],\n  \"type\": {\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"43770009\", \"display\": \"Blood pressure monitor\"}]},\n  \"manufacturer\": \"Acme Medical Devices\",\n  \"modelNumber\": \"BPM-2000\",\n  \"serialNumber\": \"SN12345678\",\n  \"patient\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"owner\": {\"reference\": \"Organization/{{organizationId}}\"}\n}"
+            },
+            "url": "{{baseUrl}}/Device"
+          }
+        },
+        {
+          "name": "Read Device",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Device/device-001"
+          }
+        },
+        {
+          "name": "Search Devices by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Device?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Devices by Type",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Device?type=http://snomed.info/sct|43770009"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Binary",
+      "item": [
+        {
+          "name": "Create Binary (PDF)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Binary\",\n  \"id\": \"binary-001\",\n  \"contentType\": \"application/pdf\",\n  \"data\": \"JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKL01lZGlhQm94IFswIDAgNjEyIDc5Ml0KPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjQgMDAwMDAgbiAKMDAwMDAwMDE2MSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjIxMwolJUVPRgo=\"\n}"
+            },
+            "url": "{{baseUrl}}/Binary"
+          }
+        },
+        {
+          "name": "Read Binary",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Binary/binary-001"
+          }
+        },
+        {
+          "name": "Read Binary (Raw)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "*/*"}],
+            "url": "{{baseUrl}}/Binary/binary-001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Composition",
+      "item": [
+        {
+          "name": "Create Composition",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Composition\",\n  \"id\": \"composition-001\",\n  \"status\": \"final\",\n  \"type\": {\"coding\": [{\"system\": \"http://loinc.org\", \"code\": \"11503-0\", \"display\": \"Medical records\"}]},\n  \"subject\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"date\": \"2024-06-15T10:30:00Z\",\n  \"author\": [{\"reference\": \"Practitioner/{{practitionerId}}\"}],\n  \"title\": \"Patient Medical Summary\",\n  \"section\": [\n    {\n      \"title\": \"Active Problems\",\n      \"code\": {\"coding\": [{\"system\": \"http://loinc.org\", \"code\": \"11450-4\", \"display\": \"Problem list\"}]},\n      \"text\": {\"status\": \"generated\", \"div\": \"<div xmlns='http://www.w3.org/1999/xhtml'><p>Hypertension, Type 2 Diabetes</p></div>\"}\n    },\n    {\n      \"title\": \"Current Medications\",\n      \"code\": {\"coding\": [{\"system\": \"http://loinc.org\", \"code\": \"10160-0\", \"display\": \"Medication list\"}]},\n      \"text\": {\"status\": \"generated\", \"div\": \"<div xmlns='http://www.w3.org/1999/xhtml'><p>Lisinopril 10mg daily, Metformin 500mg twice daily</p></div>\"}\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/Composition"
+          }
+        },
+        {
+          "name": "Read Composition",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Composition/composition-001"
+          }
+        },
+        {
+          "name": "Search Composition by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Composition?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Composition by Type",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Composition?type=http://loinc.org|11503-0"
+          }
+        },
+        {
+          "name": "Composition $document",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Composition/composition-001/$document"
+          }
+        }
+      ]
+    },
+    {
+      "name": "CareTeam",
+      "item": [
+        {
+          "name": "Create CareTeam",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"CareTeam\",\n  \"id\": \"care-team-001\",\n  \"status\": \"active\",\n  \"category\": [{\"coding\": [{\"system\": \"http://loinc.org\", \"code\": \"LA27976-2\", \"display\": \"Longitudinal care-coordination focused care team\"}]}],\n  \"name\": \"Diabetes Care Team\",\n  \"subject\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"period\": {\"start\": \"2024-01-01\"},\n  \"participant\": [\n    {\n      \"role\": [{\"coding\": [{\"system\": \"http://snomed.info/sct\", \"code\": \"446050000\", \"display\": \"Primary care physician\"}]}],\n      \"member\": {\"reference\": \"Practitioner/{{practitionerId}}\", \"display\": \"Dr. Sarah Wilson\"}\n    }\n  ],\n  \"managingOrganization\": [{\"reference\": \"Organization/{{organizationId}}\"}]\n}"
+            },
+            "url": "{{baseUrl}}/CareTeam"
+          }
+        },
+        {
+          "name": "Read CareTeam",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/CareTeam/care-team-001"
+          }
+        },
+        {
+          "name": "Search CareTeam by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/CareTeam?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Active CareTeams",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/CareTeam?status=active"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Task",
+      "item": [
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Task\",\n  \"id\": \"task-001\",\n  \"status\": \"requested\",\n  \"intent\": \"order\",\n  \"priority\": \"routine\",\n  \"code\": {\"coding\": [{\"system\": \"http://hl7.org/fhir/CodeSystem/task-code\", \"code\": \"approve\", \"display\": \"Activate/Approve\"}]},\n  \"description\": \"Review and approve medication refill request\",\n  \"for\": {\"reference\": \"Patient/{{patientId}}\"},\n  \"authoredOn\": \"2024-06-15T09:00:00Z\",\n  \"requester\": {\"reference\": \"Practitioner/{{practitionerId}}\"},\n  \"owner\": {\"reference\": \"Practitioner/{{practitionerId}}\"},\n  \"restriction\": {\n    \"period\": {\"end\": \"2024-06-16T17:00:00Z\"}\n  }\n}"
+            },
+            "url": "{{baseUrl}}/Task"
+          }
+        },
+        {
+          "name": "Read Task",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Task/task-001"
+          }
+        },
+        {
+          "name": "Search Tasks by Patient",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Task?patient=Patient/{{patientId}}"
+          }
+        },
+        {
+          "name": "Search Tasks by Status",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Task?status=requested"
+          }
+        },
+        {
+          "name": "Search Tasks by Owner",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Task?owner=Practitioner/{{practitionerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Library",
+      "item": [
+        {
+          "name": "Create Library",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"Library\",\n  \"id\": \"library-001\",\n  \"url\": \"http://example.org/Library/diabetes-care\",\n  \"name\": \"DiabetesCareLibrary\",\n  \"title\": \"Diabetes Care CQL Library\",\n  \"status\": \"active\",\n  \"type\": {\"coding\": [{\"system\": \"http://terminology.hl7.org/CodeSystem/library-type\", \"code\": \"logic-library\", \"display\": \"Logic Library\"}]},\n  \"date\": \"2024-06-15\",\n  \"description\": \"CQL library for diabetes care quality measures\",\n  \"content\": [{\n    \"contentType\": \"text/cql\",\n    \"data\": \"bGlicmFyeSBEaWFiZXRlc0NhcmUgdmVyc2lvbiAnMS4wLjAnCgpkZWZpbmUgIkRpYWJldGljIFBhdGllbnRzIjoKICBbQ29uZGl0aW9uOiBjb2RlIGluICJEaWFiZXRlcyBDb2RlcyJd\"\n  }]\n}"
+            },
+            "url": "{{baseUrl}}/Library"
+          }
+        },
+        {
+          "name": "Read Library",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Library/library-001"
+          }
+        },
+        {
+          "name": "Search Libraries by Name",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Library?name=DiabetesCare"
+          }
+        },
+        {
+          "name": "Search Libraries by URL",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/Library?url=http://example.org/Library/diabetes-care"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ConceptMap",
+      "item": [
+        {
+          "name": "Create ConceptMap",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/fhir+json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"ConceptMap\",\n  \"id\": \"concept-map-001\",\n  \"url\": \"http://example.org/ConceptMap/icd10-to-snomed\",\n  \"name\": \"ICD10ToSNOMED\",\n  \"title\": \"ICD-10 to SNOMED CT Mapping\",\n  \"status\": \"active\",\n  \"sourceUri\": \"http://hl7.org/fhir/ValueSet/icd-10\",\n  \"targetUri\": \"http://snomed.info/sct?fhir_vs\",\n  \"group\": [{\n    \"source\": \"http://hl7.org/fhir/sid/icd-10\",\n    \"target\": \"http://snomed.info/sct\",\n    \"element\": [{\n      \"code\": \"E11.9\",\n      \"display\": \"Type 2 diabetes mellitus without complications\",\n      \"target\": [{\n        \"code\": \"44054006\",\n        \"display\": \"Type 2 diabetes mellitus\",\n        \"equivalence\": \"equivalent\"\n      }]\n    }]\n  }]\n}"
+            },
+            "url": "{{baseUrl}}/ConceptMap"
+          }
+        },
+        {
+          "name": "Read ConceptMap",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/ConceptMap/concept-map-001"
+          }
+        },
+        {
+          "name": "Search ConceptMaps",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": "{{baseUrl}}/ConceptMap"
+          }
+        },
+        {
+          "name": "ConceptMap $translate",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/fhir+json"}],
+            "url": {
+              "raw": "{{baseUrl}}/ConceptMap/$translate?code=E11.9&system=http://hl7.org/fhir/sid/icd-10&target=http://snomed.info/sct",
+              "host": ["{{baseUrl}}"],
+              "path": ["ConceptMap", "$translate"],
+              "query": [
+                {"key": "code", "value": "E11.9"},
+                {"key": "system", "value": "http://hl7.org/fhir/sid/icd-10"},
+                {"key": "target", "value": "http://snomed.info/sct"}
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

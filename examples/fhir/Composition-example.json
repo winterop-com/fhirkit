@@ -1,0 +1,213 @@
+{
+  "resourceType": "Composition",
+  "id": "composition-example",
+  "status": "final",
+  "type": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "11503-0",
+        "display": "Medical records"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://loinc.org",
+          "code": "LP183761-8",
+          "display": "Report"
+        }
+      ]
+    }
+  ],
+  "subject": {
+    "reference": "Patient/patient-001",
+    "display": "John Smith"
+  },
+  "encounter": {
+    "reference": "Encounter/encounter-001"
+  },
+  "date": "2024-06-15T10:30:00Z",
+  "author": [
+    {
+      "reference": "Practitioner/practitioner-001",
+      "display": "Dr. Sarah Wilson"
+    }
+  ],
+  "title": "Patient Medical Summary - John Smith",
+  "confidentiality": "N",
+  "attester": [
+    {
+      "mode": "professional",
+      "time": "2024-06-15T11:00:00Z",
+      "party": {
+        "reference": "Practitioner/practitioner-001",
+        "display": "Dr. Sarah Wilson"
+      }
+    }
+  ],
+  "custodian": {
+    "reference": "Organization/org-001",
+    "display": "Springfield General Hospital"
+  },
+  "relatesTo": [
+    {
+      "code": "replaces",
+      "targetReference": {
+        "reference": "Composition/composition-previous"
+      }
+    }
+  ],
+  "event": [
+    {
+      "code": [
+        {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "PCPR",
+              "display": "Primary care physician review"
+            }
+          ]
+        }
+      ],
+      "period": {
+        "start": "2024-01-01",
+        "end": "2024-06-15"
+      }
+    }
+  ],
+  "section": [
+    {
+      "title": "Active Problems",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "11450-4",
+            "display": "Problem list - Reported"
+          }
+        ]
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table><tr><td>Hypertension (Essential)</td><td>Active since 2020-03-15</td></tr><tr><td>Type 2 Diabetes Mellitus</td><td>Active since 2019-08-22</td></tr></table></div>"
+      },
+      "mode": "snapshot",
+      "orderedBy": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/list-order",
+            "code": "priority",
+            "display": "Sorted by Priority"
+          }
+        ]
+      },
+      "entry": [
+        {
+          "reference": "Condition/condition-hypertension"
+        },
+        {
+          "reference": "Condition/condition-diabetes"
+        }
+      ]
+    },
+    {
+      "title": "Current Medications",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "10160-0",
+            "display": "History of Medication use Narrative"
+          }
+        ]
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul><li>Lisinopril 10mg - once daily</li><li>Metformin 500mg - twice daily</li><li>Aspirin 81mg - once daily</li></ul></div>"
+      },
+      "mode": "snapshot",
+      "entry": [
+        {
+          "reference": "MedicationRequest/med-lisinopril"
+        },
+        {
+          "reference": "MedicationRequest/med-metformin"
+        },
+        {
+          "reference": "MedicationRequest/med-aspirin"
+        }
+      ]
+    },
+    {
+      "title": "Allergies and Adverse Reactions",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "48765-2",
+            "display": "Allergies and adverse reactions Document"
+          }
+        ]
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Penicillin - Causes rash</p></div>"
+      },
+      "mode": "snapshot",
+      "entry": [
+        {
+          "reference": "AllergyIntolerance/allergy-penicillin"
+        }
+      ]
+    },
+    {
+      "title": "Vital Signs",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "8716-3",
+            "display": "Vital signs"
+          }
+        ]
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table><tr><th>Date</th><th>BP</th><th>HR</th><th>Temp</th></tr><tr><td>2024-06-15</td><td>128/82 mmHg</td><td>72 bpm</td><td>98.6 F</td></tr></table></div>"
+      },
+      "mode": "snapshot",
+      "entry": [
+        {
+          "reference": "Observation/obs-bp-001"
+        },
+        {
+          "reference": "Observation/obs-hr-001"
+        },
+        {
+          "reference": "Observation/obs-temp-001"
+        }
+      ]
+    },
+    {
+      "title": "Plan of Care",
+      "code": {
+        "coding": [
+          {
+            "system": "http://loinc.org",
+            "code": "18776-5",
+            "display": "Plan of care note"
+          }
+        ]
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><ol><li>Continue current medications</li><li>HbA1c check in 3 months</li><li>Follow-up appointment in 6 months</li><li>Dietary counseling referral</li></ol></div>"
+      },
+      "mode": "working"
+    }
+  ]
+}
