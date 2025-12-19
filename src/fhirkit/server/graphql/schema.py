@@ -1421,6 +1421,7 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
         return {"store": store}
 
     import json
+
     from fastapi.responses import HTMLResponse
 
     # Custom GraphQL router with default query in GraphiQL
@@ -1440,21 +1441,112 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
 
     # Define examples for the dropdown
     examples = [
-        {"group": "Queries", "name": "List patients", "query": "{\n  patients(_count: 5) {\n    id\n    resourceType\n    data\n  }\n}"},
-        {"group": "Queries", "name": "Search patients by gender", "query": '{\n  patients(gender: "female", _count: 5) {\n    id\n    data\n  }\n}'},
-        {"group": "Queries", "name": "Get patient by ID", "query": '{\n  patient(id: "PATIENT_ID") {\n    id\n    resourceType\n    data\n  }\n}'},
-        {"group": "Queries", "name": "List observations", "query": "{\n  observations(_count: 10) {\n    id\n    data\n  }\n}"},
-        {"group": "Queries", "name": "Observations for patient", "query": '{\n  observations(patient: "Patient/PATIENT_ID", _count: 10) {\n    id\n    data\n  }\n}'},
-        {"group": "Queries", "name": "List conditions", "query": "{\n  conditions(_count: 10) {\n    id\n    data\n  }\n}"},
-        {"group": "Queries", "name": "Multiple resources", "query": "{\n  p: patients(_count: 3) { id data }\n  obs: observations(_count: 3) { id data }\n  cond: conditions(_count: 3) { id data }\n}"},
-        {"group": "Queries", "name": "Generic resource query", "query": '{\n  resource(resourceType: "Observation", id: "OBS_ID") {\n    id\n    resourceType\n    data\n  }\n}'},
-        {"group": "Pagination", "name": "Cursor pagination", "query": "{\n  patientConnection(first: 5) {\n    edges {\n      cursor\n      node {\n        id\n        data\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    total\n  }\n}"},
-        {"group": "Pagination", "name": "Offset pagination", "query": "{\n  patients(_count: 5, _offset: 0) {\n    id\n    data\n  }\n}"},
-        {"group": "Pagination", "name": "Pagination with cursor", "query": '{\n  patientConnection(first: 5, after: "CURSOR") {\n    edges {\n      cursor\n      node { id data }\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      endCursor\n    }\n  }\n}'},
-        {"group": "Mutations", "name": "Create patient", "query": 'mutation {\n  createPatient(data: {\n    resourceType: "Patient"\n    name: [{ family: "Smith", given: ["John"] }]\n    gender: "male"\n    birthDate: "1990-01-15"\n  }) {\n    id\n    resourceType\n    data\n  }\n}'},
-        {"group": "Mutations", "name": "Update patient", "query": 'mutation {\n  updatePatient(id: "PATIENT_ID", data: {\n    resourceType: "Patient"\n    name: [{ family: "Updated", given: ["Name"] }]\n    gender: "male"\n  }) {\n    id\n    data\n  }\n}'},
-        {"group": "Mutations", "name": "Delete patient", "query": 'mutation {\n  deletePatient(id: "PATIENT_ID") {\n    id\n  }\n}'},
-        {"group": "Mutations", "name": "Generic create", "query": 'mutation {\n  resourceCreate(resourceType: "Observation", data: {\n    resourceType: "Observation"\n    status: "final"\n    code: { text: "Heart Rate" }\n    valueQuantity: { value: 72, unit: "bpm" }\n  }) {\n    id\n    resourceType\n    data\n  }\n}'},
+        {
+            "group": "Queries",
+            "name": "List patients",
+            "query": "{\n  patients(_count: 5) {\n    id\n    resourceType\n    data\n  }\n}",
+        },
+        {
+            "group": "Queries",
+            "name": "Search patients by gender",
+            "query": '{\n  patients(gender: "female", _count: 5) {\n    id\n    data\n  }\n}',
+        },
+        {
+            "group": "Queries",
+            "name": "Get patient by ID",
+            "query": '{\n  patient(id: "PATIENT_ID") {\n    id\n    resourceType\n    data\n  }\n}',
+        },
+        {
+            "group": "Queries",
+            "name": "List observations",
+            "query": "{\n  observations(_count: 10) {\n    id\n    data\n  }\n}",
+        },
+        {
+            "group": "Queries",
+            "name": "Observations for patient",
+            "query": '{\n  observations(patient: "Patient/PATIENT_ID", _count: 10) {\n    id\n    data\n  }\n}',
+        },
+        {
+            "group": "Queries",
+            "name": "List conditions",
+            "query": "{\n  conditions(_count: 10) {\n    id\n    data\n  }\n}",
+        },
+        {
+            "group": "Queries",
+            "name": "Multiple resources",
+            "query": (
+                "{\n  p: patients(_count: 3) { id data }\n"
+                "  obs: observations(_count: 3) { id data }\n"
+                "  cond: conditions(_count: 3) { id data }\n}"
+            ),
+        },
+        {
+            "group": "Queries",
+            "name": "Generic resource query",
+            "query": (
+                '{\n  resource(resourceType: "Observation", id: "OBS_ID") {\n    id\n    resourceType\n    data\n  }\n}'
+            ),
+        },
+        {
+            "group": "Pagination",
+            "name": "Cursor pagination",
+            "query": (
+                "{\n  patientConnection(first: 5) {\n    edges {\n      cursor\n"
+                "      node {\n        id\n        data\n      }\n    }\n"
+                "    pageInfo {\n      hasNextPage\n      endCursor\n    }\n"
+                "    total\n  }\n}"
+            ),
+        },
+        {
+            "group": "Pagination",
+            "name": "Offset pagination",
+            "query": "{\n  patients(_count: 5, _offset: 0) {\n    id\n    data\n  }\n}",
+        },
+        {
+            "group": "Pagination",
+            "name": "Pagination with cursor",
+            "query": (
+                '{\n  patientConnection(first: 5, after: "CURSOR") {\n    edges {\n'
+                "      cursor\n      node { id data }\n    }\n    pageInfo {\n"
+                "      hasNextPage\n      hasPreviousPage\n      endCursor\n    }\n  }\n}"
+            ),
+        },
+        {
+            "group": "Mutations",
+            "name": "Create patient",
+            "query": (
+                'mutation {\n  createPatient(data: {\n    resourceType: "Patient"\n'
+                '    name: [{ family: "Smith", given: ["John"] }]\n    gender: "male"\n'
+                '    birthDate: "1990-01-15"\n  }) {\n    id\n    resourceType\n'
+                "    data\n  }\n}"
+            ),
+        },
+        {
+            "group": "Mutations",
+            "name": "Update patient",
+            "query": (
+                'mutation {\n  updatePatient(id: "PATIENT_ID", data: {\n'
+                '    resourceType: "Patient"\n'
+                '    name: [{ family: "Updated", given: ["Name"] }]\n'
+                '    gender: "male"\n  }) {\n    id\n    data\n  }\n}'
+            ),
+        },
+        {
+            "group": "Mutations",
+            "name": "Delete patient",
+            "query": 'mutation {\n  deletePatient(id: "PATIENT_ID") {\n    id\n  }\n}',
+        },
+        {
+            "group": "Mutations",
+            "name": "Generic create",
+            "query": (
+                'mutation {\n  resourceCreate(resourceType: "Observation", data: {\n'
+                '    resourceType: "Observation"\n    status: "final"\n'
+                '    code: { text: "Heart Rate" }\n'
+                '    valueQuantity: { value: 72, unit: "bpm" }\n'
+                "  }) {\n    id\n    resourceType\n    data\n  }\n}"
+            ),
+        },
     ]
 
     # Set custom GraphiQL HTML with examples dropdown
@@ -1538,7 +1630,9 @@ def create_graphql_router(store: FHIRStore) -> GraphQLRouter:
             url: window.location.href,
         }});
 
-        const defaultQuery = "# FHIR GraphQL API\\n# Select an example from the dropdown above, or write your own query\\n\\n{{\\n  patients(_count: 5) {{\\n    id\\n    resourceType\\n    data\\n  }}\\n}}";
+        const defaultQuery = "# FHIR GraphQL API\\n" +
+            "# Select an example from the dropdown above, or write your own query\\n\\n" +
+            "{{\\n  patients(_count: 5) {{\\n    id\\n    resourceType\\n    data\\n  }}\\n}}";
 
         let graphiqlInstance = null;
 

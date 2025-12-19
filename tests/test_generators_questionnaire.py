@@ -1,6 +1,5 @@
 """Tests for Questionnaire and QuestionnaireResponse generators."""
 
-
 from fhirkit.server.generator.questionnaire import QuestionnaireGenerator
 from fhirkit.server.generator.questionnaire_response import QuestionnaireResponseGenerator
 

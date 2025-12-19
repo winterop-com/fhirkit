@@ -41,11 +41,13 @@ class TestSingleResourceQueries:
 
     def test_query_patient_by_id(self, client, store):
         """Test fetching a single Patient by ID."""
-        patient = store.create({
-            "resourceType": "Patient",
-            "name": [{"family": "Smith", "given": ["John"]}],
-            "gender": "male",
-        })
+        patient = store.create(
+            {
+                "resourceType": "Patient",
+                "name": [{"family": "Smith", "given": ["John"]}],
+                "gender": "male",
+            }
+        )
         patient_id = patient["id"]
 
         query = f"""
@@ -85,15 +87,17 @@ class TestSingleResourceQueries:
 
     def test_generic_resource_query(self, client, store):
         """Test the generic resource query for any type."""
-        obs = store.create({
-            "resourceType": "Observation",
-            "status": "final",
-            "code": {"text": "Heart Rate"},
-        })
+        obs = store.create(
+            {
+                "resourceType": "Observation",
+                "status": "final",
+                "code": {"text": "Heart Rate"},
+            }
+        )
 
         query = f"""
         {{
-            resource(resourceType: "Observation", id: "{obs['id']}") {{
+            resource(resourceType: "Observation", id: "{obs["id"]}") {{
                 id
                 resourceType
                 data
@@ -176,24 +180,30 @@ class TestListQueries:
         patient = store.create({"resourceType": "Patient", "name": [{"family": "Test"}]})
         patient_ref = f"Patient/{patient['id']}"
 
-        store.create({
-            "resourceType": "Observation",
-            "status": "final",
-            "subject": {"reference": patient_ref},
-            "code": {"text": "BP"},
-        })
-        store.create({
-            "resourceType": "Observation",
-            "status": "final",
-            "subject": {"reference": patient_ref},
-            "code": {"text": "HR"},
-        })
-        store.create({
-            "resourceType": "Observation",
-            "status": "final",
-            "subject": {"reference": "Patient/other"},
-            "code": {"text": "Temp"},
-        })
+        store.create(
+            {
+                "resourceType": "Observation",
+                "status": "final",
+                "subject": {"reference": patient_ref},
+                "code": {"text": "BP"},
+            }
+        )
+        store.create(
+            {
+                "resourceType": "Observation",
+                "status": "final",
+                "subject": {"reference": patient_ref},
+                "code": {"text": "HR"},
+            }
+        )
+        store.create(
+            {
+                "resourceType": "Observation",
+                "status": "final",
+                "subject": {"reference": "Patient/other"},
+                "code": {"text": "Temp"},
+            }
+        )
 
         query = f"""
         {{
@@ -314,11 +324,7 @@ class TestMutations:
         }
         """
         variables = {
-            "data": {
-                "resourceType": "Patient",
-                "name": [{"family": "New", "given": ["Test"]}],
-                "gender": "female"
-            }
+            "data": {"resourceType": "Patient", "name": [{"family": "New", "given": ["Test"]}], "gender": "female"}
         }
         response = client.post("/baseR4/$graphql", json={"query": mutation, "variables": variables})
 
@@ -338,11 +344,13 @@ class TestMutations:
 
     def test_patient_update(self, client, store):
         """Test updating a patient via mutation."""
-        patient = store.create({
-            "resourceType": "Patient",
-            "name": [{"family": "Original"}],
-            "gender": "male",
-        })
+        patient = store.create(
+            {
+                "resourceType": "Patient",
+                "name": [{"family": "Original"}],
+                "gender": "male",
+            }
+        )
 
         # Use variables to pass JSON data properly
         mutation = """
@@ -354,12 +362,8 @@ class TestMutations:
         }
         """
         variables = {
-            "id": patient['id'],
-            "data": {
-                "resourceType": "Patient",
-                "name": [{"family": "Updated"}],
-                "gender": "male"
-            }
+            "id": patient["id"],
+            "data": {"resourceType": "Patient", "name": [{"family": "Updated"}], "gender": "male"},
         }
         response = client.post("/baseR4/$graphql", json={"query": mutation, "variables": variables})
 
@@ -372,10 +376,12 @@ class TestMutations:
 
     def test_patient_delete(self, client, store):
         """Test deleting a patient via mutation."""
-        patient = store.create({
-            "resourceType": "Patient",
-            "name": [{"family": "ToDelete"}],
-        })
+        patient = store.create(
+            {
+                "resourceType": "Patient",
+                "name": [{"family": "ToDelete"}],
+            }
+        )
         patient_id = patient["id"]
 
         mutation = f"""
@@ -409,11 +415,7 @@ class TestMutations:
         """
         variables = {
             "resourceType": "Observation",
-            "data": {
-                "resourceType": "Observation",
-                "status": "final",
-                "code": {"text": "Test Observation"}
-            }
+            "data": {"resourceType": "Observation", "status": "final", "code": {"text": "Test Observation"}},
         }
         response = client.post("/baseR4/$graphql", json={"query": mutation, "variables": variables})
 
@@ -475,17 +477,19 @@ class TestMultipleResourceTypes:
 
     def test_query_condition(self, client, store):
         """Test querying a Condition resource."""
-        condition = store.create({
-            "resourceType": "Condition",
-            "clinicalStatus": {
-                "coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active"}]
-            },
-            "code": {"text": "Diabetes"},
-        })
+        condition = store.create(
+            {
+                "resourceType": "Condition",
+                "clinicalStatus": {
+                    "coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active"}]
+                },
+                "code": {"text": "Diabetes"},
+            }
+        )
 
         query = f"""
         {{
-            condition(id: "{condition['id']}") {{
+            condition(id: "{condition["id"]}") {{
                 id
                 resourceType
                 data
@@ -500,15 +504,17 @@ class TestMultipleResourceTypes:
 
     def test_query_encounter(self, client, store):
         """Test querying an Encounter resource."""
-        encounter = store.create({
-            "resourceType": "Encounter",
-            "status": "finished",
-            "class": {"code": "AMB"},
-        })
+        encounter = store.create(
+            {
+                "resourceType": "Encounter",
+                "status": "finished",
+                "class": {"code": "AMB"},
+            }
+        )
 
         query = f"""
         {{
-            encounter(id: "{encounter['id']}") {{
+            encounter(id: "{encounter["id"]}") {{
                 id
                 data
             }}
@@ -522,16 +528,20 @@ class TestMultipleResourceTypes:
 
     def test_condition_list_with_filters(self, client, store):
         """Test conditions with clinical status filter."""
-        store.create({
-            "resourceType": "Condition",
-            "clinicalStatus": {"coding": [{"code": "active"}]},
-            "code": {"text": "Condition1"},
-        })
-        store.create({
-            "resourceType": "Condition",
-            "clinicalStatus": {"coding": [{"code": "resolved"}]},
-            "code": {"text": "Condition2"},
-        })
+        store.create(
+            {
+                "resourceType": "Condition",
+                "clinicalStatus": {"coding": [{"code": "active"}]},
+                "code": {"text": "Condition1"},
+            }
+        )
+        store.create(
+            {
+                "resourceType": "Condition",
+                "clinicalStatus": {"coding": [{"code": "resolved"}]},
+                "code": {"text": "Condition2"},
+            }
+        )
 
         # Use clinicalStatus (camelCase) as defined in the GraphQL schema
         query = """

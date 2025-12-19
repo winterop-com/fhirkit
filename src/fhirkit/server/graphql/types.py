@@ -73,15 +73,9 @@ class FHIRURI(str):
 class Reference:
     """FHIR Reference type with optional inline resolution."""
 
-    reference: Optional[str] = strawberry.field(
-        default=None, description="Literal reference (e.g., 'Patient/123')"
-    )
-    type: Optional[str] = strawberry.field(
-        default=None, description="Type of the referenced resource"
-    )
-    display: Optional[str] = strawberry.field(
-        default=None, description="Display text for the reference"
-    )
+    reference: Optional[str] = strawberry.field(default=None, description="Literal reference (e.g., 'Patient/123')")
+    type: Optional[str] = strawberry.field(default=None, description="Type of the referenced resource")
+    display: Optional[str] = strawberry.field(default=None, description="Display text for the reference")
 
     # Private field for store access
     _store: strawberry.Private[Optional["FHIRStore"]] = None
@@ -311,12 +305,8 @@ class PageInfo:
 class SearchEntryMode:
     """FHIR search entry mode information."""
 
-    mode: str = strawberry.field(
-        default="match", description="Whether this is a 'match' or 'include' result"
-    )
-    score: Optional[float] = strawberry.field(
-        default=None, description="Search relevance score"
-    )
+    mode: str = strawberry.field(default="match", description="Whether this is a 'match' or 'include' result")
+    score: Optional[float] = strawberry.field(default=None, description="Search relevance score")
 
 
 @strawberry.type(description="An edge in a connection (resource + cursor)")
@@ -325,9 +315,7 @@ class ResourceEdge:
 
     cursor: str = strawberry.field(description="Cursor for this item (for pagination)")
     node: Resource = strawberry.field(description="The resource at this edge")
-    search: Optional[SearchEntryMode] = strawberry.field(
-        default=None, description="Search result metadata"
-    )
+    search: Optional[SearchEntryMode] = strawberry.field(default=None, description="Search result metadata")
 
 
 @strawberry.type(description="A paginated connection of FHIR resources")
