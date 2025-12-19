@@ -319,6 +319,41 @@ Min({5, 2, 8})              // 2
 Max({5, 2, 8})              // 8
 ```
 
+**Quantity and Unit Conversion (UCUM)**
+
+Convert between units using the UCUM (Unified Code for Units of Measure) standard:
+
+```cql
+// Mass conversions
+ConvertQuantity(1 'g', 'mg')           // 1000 'mg'
+ConvertQuantity(500 'mg', 'g')         // 0.5 'g'
+ConvertQuantity(150 '[lb_av]', 'kg')   // 68.04 'kg'
+
+// Volume conversions
+ConvertQuantity(1 'L', 'mL')           // 1000 'mL'
+ConvertQuantity(500 'mL', 'L')         // 0.5 'L'
+
+// Temperature conversions
+ConvertQuantity(98.6 '[degF]', 'Cel')  // 37.0 'Cel'
+ConvertQuantity(37 'Cel', '[degF]')    // 98.6 '[degF]'
+ConvertQuantity(0 'Cel', 'K')          // 273.15 'K'
+
+// Length conversions
+ConvertQuantity(70 '[in_i]', 'cm')     // 177.8 'cm'
+ConvertQuantity(1 '[ft_i]', 'm')       // 0.3048 'm'
+
+// Compound units (concentrations)
+ConvertQuantity(180 'mg/dL', 'mg/L')   // 1800 'mg/L'
+```
+
+Supported unit categories:
+- **Mass**: g, mg, kg, ug, ng, [lb_av], [oz_av]
+- **Volume**: L, mL, dL, uL, [gal_us], [foz_us]
+- **Length**: m, cm, mm, km, [in_i], [ft_i], [mi_i]
+- **Temperature**: Cel (Celsius), [degF] (Fahrenheit), K (Kelvin)
+- **Time**: s, min, h, d, wk, mo, a (year)
+- **Concentration**: mg/dL, mmol/L, g/L, etc.
+
 ### User-Defined Functions
 
 Create reusable functions:

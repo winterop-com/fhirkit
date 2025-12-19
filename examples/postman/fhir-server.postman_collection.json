@@ -1879,6 +1879,156 @@
       ]
     },
     {
+      "name": "CQL & FHIRPath",
+      "description": "Evaluate CQL expressions and FHIRPath queries on the server",
+      "item": [
+        {
+          "name": "CQL - Basic Expression",
+          "description": "Evaluate a simple CQL expression",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define Result: 1 + 2 * 3\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - UCUM Unit Conversion (Mass)",
+          "description": "Convert weight from pounds to kilograms using UCUM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define WeightInKg: ConvertQuantity(150 '[lb_av]', 'kg')\\ndefine WeightInGrams: ConvertQuantity(1 'kg', 'g')\\ndefine MedicationDose: ConvertQuantity(500 'mg', 'g')\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - UCUM Unit Conversion (Temperature)",
+          "description": "Convert temperature between Fahrenheit and Celsius",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define BodyTempCelsius: ConvertQuantity(98.6 '[degF]', 'Cel')\\ndefine BoilingPoint: ConvertQuantity(100 'Cel', '[degF]')\\ndefine FreezingKelvin: ConvertQuantity(0 'Cel', 'K')\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - UCUM Unit Conversion (Volume)",
+          "description": "Convert volumes for IV fluid calculations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define FluidLiters: ConvertQuantity(1000 'mL', 'L')\\ndefine FluidDeciliters: ConvertQuantity(500 'mL', 'dL')\\ndefine USGallonToLiters: ConvertQuantity(1 '[gal_us]', 'L')\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - UCUM Unit Conversion (Length)",
+          "description": "Convert height from inches to centimeters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define HeightCm: ConvertQuantity(70 '[in_i]', 'cm')\\ndefine HeightMeters: ConvertQuantity(6 '[ft_i]', 'm')\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - Clinical Calculations",
+          "description": "Common clinical unit conversions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define GlucoseMgPerL: ConvertQuantity(180 'mg/dL', 'mg/L')\\ndefine DrugConcentration: ConvertQuantity(50 'mg/mL', 'g/L')\\ndefine InfusionRate: ConvertQuantity(125 'mL/h', 'L/h')\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - String Functions",
+          "description": "Test CQL string functions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define UpperCase: Upper('hello world')\\ndefine Concatenated: 'Hello' + ' ' + 'CQL'\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "CQL - Date/Time Functions",
+          "description": "Test CQL date and time functions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"define CurrentDate: Today()\\ndefine CurrentDateTime: Now()\\ndefine DateMath: Today() + 30 days\"\n}"
+            },
+            "url": "{{baseUrl}}/$cql"
+          }
+        },
+        {
+          "name": "FHIRPath - Evaluate Expression",
+          "description": "Evaluate a FHIRPath expression against a resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expression\": \"Patient.name.family\",\n  \"resource\": {\n    \"resourceType\": \"Patient\",\n    \"name\": [{\"family\": \"Smith\", \"given\": [\"John\"]}]\n  }\n}"
+            },
+            "url": "{{baseUrl}}/$fhirpath"
+          }
+        }
+      ]
+    },
+    {
       "name": "Bulk Data Export",
       "item": [
         {

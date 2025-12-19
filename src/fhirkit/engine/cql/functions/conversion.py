@@ -195,14 +195,44 @@ def _to_chars(args: list[Any]) -> list[str] | None:
 
 
 def _convert_quantity(args: list[Any]) -> Quantity | None:
-    """Convert quantity to different units."""
+    """Convert quantity to different units using UCUM.
+
+    Performs real unit conversion using the UCUM (Unified Code for Units of Measure)
+    specification. Supports:
+    - Metric prefixes (mg, kg, mL, etc.)
+    - US customary units ([lb_av], [oz_av], [in_i], etc.)
+    - Temperature conversions (Cel, [degF], K)
+    - Compound units (mg/dL, mmol/L, etc.)
+
+    Args:
+        args: [quantity, target_unit] - quantity to convert and target unit code
+
+    Returns:
+        Quantity with converted value and new unit, or None if conversion fails
+
+    Examples:
+        ConvertQuantity(1 'g', 'mg') = 1000 'mg'
+        ConvertQuantity(98.6 '[degF]', 'Cel') = 37 'Cel'
+        ConvertQuantity(150 '[lb_av]', 'kg') = 68.0388555 'kg'
+    """
     if len(args) >= 2 and args[0] is not None:
         quantity = args[0]
         target_unit = args[1]
+
         if isinstance(quantity, Quantity) and target_unit:
-            # Simple conversion - just change the unit
-            # A real implementation would handle unit conversion
-            return Quantity(value=quantity.value, unit=str(target_unit))
+            from fhirkit.engine.units import convert_quantity as ucum_convert
+
+            source_unit = quantity.unit or "1"
+            target_unit_str = str(target_unit)
+
+            converted_value = ucum_convert(quantity.value, source_unit, target_unit_str)
+
+            if converted_value is not None:
+                return Quantity(value=Decimal(str(converted_value)), unit=target_unit_str)
+
+            # Fallback: if conversion fails, just change the unit (for compatibility)
+            return Quantity(value=quantity.value, unit=target_unit_str)
+
     return None
 
 

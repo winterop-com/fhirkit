@@ -24,7 +24,7 @@ This project provides complete implementations of:
 - **CLI Tools**: Command-line interfaces for evaluation, AST visualization, validation, and server management
 - **Python API**: Programmatic access to evaluators for integration into applications
 
-**Current test count: 2810 passing tests**
+**Current test count: 2879 passing tests**
 
 ## Requirements
 
@@ -132,6 +132,7 @@ all_results = evaluator.evaluate_all_definitions()
 | Queries (from/where/return) | - | Yes | Yes | - | Yes | - | - |
 | Interval operations | - | Yes | Yes | - | - | - | - |
 | Temporal operations | - | Yes | Yes | - | - | - | - |
+| UCUM unit conversion | - | Yes | - | - | - | - | - |
 | Terminology (codes/valuesets) | - | Yes | Yes | Yes | - | - | Yes |
 | FHIR data sources | - | Yes | Yes | Yes | Yes | - | - |
 | Quality measures | - | Yes | Yes | Yes | - | - | - |
