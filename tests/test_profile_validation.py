@@ -60,7 +60,13 @@ class TestProfileValidator:
             "snapshot": {
                 "element": [
                     {"id": "Observation", "path": "Observation", "min": 0, "max": "*"},
-                    {"id": "Observation.status", "path": "Observation.status", "min": 1, "max": "1", "fixedCode": "final"},
+                    {
+                        "id": "Observation.status",
+                        "path": "Observation.status",
+                        "min": 1,
+                        "max": "1",
+                        "fixedCode": "final",
+                    },
                     {"id": "Observation.category", "path": "Observation.category", "min": 1, "max": "*"},
                     {"id": "Observation.code", "path": "Observation.code", "min": 1, "max": "1"},
                     {"id": "Observation.subject", "path": "Observation.subject", "min": 1, "max": "1"},

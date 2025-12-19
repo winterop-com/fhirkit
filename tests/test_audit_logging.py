@@ -1,14 +1,14 @@
 """Tests for FHIR server audit logging functionality."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from fhirkit.server.audit.service import (
+    REST_SUBTYPES,
     AuditAction,
     AuditOutcome,
     AuditService,
-    REST_SUBTYPES,
 )
 from fhirkit.server.storage.fhir_store import FHIRStore
 
