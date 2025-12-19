@@ -2359,6 +2359,87 @@ def create_router(
         return JSONResponse(content=result, media_type=FHIR_JSON)
 
     # =========================================================================
+    # Generate Sample Data Operation
+    # =========================================================================
+
+    @router.post("/$generate-sample-data", tags=["Operations"])
+    async def generate_sample_data(request: Request) -> Response:
+        """Generate synthetic patient population data.
+
+        Creates a population of patients with comprehensive clinical data including
+        conditions, observations, medications, encounters, procedures, and more.
+
+        Request body should be a Parameters resource containing:
+        - count (integer): Number of patients to generate (default: 10, max: 10000)
+        - seed (integer): Random seed for reproducibility (optional)
+        - includeTerminology (boolean): Include CodeSystem/ValueSet resources (default: false)
+        """
+        from ..generator import PatientRecordGenerator
+
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+
+        # Parse parameters
+        count = 10
+        seed = None
+        include_terminology = False
+
+        if body.get("resourceType") == "Parameters":
+            for param in body.get("parameter", []):
+                name = param.get("name")
+                if name == "count":
+                    count = param.get("valueInteger", 10)
+                elif name == "seed":
+                    seed = param.get("valueInteger")
+                elif name == "includeTerminology":
+                    include_terminology = param.get("valueBoolean", False)
+
+        # Limit count to prevent abuse
+        count = min(count, 10000)
+        if count < 1:
+            count = 1
+
+        # Generate population
+        generator = PatientRecordGenerator(seed=seed)
+        resources = generator.generate_population(
+            count,
+            include_terminology=include_terminology,
+        )
+
+        # Store all resources
+        created_counts: dict[str, int] = {}
+        for resource in resources:
+            rt = resource.get("resourceType", "Unknown")
+            try:
+                store.create(resource)
+                created_counts[rt] = created_counts.get(rt, 0) + 1
+            except ValueError:
+                # Resource already exists (duplicate ID), try update
+                try:
+                    store.update(resource)
+                    created_counts[rt] = created_counts.get(rt, 0) + 1
+                except Exception:
+                    pass  # Skip on failure
+
+        # Build summary string
+        summary_parts = [f"{v} {k}" for k, v in sorted(created_counts.items())]
+        summary = ", ".join(summary_parts)
+
+        outcome = {
+            "resourceType": "OperationOutcome",
+            "issue": [
+                {
+                    "severity": "information",
+                    "code": "informational",
+                    "diagnostics": f"Generated {len(resources)} resources for {count} patients: {summary}",
+                }
+            ],
+        }
+        return JSONResponse(content=outcome, status_code=201, media_type=FHIR_JSON)
+
+    # =========================================================================
     # Composition $document Operation
     # =========================================================================
 

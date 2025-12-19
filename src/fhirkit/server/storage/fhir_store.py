@@ -594,7 +594,11 @@ class FHIRStore(InMemoryDataSource):
                         # Match system|value or just value
                         if "|" in search_value:
                             system, value = search_value.split("|", 1)
-                            if ident.get("system") == system and ident.get("value") == value:
+                            if system == "":
+                                # Empty system (|value) - match any identifier with this value
+                                if ident.get("value") == value:
+                                    return True
+                            elif ident.get("system") == system and ident.get("value") == value:
                                 return True
                         elif ident.get("value") == search_value:
                             return True
