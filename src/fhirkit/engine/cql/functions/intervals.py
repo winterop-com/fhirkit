@@ -125,6 +125,71 @@ def point_interval_timing(point: Any, interval: "CQLInterval[Any]", op: str) -> 
     return None
 
 
+def _are_adjacent(high: Any, low: Any) -> bool:
+    """Check if two values are adjacent (successor of high equals low).
+
+    For integers: high + 1 == low
+    For dates: next day
+    For times: next millisecond
+    """
+    from datetime import date, datetime, time, timedelta
+    from decimal import Decimal
+    from ...types import FHIRDate, FHIRDateTime, FHIRTime
+
+    # Integer adjacency
+    if isinstance(high, int) and isinstance(low, int):
+        return high + 1 == low
+
+    # Decimal adjacency - for CQL, decimals with step 0.00000001
+    if isinstance(high, Decimal) and isinstance(low, Decimal):
+        # For decimals, check if difference is minimal (within precision)
+        diff = low - high
+        # Adjacent if the difference equals the smallest decimal step
+        return diff > 0 and diff <= Decimal("0.00000001")
+
+    # Date adjacency - next day
+    if isinstance(high, date) and isinstance(low, date):
+        return high + timedelta(days=1) == low
+    if isinstance(high, FHIRDate) and isinstance(low, FHIRDate):
+        if high.day is not None and low.day is not None:
+            h_date = high.to_date()
+            l_date = low.to_date()
+            if h_date and l_date:
+                return h_date + timedelta(days=1) == l_date
+        return False
+
+    # DateTime adjacency - next day (for day precision) or next ms (for time precision)
+    if isinstance(high, FHIRDateTime) and isinstance(low, FHIRDateTime):
+        # Check if both have same precision level
+        if high.day is not None and low.day is not None:
+            if high.hour is None and low.hour is None:
+                # Day precision - check if adjacent days
+                h_date = high.to_datetime()
+                l_date = low.to_datetime()
+                if h_date and l_date:
+                    return h_date + timedelta(days=1) == l_date
+            elif high.millisecond is not None and low.millisecond is not None:
+                # Full precision - check millisecond adjacency
+                h_dt = high.to_datetime()
+                l_dt = low.to_datetime()
+                if h_dt and l_dt:
+                    return h_dt + timedelta(milliseconds=1) == l_dt
+        return False
+
+    # Time adjacency - next millisecond
+    if isinstance(high, FHIRTime) and isinstance(low, FHIRTime):
+        h_time = high.to_time()
+        l_time = low.to_time()
+        if h_time and l_time:
+            # Convert to datetime for calculation
+            h_dt = datetime.combine(date.today(), h_time)
+            l_dt = datetime.combine(date.today(), l_time)
+            return h_dt + timedelta(milliseconds=1) == l_dt
+        return False
+
+    return False
+
+
 def collapse_intervals(
     intervals: list["CQLInterval[Any]"],
     interval_class: type,
@@ -148,9 +213,20 @@ def collapse_intervals(
     result = [sorted_intervals[0]]
     for current in sorted_intervals[1:]:
         last = result[-1]
-        # Check if intervals overlap or are adjacent
+        # Check if intervals overlap, touch, or are adjacent
         if last.high is not None and current.low is not None:
-            if last.high >= current.low or (last.high == current.low and (last.high_closed or current.low_closed)):
+            # Overlapping: last.high >= current.low
+            # Touching: last.high == current.low and one side is closed
+            # Adjacent: successor(last.high) == current.low (for closed intervals)
+            should_merge = False
+            if last.high >= current.low:
+                should_merge = True
+            elif last.high == current.low and (last.high_closed or current.low_closed):
+                should_merge = True
+            elif last.high_closed and current.low_closed and _are_adjacent(last.high, current.low):
+                should_merge = True
+
+            if should_merge:
                 # Merge intervals
                 new_high = max(last.high, current.high) if current.high is not None else current.high
                 result[-1] = interval_class(

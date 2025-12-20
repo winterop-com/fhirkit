@@ -113,6 +113,14 @@ def normalize_result(result: Any) -> Any:
                     parts.append(f".{result.millisecond:03d}")
         return "@T" + "".join(parts)
 
+    # Handle CQLInterval - convert to string format
+    if hasattr(result, "low") and hasattr(result, "high") and hasattr(result, "low_closed"):
+        low = normalize_result(result.low)
+        high = normalize_result(result.high)
+        low_bracket = "[" if result.low_closed else "("
+        high_bracket = "]" if result.high_closed else ")"
+        return f"Interval {low_bracket} {low}, {high} {high_bracket}"
+
     # Handle Quantity-like objects
     if hasattr(result, "value") and hasattr(result, "unit"):
         return {"value": Decimal(str(result.value)), "unit": result.unit}
@@ -128,6 +136,91 @@ def normalize_result(result: Any) -> Any:
         return Decimal(str(result))
 
     return result
+
+
+def parse_interval_string(s: str) -> tuple[str, str, bool, bool] | None:
+    """Parse an interval string like 'Interval [ 1, 10 ]' or 'Interval ( 1, 10 )'."""
+    import re
+    # Pattern: Interval [/( low, high ]/)]
+    pattern = r"Interval\s*([\[\(])\s*(.+?)\s*,\s*(.+?)\s*([\]\)])"
+    match = re.match(pattern, s.strip())
+    if match:
+        low_closed = match.group(1) == "["
+        high_closed = match.group(4) == "]"
+        return match.group(2).strip(), match.group(3).strip(), low_closed, high_closed
+    return None
+
+
+def compare_interval_strings(actual: str, expected: str) -> bool:
+    """Compare two interval strings."""
+    actual_parts = parse_interval_string(actual)
+    expected_parts = parse_interval_string(expected)
+
+    if not actual_parts or not expected_parts:
+        return actual == expected
+
+    actual_low, actual_high, actual_low_closed, actual_high_closed = actual_parts
+    expected_low, expected_high, expected_low_closed, expected_high_closed = expected_parts
+
+    # Compare closure
+    if actual_low_closed != expected_low_closed or actual_high_closed != expected_high_closed:
+        return False
+
+    # Compare bounds (handle datetime, decimal, integer)
+    return compare_interval_bounds(actual_low, expected_low) and compare_interval_bounds(actual_high, expected_high)
+
+
+def compare_interval_bounds(actual: str, expected: str) -> bool:
+    """Compare interval bound values."""
+    # Handle datetime bounds
+    if actual.startswith("@") and expected.startswith("@"):
+        return compare_datetime_strings(actual, expected)
+
+    # Handle decimal bounds
+    try:
+        actual_num = Decimal(actual)
+        expected_num = Decimal(expected)
+        return actual_num == expected_num
+    except Exception:
+        pass
+
+    # String comparison
+    return actual == expected
+
+
+def compare_interval_list(actual: Any, expected: str) -> bool:
+    """Compare a list of intervals against expected string format.
+
+    Expected format: {Interval [ 1, 10 ], Interval [ 12, 19 ]}
+    """
+    import re
+
+    # Parse expected intervals from string
+    # Remove outer braces and split by 'Interval'
+    inner = expected.strip()[1:-1].strip()  # Remove { }
+    if not inner:
+        return not actual or actual == []
+
+    # Find all Interval[...] patterns
+    interval_pattern = r"Interval\s*[\[\(][^\]\)]+[\]\)]"
+    expected_intervals = re.findall(interval_pattern, inner)
+
+    # Handle actual - should be a list
+    if not isinstance(actual, list):
+        actual = [actual] if actual else []
+
+    if len(actual) != len(expected_intervals):
+        return False
+
+    # Compare each interval
+    for act, exp in zip(actual, expected_intervals):
+        if isinstance(act, str):
+            if not compare_interval_strings(act, exp):
+                return False
+        else:
+            return False
+
+    return True
 
 
 def compare_datetime_strings(actual: str, expected: str) -> bool:
@@ -208,6 +301,14 @@ def compare_results(actual: Any, expected: Any) -> bool:
 
     # Handle string comparison
     if isinstance(expected, str):
+        # Handle interval list format: {Interval [...], Interval [...]}
+        if expected.startswith("{") and "Interval" in expected:
+            return compare_interval_list(actual, expected)
+        # Handle single interval format: Interval [...]
+        if expected.startswith("Interval"):
+            if isinstance(actual, str) and actual.startswith("Interval"):
+                return compare_interval_strings(actual, expected)
+            return False
         actual_str = str(actual)
         # Handle datetime string comparisons with precision awareness
         if expected.startswith("@") and actual_str.startswith("@"):
