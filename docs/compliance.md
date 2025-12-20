@@ -21,50 +21,50 @@ make compliance-fhirpath
 
 | Component | Tests | Passed | Failed | Pass Rate |
 |-----------|-------|--------|--------|-----------|
-| **CQL** | 1,557 | 685 | 872 | 44% |
-| **FHIRPath** | 686 | 446 | 240 | 65% |
-| **Total** | 2,243 | 1,131 | 1,112 | 50% |
+| **CQL** | 1,558 | 973 | 585 | 62% |
+| **FHIRPath** | 688 | 471 | 217 | 68% |
+| **Total** | 2,246 | 1,444 | 802 | 64% |
 
 ### CQL Compliance by Category
 
-| Category | Tests | Status |
-|----------|-------|--------|
-| CqlLogicalOperatorsTest | 39 | 38 pass, 1 fail (97%) |
-| CqlConditionalOperatorsTest | 9 | Mostly passing |
-| CqlNullologicalOperatorsTest | 22 | 12 pass, 10 fail (55%) |
-| CqlArithmeticFunctionsTest | 192 | 150 pass, 42 fail (78%) |
-| CqlComparisonOperatorsTest | 183 | 125 pass, 58 fail (68%) |
-| CqlStringOperatorsTest | 81 | 42 pass, 39 fail (52%) |
-| CqlTypeOperatorsTest | 32 | 6 pass, 26 fail (19%) |
-| CqlTypesTest | 27 | 3 pass, 24 fail (11%) |
-| CqlAggregateFunctionsTest | 39 | 28 pass, 11 fail (72%) |
-| CqlAggregateTest | 2 | 0 pass, 2 fail (0%) |
-| CqlListOperatorsTest | 207 | 82 pass, 125 fail (40%) |
-| CqlIntervalOperatorsTest | 360 | 163 pass, 197 fail (45%) |
-| CqlDateTimeOperatorsTest | 294 | 27 pass, 267 fail (9%) |
-| CqlErrorsAndMessagingOperatorsTest | 4 | 0 pass, 4 fail (0%) |
-| ValueLiteralsAndSelectors | 66 | 0 pass, 66 fail (0%) |
+| Category | Failures | Notes |
+|----------|----------|-------|
+| CqlLogicalOperatorsTest | 1 | 97% passing |
+| CqlConditionalOperatorsTest | 0 | Fully passing |
+| CqlNullologicalOperatorsTest | 9 | Some null edge cases |
+| CqlArithmeticFunctionsTest | 32 | Large decimal edge cases |
+| CqlComparisonOperatorsTest | 30 | Precision comparisons |
+| CqlStringOperatorsTest | 39 | Some string functions |
+| CqlTypeOperatorsTest | 18 | Type conversions |
+| CqlTypesTest | 17 | Type handling |
+| CqlAggregateFunctionsTest | 8 | Most aggregates work |
+| CqlAggregateTest | 2 | `aggregate()` function |
+| CqlListOperatorsTest | 121 | List operations |
+| CqlIntervalOperatorsTest | 134 | Interval relationships |
+| CqlDateTimeOperatorsTest | 104 | Timezone, precision |
+| CqlErrorsAndMessagingOperatorsTest | 4 | Error handling |
+| ValueLiteralsAndSelectors | 66 | Large decimals |
 
 ### Key Gap Areas
 
 #### CQL
 
-1. **DateTime Operations** (267 failures)
-   - DateTime arithmetic with durations
-   - Time zone handling
-   - Precision-sensitive comparisons
-
-2. **Interval Operations** (197 failures)
+1. **Interval Operations** (134 failures)
    - Complex interval relationships
    - Null handling in interval bounds
    - Precision handling
 
-3. **List Operations** (125 failures)
+2. **List Operations** (121 failures)
    - Some aggregate operations
    - Complex filtering scenarios
 
+3. **DateTime Operations** (104 failures)
+   - Timezone-aware comparisons
+   - Precision-sensitive operations
+   - Some edge cases
+
 4. **Value Literals** (66 failures)
-   - Large decimal handling
+   - Large decimal handling (10^28)
    - Scientific notation
    - Edge case values
 
@@ -102,7 +102,7 @@ To improve compliance:
 4. Re-run compliance to verify fixes
 
 Priority areas for improvement:
-- DateTime arithmetic and duration handling
-- Interval edge cases
+- Interval edge cases and relationships
+- List operation edge cases
 - Large decimal precision
 - FHIRPath `aggregate()` function
