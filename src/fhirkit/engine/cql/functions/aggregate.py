@@ -14,9 +14,12 @@ if TYPE_CHECKING:
 
 
 def _count(args: list[Any]) -> int:
-    """Count elements in a list."""
+    """Count non-null elements in a list.
+
+    Per CQL spec: Count returns the number of non-null elements in the list.
+    """
     if args and isinstance(args[0], list):
-        return len(args[0])
+        return sum(1 for v in args[0] if v is not None)
     return 0
 
 

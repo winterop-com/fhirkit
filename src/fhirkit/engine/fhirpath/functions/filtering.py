@@ -45,6 +45,55 @@ def fn_repeat(ctx: EvaluationContext, collection: list[Any], *args: Any) -> list
     raise NotImplementedError("repeat() is handled by the visitor")
 
 
+def _is_type(item: Any, type_name: str) -> bool:
+    """Check if an item is of the specified FHIRPath type."""
+    from decimal import Decimal as PyDecimal
+
+    from ...types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
+
+    # Handle FHIRPath system types
+    if type_name == "DateTime":
+        return isinstance(item, FHIRDateTime)
+    elif type_name == "Date":
+        return isinstance(item, FHIRDate)
+    elif type_name == "Time":
+        return isinstance(item, FHIRTime)
+    elif type_name == "String":
+        return isinstance(item, str)
+    elif type_name == "Boolean":
+        return isinstance(item, bool)
+    elif type_name == "Integer":
+        return isinstance(item, int) and not isinstance(item, bool)
+    elif type_name == "Decimal":
+        return isinstance(item, (float, PyDecimal)) and not isinstance(item, bool)
+    elif type_name == "Quantity":
+        return isinstance(item, (Quantity, dict)) and (not isinstance(item, dict) or "value" in item)
+    elif isinstance(item, dict):
+        # Check resourceType for FHIR resources
+        return item.get("resourceType") == type_name
+    return False
+
+
+@FunctionRegistry.register("is")
+def fn_is(ctx: EvaluationContext, collection: list[Any], type_name: str) -> list[bool]:
+    """
+    Returns true if the input is of the specified type.
+
+    According to FHIRPath spec:
+    - Returns empty if collection is empty
+    - Returns true/false based on type check for single element
+    - Multiple elements is an error (not implemented here, just use first)
+
+    Args:
+        type_name: The FHIRPath type name to check
+    """
+    if not collection:
+        return []
+    # For single element, return boolean result
+    item = collection[0]
+    return [_is_type(item, type_name)]
+
+
 @FunctionRegistry.register("ofType")
 def fn_of_type(ctx: EvaluationContext, collection: list[Any], type_name: str) -> list[Any]:
     """
@@ -53,20 +102,4 @@ def fn_of_type(ctx: EvaluationContext, collection: list[Any], type_name: str) ->
     Args:
         type_name: The FHIR type name to filter by
     """
-    result: list[Any] = []
-    for item in collection:
-        if isinstance(item, dict):
-            # Check resourceType for resources
-            if item.get("resourceType") == type_name:
-                result.append(item)
-            # For elements, we'd need model info to determine type
-            # For now, include if it's a dict (element)
-        elif type_name == "String" and isinstance(item, str):
-            result.append(item)
-        elif type_name == "Boolean" and isinstance(item, bool):
-            result.append(item)
-        elif type_name == "Integer" and isinstance(item, int) and not isinstance(item, bool):
-            result.append(item)
-        elif type_name == "Decimal" and isinstance(item, float):
-            result.append(item)
-    return result
+    return [item for item in collection if _is_type(item, type_name)]
