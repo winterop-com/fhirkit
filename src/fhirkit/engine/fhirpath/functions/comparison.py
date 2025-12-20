@@ -1,9 +1,32 @@
 """Comparison functions and operators."""
 
+from decimal import Decimal
 from typing import Any
 
 from ...context import EvaluationContext
 from ...functions import FunctionRegistry
+from ...types import FHIRDate, FHIRDateTime, FHIRTime
+
+
+def _normalize_for_comparison(value: Any) -> Any:
+    """Normalize a value for comparison.
+
+    Converts date strings to FHIRDate/FHIRDateTime for proper comparison.
+    """
+    if isinstance(value, str):
+        # Try to parse as date or datetime
+        if "T" in value or len(value) > 10:
+            # Might be a datetime
+            try:
+                return FHIRDateTime.parse(value)
+            except (ValueError, AttributeError):
+                pass
+        # Try as date
+        try:
+            return FHIRDate.parse(value)
+        except (ValueError, AttributeError):
+            pass
+    return value
 
 
 def equals(left: Any, right: Any) -> bool | None:
@@ -25,12 +48,16 @@ def equals(left: Any, right: Any) -> bool | None:
             return None
         right = right[0]
 
+    # Normalize date strings to FHIRDate/FHIRDateTime
+    left = _normalize_for_comparison(left)
+    right = _normalize_for_comparison(right)
+
     # Type-specific comparison
     if type(left) is not type(right):
         # Different types are not equal (with some exceptions)
-        # int and float can be compared
-        if isinstance(left, (int, float)) and isinstance(right, (int, float)):
-            return left == right
+        # int, float, and Decimal can be compared
+        if isinstance(left, (int, float, Decimal)) and isinstance(right, (int, float, Decimal)):
+            return float(left) == float(right)
         return False
 
     return left == right
@@ -84,6 +111,10 @@ def compare(left: Any, right: Any) -> int | None:
         if not right:
             return None
         right = right[0]
+
+    # Normalize date strings to FHIRDate/FHIRDateTime
+    left = _normalize_for_comparison(left)
+    right = _normalize_for_comparison(right)
 
     try:
         if left < right:
