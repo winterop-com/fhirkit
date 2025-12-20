@@ -8,10 +8,86 @@ Implements interval comparison operations for CQL timing relationships:
 - during/included in/includes
 """
 
+from datetime import timedelta
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..types import CQLInterval
+
+
+def get_successor(value: Any) -> Any:
+    """Get the successor of a value for interval adjacency checks."""
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value + 1
+    if isinstance(value, Decimal):
+        return value + Decimal("0.00000001")  # CQL uses 8 decimal places
+    if hasattr(value, "day") and hasattr(value, "year"):
+        # FHIRDateTime or FHIRDate - add 1 millisecond or 1 day depending on precision
+        from fhirkit.engine.types import FHIRDate, FHIRDateTime
+
+        if isinstance(value, FHIRDateTime) and value.hour is not None:
+            # Has time component - add 1 millisecond
+            ms = (value.millisecond or 0) + 1
+            sec = value.second or 0
+            minute = value.minute or 0
+            hour = value.hour or 0
+            day = value.day or 1
+            month = value.month or 1
+            year = value.year
+            if ms >= 1000:
+                ms = 0
+                sec += 1
+            if sec >= 60:
+                sec = 0
+                minute += 1
+            if minute >= 60:
+                minute = 0
+                hour += 1
+            if hour >= 24:
+                hour = 0
+                day += 1
+            return FHIRDateTime(
+                year=year, month=month, day=day, hour=hour, minute=minute, second=sec, millisecond=ms
+            )
+        elif isinstance(value, FHIRDate) or (isinstance(value, FHIRDateTime) and value.hour is None):
+            # Date precision - add 1 day
+            day = (value.day or 1) + 1
+            month = value.month or 1
+            year = value.year
+            if day > 28:  # Simplified - just roll over
+                day = 1
+                month += 1
+            if month > 12:
+                month = 1
+                year += 1
+            return type(value)(year=year, month=month, day=day)
+    if hasattr(value, "hour") and hasattr(value, "minute"):
+        # FHIRTime - add 1 millisecond
+        from fhirkit.engine.types import FHIRTime
+
+        ms = (value.millisecond or 0) + 1
+        sec = value.second or 0
+        minute = value.minute or 0
+        hour = value.hour or 0
+        if ms >= 1000:
+            ms = 0
+            sec += 1
+        if sec >= 60:
+            sec = 0
+            minute += 1
+        if minute >= 60:
+            minute = 0
+            hour += 1
+        if hour >= 24:
+            hour = 0  # Wrap around
+        return FHIRTime(hour=hour, minute=minute, second=sec, millisecond=ms)
+    if hasattr(value, "value") and hasattr(value, "unit"):
+        # Quantity - add smallest step
+        return type(value)(value=value.value + Decimal("0.00000001"), unit=value.unit)
+    return value
 
 
 def interval_timing(left: "CQLInterval[Any]", right: "CQLInterval[Any]", op: str) -> bool | None:
@@ -44,13 +120,26 @@ def interval_timing(left: "CQLInterval[Any]", right: "CQLInterval[Any]", op: str
             return left.overlaps(right)
 
     # Handle compound 'meets before/after'
+    # Two intervals meet if the successor of one's end equals the other's start
     if "meets" in op:
+        if left.high is None or right.low is None:
+            return None
         if "before" in op:
-            return left.high == right.low
+            # left meets before right: successor(left.high) == right.low
+            return get_successor(left.high) == right.low
         elif "after" in op:
-            return left.low == right.high
+            # left meets after right: left.low == successor(right.high)
+            if right.high is None or left.low is None:
+                return None
+            return left.low == get_successor(right.high)
         else:
-            return left.high == right.low or left.low == right.high
+            # Simple meets: either meets before or meets after
+            if right.high is not None and left.low is not None:
+                meets_after = left.low == get_successor(right.high)
+            else:
+                meets_after = False
+            meets_before = get_successor(left.high) == right.low
+            return meets_before or meets_after
 
     # Handle simple before/after (intervals don't overlap)
     if "before" in op:

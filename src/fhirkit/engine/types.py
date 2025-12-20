@@ -437,10 +437,7 @@ class FHIRTime(BaseModel):
 
             # Convert current time to milliseconds
             current_ms = (
-                (self.hour * 3600000)
-                + (self.minute or 0) * 60000
-                + (self.second or 0) * 1000
-                + (self.millisecond or 0)
+                (self.hour * 3600000) + (self.minute or 0) * 60000 + (self.second or 0) * 1000 + (self.millisecond or 0)
             )
 
             # Add and wrap around 24 hours
@@ -467,10 +464,7 @@ class FHIRTime(BaseModel):
         if isinstance(other, FHIRTime):
             # Return difference in milliseconds
             self_ms = (
-                (self.hour * 3600000)
-                + (self.minute or 0) * 60000
-                + (self.second or 0) * 1000
-                + (self.millisecond or 0)
+                (self.hour * 3600000) + (self.minute or 0) * 60000 + (self.second or 0) * 1000 + (self.millisecond or 0)
             )
             other_ms = (
                 (other.hour * 3600000)

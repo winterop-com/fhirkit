@@ -949,62 +949,70 @@ class CQLEvaluatorVisitor(cqlVisitor):
     # =========================================================================
 
     def visitExistenceExpression(self, ctx: cqlParser.ExistenceExpressionContext) -> bool:
-        """Visit exists expression."""
+        """Visit exists expression.
+
+        Per CQL spec: Exists returns true if list has at least one non-null element.
+        A list containing only null values returns false.
+        """
         value = self.visit(ctx.expression())
         if isinstance(value, list):
-            return len(value) > 0
+            # Check if any non-null elements exist
+            return any(x is not None for x in value)
         return value is not None
 
     def visitMembershipExpression(self, ctx: cqlParser.MembershipExpressionContext) -> bool | None:
         """Visit membership expression (in, contains).
 
-        Per CQL spec: If the element being tested is null, the result is null
-        (because null = x is always null).
+        Per CQL spec:
+        - If the element being tested is null, the result is null
+        - If the container is null, the result is false (nothing to contain)
+        - A non-null element is definitively NOT equal to null values in the list,
+          so nulls in the list don't affect the result when searching for non-null elements
         """
         left = self.visit(ctx.expression(0))
         right = self.visit(ctx.expression(1))
         op = ctx.getChild(1).getText().lower()
 
         if op == "in":
-            # If element is null, result is null
-            if left is None:
+            # element in container
+            element = left
+            container = right
+
+            # If element is null, result is null (null = x is always null)
+            if element is None:
                 return None
-            if isinstance(right, list):
-                # Check if any element in the list equals left
-                # If list contains nulls, result may be null
-                found = False
-                has_null = False
-                for item in right:
-                    if item is None:
-                        has_null = True
-                    elif item == left:
-                        found = True
-                        break
-                if found:
-                    return True
-                # If we didn't find it and there are nulls, result is null
-                return None if has_null else False
-            elif isinstance(right, CQLInterval):
-                return right.contains(left)
+            # If container is null, result is false
+            if container is None:
+                return False
+            if isinstance(container, list):
+                # Check if element equals any non-null item in container
+                # Nulls in the list don't affect result for non-null elements
+                # because a non-null element is definitively != null
+                for item in container:
+                    if item is not None and item == element:
+                        return True
+                return False
+            elif isinstance(container, CQLInterval):
+                return container.contains(element)
         elif op == "contains":
+            # container contains element
+            container = left
+            element = right
+
             # If element is null, result is null
-            if right is None:
+            if element is None:
                 return None
-            if isinstance(left, list):
-                # Same logic as 'in' but reversed
-                found = False
-                has_null = False
-                for item in left:
-                    if item is None:
-                        has_null = True
-                    elif item == right:
-                        found = True
-                        break
-                if found:
-                    return True
-                return None if has_null else False
-            elif isinstance(left, CQLInterval):
-                return left.contains(right)
+            # If container is null, result is false
+            if container is None:
+                return False
+            if isinstance(container, list):
+                # Check if element equals any non-null item in container
+                for item in container:
+                    if item is not None and item == element:
+                        return True
+                return False
+            elif isinstance(container, CQLInterval):
+                return container.contains(element)
 
         return None
 
@@ -1596,12 +1604,39 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 op_text += child.getText().lower() + " "
         op_text = op_text.strip()
 
-        if left is None or right is None:
-            return None
-
         # Handle "same X as" expressions (concurrentWithIntervalOperatorPhrase)
         if "same" in op_text and "as" in op_text:
+            if left is None or right is None:
+                return None
             return self._same_as(left, right, op_text)
+
+        # Handle "same X or before/after" and "on or before/after" expressions
+        # Note: parser may return "orafter"/"orbefore" or "or after"/"or before"
+        has_or_before = "orbefore" in op_text or "or before" in op_text
+        has_or_after = "orafter" in op_text or "or after" in op_text
+        if ("same" in op_text or "on" in op_text) and (has_or_before or has_or_after):
+            if left is None or right is None:
+                return None
+            return self._same_or_before_after(left, right, op_text)
+
+        # Handle list timing operations (includes, included in)
+        # For includes: null includes X -> False, X includes null -> depends
+        # For included in: null included in X -> depends, X included in null -> False
+        if "includes" in op_text or "included in" in op_text or "during" in op_text:
+            if "includes" in op_text and "included" not in op_text:
+                # "includes" - if container (left) is null, return False
+                if left is None:
+                    return False
+            elif "included in" in op_text or "during" in op_text:
+                # "included in" - if container (right) is null, return False
+                if right is None:
+                    return False
+
+        if isinstance(left, list) or isinstance(right, list):
+            return self._list_timing(left, right, op_text)
+
+        if left is None or right is None:
+            return None
 
         # Handle interval timing
         if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
@@ -1619,11 +1654,91 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return None
 
+    def _list_timing(self, left: Any, right: Any, op_text: str) -> bool | None:
+        """Handle list timing operations (includes, included in, properly variants).
+
+        Null handling:
+        - list includes single_null → null (can't determine if list includes null)
+        - list includes list_with_nulls → computed (list membership can be determined)
+        - single_null included in list → null (can't determine if null is in list)
+        """
+        proper = "properly" in op_text
+
+        if "includes" in op_text and "included" not in op_text:
+            # left includes right - all elements of right must be in left
+            if isinstance(left, list):
+                if isinstance(right, list):
+                    # List vs list - can compare even with nulls in lists
+                    return self._list_includes(left, right, proper)
+                else:
+                    # Single element - if null, result is null
+                    if right is None:
+                        return None
+                    return self._list_contains_element(left, right, proper)
+            return None
+
+        if "included in" in op_text or "during" in op_text:
+            # left included in right - all elements of left must be in right
+            if isinstance(right, list):
+                if isinstance(left, list):
+                    # List vs list - can compare even with nulls in lists
+                    return self._list_includes(right, left, proper)
+                else:
+                    # Single element - if null, result is null
+                    if left is None:
+                        return None
+                    return self._list_contains_element(right, left, proper)
+            return None
+
+        return None
+
+    def _list_includes(self, container: list, contained: list, proper: bool) -> bool | None:
+        """Check if container list includes all elements of contained list.
+
+        Returns True if all elements of contained are in container.
+        For 'properly includes', container must have at least one additional element.
+        """
+        if not contained:
+            # Empty list is included in any list
+            # For proper includes, container must have elements
+            if proper:
+                return len(container) > 0
+            return True
+
+        # Check each element in contained
+        for elem in contained:
+            if elem is None:
+                # Null element - check if container has any null
+                if not any(x is None for x in container):
+                    return False
+            else:
+                if elem not in container:
+                    return False
+
+        if proper:
+            # For proper includes, container must have more elements
+            return len(container) > len(contained)
+        return True
+
+    def _list_contains_element(self, container: list, element: Any, proper: bool) -> bool | None:
+        """Check if container list contains a single element."""
+        if element is None:
+            # Check if container has any null
+            found = any(x is None for x in container)
+            if proper:
+                return found and len(container) > 1
+            return found
+
+        found = element in container
+        if proper:
+            # For proper contains, list must have more than just this element
+            return found and len(container) > 1
+        return found
+
     def _same_as(self, left: Any, right: Any, op_text: str) -> bool | None:
         """Handle 'same X as' precision-aware comparison."""
         # Parse precision from op_text (e.g., "sameyearas" or "same year as" -> "year")
         # The op_text might not have spaces, so extract precision by pattern matching
-        import re
 
         op_lower = op_text.lower().replace(" ", "")
         precision = None
@@ -1693,6 +1808,80 @@ class CQLEvaluatorVisitor(cqlVisitor):
             if left_val != right_val:
                 return False
 
+        return True
+
+    def _same_or_before_after(self, left: Any, right: Any, op_text: str) -> bool | None:
+        """Handle 'same X or before/after' precision-aware comparison."""
+
+        op_lower = op_text.lower().replace(" ", "")
+        is_before = "orbefore" in op_lower
+        is_after = "orafter" in op_lower
+
+        # Extract precision
+        precisions = ["millisecond", "second", "minute", "hour", "day", "month", "year"]
+        precision = None
+        for p in precisions:
+            if f"same{p}or" in op_lower:
+                precision = p
+                break
+
+        if precision is None:
+            # Default to millisecond precision
+            precision = "millisecond"
+
+        precision_map = {
+            "year": 0,
+            "month": 1,
+            "day": 2,
+            "hour": 3,
+            "minute": 4,
+            "second": 5,
+            "millisecond": 6,
+        }
+        precision_index = precision_map.get(precision)
+        if precision_index is None:
+            return None
+
+        left_components = self._datetime_components(left)
+        right_components = self._datetime_components(right)
+
+        if left_components is None or right_components is None:
+            return None
+
+        # Determine if this is a time-only comparison
+        is_time_comparison = (
+            left_components[0] is None
+            and left_components[1] is None
+            and left_components[2] is None
+            and right_components[0] is None
+            and right_components[1] is None
+            and right_components[2] is None
+        )
+
+        if is_time_comparison:
+            start_index = 3
+            if precision_index < 3:
+                return None
+        else:
+            start_index = 0
+
+        # Compare components up to the specified precision
+        for i in range(start_index, precision_index + 1):
+            left_val = left_components[i] if i < len(left_components) else None
+            right_val = right_components[i] if i < len(right_components) else None
+
+            # If either value is None at this precision, result is uncertain
+            if left_val is None or right_val is None:
+                return None
+
+            if left_val < right_val:
+                # left is before right at this component
+                return is_before
+            elif left_val > right_val:
+                # left is after right at this component
+                return is_after
+
+        # All components are equal up to precision - "same X"
         return True
 
     def _datetime_components(self, value: Any) -> list[int | None] | None:
@@ -3464,8 +3653,12 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return []
 
         # Convert to milliseconds for easy arithmetic
-        low_ms = (low.hour * 3600000) + ((low.minute or 0) * 60000) + ((low.second or 0) * 1000) + (low.millisecond or 0)
-        high_ms = (high.hour * 3600000) + ((high.minute or 0) * 60000) + ((high.second or 0) * 1000) + (high.millisecond or 0)
+        low_ms = (
+            (low.hour * 3600000) + ((low.minute or 0) * 60000) + ((low.second or 0) * 1000) + (low.millisecond or 0)
+        )
+        high_ms = (
+            (high.hour * 3600000) + ((high.minute or 0) * 60000) + ((high.second or 0) * 1000) + (high.millisecond or 0)
+        )
 
         # Determine step in milliseconds
         if unit == "hour":

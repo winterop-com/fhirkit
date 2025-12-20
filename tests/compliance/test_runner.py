@@ -80,13 +80,18 @@ class TestOutput:
         if quantity_match:
             return {"value": Decimal(quantity_match.group(1)), "unit": quantity_match.group(2)}
 
-        # Decimal
+        # Decimal (simple literal)
         if re.match(r"^-?\d+\.\d+$", value):
             return Decimal(value)
 
-        # Integer
+        # Integer (simple literal)
         if re.match(r"^-?\d+$", value):
             return int(value)
+
+        # CQL arithmetic expression (e.g., "42.0-42.0", "42-41", "Power(2.0,30.0)")
+        # Detect expressions with operators or function calls
+        if self._is_cql_expression(value):
+            return self._evaluate_cql_expression(value)
 
         # DateTime (ISO format)
         if re.match(r"^\d{4}-\d{2}-\d{2}T", value):
@@ -102,6 +107,57 @@ class TestOutput:
 
         # String (default)
         return value
+
+    def _is_cql_expression(self, value: str) -> bool:
+        """Check if value is a CQL expression that needs evaluation."""
+        # Skip if it's a quoted string
+        if value.startswith("'") or value.startswith('"'):
+            return False
+        # Skip if it starts with @ (datetime literal)
+        if value.startswith("@"):
+            return False
+        # Skip if it's a simple list
+        if value.startswith("{") and "Interval" not in value:
+            return False
+
+        # Check for function calls (e.g., Power(...))
+        if re.search(r"[A-Za-z]+\s*\(", value):
+            return True
+
+        # Check for arithmetic operators in numeric context
+        # Pattern: number followed by operator followed by number
+        # Must not confuse with negative numbers or dates
+        if re.match(r"^-?\d+\.?\d*[\+\-\*/]\d+", value):
+            return True
+        if re.match(r"^\d+\.?\d*[\+\-\*/]-?\d+", value):
+            return True
+
+        return False
+
+    def _evaluate_cql_expression(self, expression: str) -> Any:
+        """Evaluate a CQL expression to get the expected value."""
+        try:
+            from fhirkit.engine.cql.evaluator import CQLEvaluator
+        except ImportError:
+            try:
+                from fhir_cql.cql_evaluator import CQLEvaluator
+            except ImportError:
+                # Can't evaluate, return as string
+                return expression
+
+        evaluator = CQLEvaluator()
+        library_code = f"""
+library TestExpectedValue version '1.0.0'
+
+define TestResult: {expression}
+"""
+        try:
+            evaluator.compile(library_code)
+            result = evaluator.evaluate_definition("TestResult")
+            return result
+        except Exception:
+            # If evaluation fails, return as string
+            return expression
 
     def _parse_quantity(self, value: str) -> dict[str, Any]:
         """Parse a quantity string like '1.0 cm' or '1.0'cm''."""

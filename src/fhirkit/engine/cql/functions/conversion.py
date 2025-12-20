@@ -343,10 +343,16 @@ def _exp(args: list[Any]) -> float | None:
     return None
 
 
-def _power(args: list[Any]) -> Any:
-    """Raise to a power."""
+def _power(args: list[Any]) -> Decimal | None:
+    """Raise to a power.
+
+    CQL specifies Decimal type for numeric operations, so we ensure
+    both base and exponent are converted to Decimal.
+    """
     if len(args) >= 2 and args[0] is not None and args[1] is not None:
-        return args[0] ** args[1]
+        base = Decimal(str(args[0])) if not isinstance(args[0], Decimal) else args[0]
+        exp = Decimal(str(args[1])) if not isinstance(args[1], Decimal) else args[1]
+        return base**exp
     return None
 
 

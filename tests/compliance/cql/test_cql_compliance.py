@@ -364,7 +364,7 @@ def compare_interval_list(actual: Any, expected: str) -> bool:
             return False
 
         # Compare first intervals
-        for i, (act, exp) in enumerate(zip(actual[:len(first_intervals)], first_intervals)):
+        for i, (act, exp) in enumerate(zip(actual[: len(first_intervals)], first_intervals)):
             actual_str = normalize_result(act) if not isinstance(act, str) else act
             if isinstance(actual_str, str) and actual_str.startswith("Interval"):
                 if not compare_interval_strings(actual_str, exp):
@@ -373,7 +373,7 @@ def compare_interval_list(actual: Any, expected: str) -> bool:
                 return False
 
         # Compare last intervals
-        for i, (act, exp) in enumerate(zip(actual[-len(last_intervals):], last_intervals)):
+        for i, (act, exp) in enumerate(zip(actual[-len(last_intervals) :], last_intervals)):
             actual_str = normalize_result(act) if not isinstance(act, str) else act
             if isinstance(actual_str, str) and actual_str.startswith("Interval"):
                 if not compare_interval_strings(actual_str, exp):

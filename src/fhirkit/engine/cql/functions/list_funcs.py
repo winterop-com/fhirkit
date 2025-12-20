@@ -49,21 +49,31 @@ def _skip(args: list[Any]) -> list[Any]:
     return []
 
 
-def _length(args: list[Any]) -> int | None:
-    """Get length of a list or string."""
+def _length(args: list[Any]) -> int:
+    """Get length of a list or string.
+
+    Per CQL spec: Length of null returns 0.
+    """
     if args:
         val = args[0]
+        if val is None:
+            return 0
         if isinstance(val, (list, str)):
             return len(val)
-    return None
+    return 0
 
 
 def _exists(args: list[Any]) -> bool:
-    """Check if a value exists (not null/empty)."""
+    """Check if a value exists (not null/empty).
+
+    Per CQL spec: Exists returns true if list has at least one non-null element.
+    A list containing only null values returns false.
+    """
     if args:
         val = args[0]
         if isinstance(val, list):
-            return len(val) > 0
+            # Check if any non-null elements exist
+            return any(x is not None for x in val)
         return val is not None
     return False
 
