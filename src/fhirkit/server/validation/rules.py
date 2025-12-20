@@ -103,10 +103,91 @@ VALID_RESOURCE_TYPES = {
     "OperationOutcome",
     "Parameters",
     "CapabilityStatement",
+    "TerminologyCapabilities",
     "Provenance",
     "AuditEvent",
     # Conformance
     "StructureDefinition",
+    "SearchParameter",
+    "ImplementationGuide",
+    "CompartmentDefinition",
+    "MessageDefinition",
+    "StructureMap",
+    "GraphDefinition",
+    "NamingSystem",
+    "OperationDefinition",
+    "Subscription",
+    # Messaging
+    "MessageHeader",
+    # Testing
+    "TestScript",
+    "TestReport",
+    # Verification
+    "VerificationResult",
+    # Definitions
+    "EventDefinition",
+    "ObservationDefinition",
+    "SpecimenDefinition",
+    # Insurance
+    "InsurancePlan",
+    "EnrollmentRequest",
+    "EnrollmentResponse",
+    # Linkage
+    "Linkage",
+    # Device Usage
+    "DeviceUseStatement",
+    # Administrative
+    "Person",
+    # Financial (additional)
+    "Account",
+    "ClaimResponse",
+    "CoverageEligibilityRequest",
+    "CoverageEligibilityResponse",
+    "PaymentNotice",
+    "PaymentReconciliation",
+    "ChargeItem",
+    "ChargeItemDefinition",
+    "Contract",
+    "Invoice",
+    "DocumentManifest",
+    # Clinical Workflow
+    "ActivityDefinition",
+    "PlanDefinition",
+    "GuidanceResponse",
+    "DeviceRequest",
+    # Substances
+    "Substance",
+    # Immunization
+    "ImmunizationRecommendation",
+    # Vision
+    "VisionPrescription",
+    # Scheduling
+    "AppointmentResponse",
+    # Other
+    "Basic",
+    # Evidence-Based Medicine
+    "Evidence",
+    "EvidenceVariable",
+    "EffectEvidenceSynthesis",
+    "RiskEvidenceSynthesis",
+    "ResearchDefinition",
+    "ResearchElementDefinition",
+    # Laboratory & Genomics
+    "MolecularSequence",
+    "BiologicallyDerivedProduct",
+    # Catalog
+    "CatalogEntry",
+    # Immunization Assessment
+    "ImmunizationEvaluation",
+    # Substance Specialized
+    "SubstanceNucleicAcid",
+    "SubstancePolymer",
+    "SubstanceProtein",
+    "SubstanceReferenceInformation",
+    "SubstanceSourceMaterial",
+    "SubstanceSpecification",
+    # Workflow Examples
+    "ExampleScenario",
 }
 
 # Validation rules per resource type

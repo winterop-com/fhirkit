@@ -37,6 +37,7 @@ SUPPORTED_TYPES = [
     "RelatedPerson",
     "HealthcareService",
     "Endpoint",
+    "Person",
     # Clinical
     "Encounter",
     "EpisodeOfCare",
@@ -71,14 +72,36 @@ SUPPORTED_TYPES = [
     "NutritionOrder",
     "RequestGroup",
     "List",
+    # Clinical Workflow
+    "ActivityDefinition",
+    "PlanDefinition",
+    "GuidanceResponse",
+    "DeviceRequest",
+    # Substances
+    "Substance",
+    # Immunization
+    "ImmunizationRecommendation",
+    # Vision
+    "VisionPrescription",
     # Scheduling
     "Appointment",
+    "AppointmentResponse",
     "Schedule",
     "Slot",
     # Financial
     "Coverage",
     "Claim",
+    "ClaimResponse",
     "ExplanationOfBenefit",
+    "Account",
+    "CoverageEligibilityRequest",
+    "CoverageEligibilityResponse",
+    "PaymentNotice",
+    "PaymentReconciliation",
+    "ChargeItem",
+    "ChargeItemDefinition",
+    "Contract",
+    "Invoice",
     # Devices
     "Device",
     "DeviceDefinition",
@@ -86,6 +109,7 @@ SUPPORTED_TYPES = [
     # Documents & Media
     "ServiceRequest",
     "DocumentReference",
+    "DocumentManifest",
     "Binary",
     "Media",
     # Laboratory
@@ -120,6 +144,66 @@ SUPPORTED_TYPES = [
     "Provenance",
     # Conformance
     "StructureDefinition",
+    "SearchParameter",
+    "ImplementationGuide",
+    "CompartmentDefinition",
+    "MessageDefinition",
+    "StructureMap",
+    "GraphDefinition",
+    "NamingSystem",
+    # Testing
+    "TestScript",
+    "TestReport",
+    # Verification
+    "VerificationResult",
+    # Definitions
+    "EventDefinition",
+    "ObservationDefinition",
+    "SpecimenDefinition",
+    # Insurance
+    "InsurancePlan",
+    "EnrollmentRequest",
+    "EnrollmentResponse",
+    # Linkage
+    "Linkage",
+    # Device Usage
+    "DeviceUseStatement",
+    # Messaging
+    "MessageHeader",
+    # Other
+    "Basic",
+    # Subscriptions
+    "Subscription",
+    # Foundation
+    "Bundle",
+    "OperationDefinition",
+    "Parameters",
+    "OperationOutcome",
+    "CapabilityStatement",
+    "TerminologyCapabilities",
+    # Evidence-Based Medicine
+    "Evidence",
+    "EvidenceVariable",
+    "EffectEvidenceSynthesis",
+    "RiskEvidenceSynthesis",
+    "ResearchDefinition",
+    "ResearchElementDefinition",
+    # Laboratory & Genomics
+    "MolecularSequence",
+    "BiologicallyDerivedProduct",
+    # Catalog
+    "CatalogEntry",
+    # Immunization Assessment
+    "ImmunizationEvaluation",
+    # Substance specialized types
+    "SubstanceNucleicAcid",
+    "SubstancePolymer",
+    "SubstanceProtein",
+    "SubstanceReferenceInformation",
+    "SubstanceSourceMaterial",
+    "SubstanceSpecification",
+    # Workflow examples
+    "ExampleScenario",
 ]
 
 # Summary elements per resource type (per FHIR spec)
@@ -132,6 +216,7 @@ SUMMARY_ELEMENTS: dict[str, list[str]] = {
     "Location": ["identifier", "status", "name", "type", "telecom", "address"],
     "RelatedPerson": ["identifier", "active", "patient", "relationship", "name"],
     "HealthcareService": ["identifier", "active", "providedBy", "category", "type", "name"],
+    "Person": ["identifier", "active", "name", "telecom", "gender", "birthDate", "address"],
     # Clinical
     "Encounter": ["identifier", "status", "class", "type", "subject", "period"],
     "Condition": ["identifier", "clinicalStatus", "verificationStatus", "code", "subject", "onsetDateTime"],
@@ -159,19 +244,42 @@ SUMMARY_ELEMENTS: dict[str, list[str]] = {
     "Goal": ["identifier", "lifecycleStatus", "category", "description", "subject"],
     "Task": ["identifier", "status", "intent", "code", "focus", "for", "authoredOn"],
     "NutritionOrder": ["identifier", "status", "intent", "patient", "dateTime", "orderer"],
+    # Clinical Workflow
+    "ActivityDefinition": ["url", "name", "status", "kind", "code", "intent", "priority"],
+    "PlanDefinition": ["url", "name", "status", "type", "date", "publisher", "title"],
+    "GuidanceResponse": ["requestIdentifier", "status", "subject", "occurrenceDateTime"],
+    "DeviceRequest": ["identifier", "status", "intent", "codeCodeableConcept", "subject", "authoredOn"],
+    # Substances
+    "Substance": ["identifier", "status", "category", "code", "description"],
+    # Immunization
+    "ImmunizationRecommendation": ["identifier", "patient", "date", "recommendation"],
+    # Vision
+    "VisionPrescription": ["identifier", "status", "patient", "dateWritten", "prescriber"],
     # Scheduling
     "Appointment": ["identifier", "status", "serviceType", "start", "end", "participant"],
+    "AppointmentResponse": ["identifier", "appointment", "participantStatus", "actor", "start", "end"],
     "Schedule": ["identifier", "active", "serviceType", "actor", "planningHorizon"],
     "Slot": ["identifier", "status", "schedule", "start", "end"],
     # Financial
     "Coverage": ["identifier", "status", "type", "beneficiary", "payor", "period"],
     "Claim": ["identifier", "status", "type", "use", "patient", "created"],
+    "ClaimResponse": ["identifier", "status", "type", "use", "patient", "created", "outcome"],
     "ExplanationOfBenefit": ["identifier", "status", "type", "use", "patient", "created", "outcome"],
+    "Account": ["identifier", "status", "type", "name", "subject", "servicePeriod"],
+    "CoverageEligibilityRequest": ["identifier", "status", "purpose", "patient", "created", "insurer"],
+    "CoverageEligibilityResponse": ["identifier", "status", "purpose", "patient", "created", "outcome"],
+    "PaymentNotice": ["identifier", "status", "created", "paymentDate", "amount", "paymentStatus"],
+    "PaymentReconciliation": ["identifier", "status", "period", "created", "paymentDate", "paymentAmount"],
+    "ChargeItem": ["identifier", "status", "code", "subject", "context", "occurrenceDateTime"],
+    "ChargeItemDefinition": ["url", "title", "status", "date", "code", "description"],
+    "Contract": ["identifier", "status", "type", "subject", "issued", "applies"],
+    "Invoice": ["identifier", "status", "subject", "date", "issuer", "totalNet", "totalGross"],
     # Devices
     "Device": ["identifier", "status", "type", "patient", "manufacturer", "serialNumber"],
     # Documents
     "ServiceRequest": ["identifier", "status", "intent", "code", "subject", "authoredOn"],
     "DocumentReference": ["identifier", "status", "type", "subject", "date", "author"],
+    "DocumentManifest": ["masterIdentifier", "status", "type", "subject", "created", "author"],
     "Media": ["identifier", "status", "type", "subject", "createdDateTime", "operator"],
     # Laboratory
     "Specimen": ["identifier", "status", "type", "subject", "receivedTime", "collection"],
@@ -196,6 +304,80 @@ SUMMARY_ELEMENTS: dict[str, list[str]] = {
     "AuditEvent": ["type", "subtype", "action", "recorded", "outcome", "agent"],
     "Consent": ["identifier", "status", "scope", "category", "patient", "dateTime"],
     "Provenance": ["target", "recorded", "agent", "activity"],
+    # Conformance
+    "SearchParameter": ["url", "name", "status", "code", "base", "type", "expression"],
+    "ImplementationGuide": ["url", "name", "status", "version", "packageId", "fhirVersion"],
+    "CompartmentDefinition": ["url", "name", "status", "code", "search"],
+    "MessageDefinition": ["url", "name", "status", "eventCoding", "category"],
+    "StructureMap": ["url", "name", "status", "structure", "group"],
+    "GraphDefinition": ["url", "name", "status", "start", "profile"],
+    "NamingSystem": ["name", "status", "kind", "uniqueId", "type"],
+    # Testing
+    "TestScript": ["url", "name", "status", "title", "date", "publisher"],
+    "TestReport": ["identifier", "name", "status", "result", "testScript", "score"],
+    # Verification
+    "VerificationResult": ["status", "statusDate", "target", "validationType", "need"],
+    # Definitions
+    "EventDefinition": ["url", "name", "status", "title", "trigger"],
+    "ObservationDefinition": ["code", "category", "permittedDataType", "multipleResultsAllowed"],
+    "SpecimenDefinition": ["identifier", "typeCollected", "patientPreparation"],
+    # Insurance
+    "InsurancePlan": ["identifier", "status", "type", "name", "ownedBy"],
+    "EnrollmentRequest": ["identifier", "status", "created", "insurer", "candidate"],
+    "EnrollmentResponse": ["identifier", "status", "outcome", "created", "request"],
+    # Linkage
+    "Linkage": ["active", "author", "item"],
+    # Device Usage
+    "DeviceUseStatement": ["identifier", "status", "subject", "device", "timingPeriod"],
+    # Other
+    "Basic": ["identifier", "code", "subject", "created", "author"],
+    # Messaging
+    "MessageHeader": ["eventCoding", "eventUri", "source", "destination", "sender", "response"],
+    # Subscriptions
+    "Subscription": ["status", "reason", "criteria", "channel", "end", "error"],
+    # Foundation
+    "Bundle": ["type", "timestamp", "total", "link"],
+    "OperationDefinition": ["url", "name", "status", "kind", "code", "system", "type", "instance"],
+    "Parameters": ["parameter"],
+    "OperationOutcome": ["issue"],
+    "CapabilityStatement": ["url", "name", "status", "kind", "fhirVersion", "format", "rest"],
+    "TerminologyCapabilities": ["url", "name", "status", "kind", "codeSystem", "expansion"],
+    # Evidence-Based Medicine
+    "Evidence": ["url", "identifier", "name", "title", "status", "date", "description"],
+    "EvidenceVariable": ["url", "identifier", "name", "title", "status", "type", "characteristic"],
+    "EffectEvidenceSynthesis": ["url", "identifier", "name", "title", "status", "exposure", "outcome"],
+    "RiskEvidenceSynthesis": ["url", "identifier", "name", "title", "status", "exposure", "outcome"],
+    "ResearchDefinition": ["url", "identifier", "name", "title", "status", "population"],
+    "ResearchElementDefinition": ["url", "identifier", "name", "title", "status", "type", "characteristic"],
+    # Laboratory & Genomics
+    "MolecularSequence": ["identifier", "type", "coordinateSystem", "patient", "specimen"],
+    "BiologicallyDerivedProduct": ["identifier", "productCategory", "productCode", "status", "request"],
+    # Catalog
+    "CatalogEntry": ["identifier", "type", "orderable", "referencedItem", "status"],
+    # Immunization Assessment
+    "ImmunizationEvaluation": [
+        "identifier",
+        "status",
+        "patient",
+        "date",
+        "targetDisease",
+        "immunizationEvent",
+        "doseStatus",
+    ],
+    # Substance specialized types
+    "SubstanceNucleicAcid": ["sequenceType", "numberOfSubunits", "subunit"],
+    "SubstancePolymer": ["class", "geometry", "modification"],
+    "SubstanceProtein": ["sequenceType", "numberOfSubunits", "subunit"],
+    "SubstanceReferenceInformation": ["comment", "gene", "classification", "target"],
+    "SubstanceSourceMaterial": [
+        "sourceMaterialClass",
+        "sourceMaterialType",
+        "organismName",
+        "countryOfOrigin",
+    ],
+    "SubstanceSpecification": ["identifier", "status", "domain", "description", "name"],
+    # Workflow examples
+    "ExampleScenario": ["url", "name", "title", "status", "purpose", "actor", "instance"],
 }
 
 
@@ -2418,7 +2600,8 @@ def create_router(
             except ValueError:
                 # Resource already exists (duplicate ID), try update
                 try:
-                    store.update(resource)
+                    resource_id = resource.get("id", "")
+                    store.update(rt, resource_id, resource)
                     created_counts[rt] = created_counts.get(rt, 0) + 1
                 except Exception:
                     pass  # Skip on failure
