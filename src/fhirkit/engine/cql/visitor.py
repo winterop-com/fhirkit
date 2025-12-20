@@ -1622,8 +1622,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return self._date_diff(start, end, precision)
 
-    def visitTimeUnitExpressionTerm(self, ctx: cqlParser.TimeUnitExpressionTermContext) -> int | None:
-        """Visit time unit expression (year from X, month from X, etc.)."""
+    def visitTimeUnitExpressionTerm(self, ctx: cqlParser.TimeUnitExpressionTermContext) -> Any:
+        """Visit time unit expression (year from X, month from X, date from X, time from X, etc.)."""
         expr = ctx.expressionTerm()
         value = self.visit(expr)
 
@@ -2242,6 +2242,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if right == 0:
             return None
         import math
+
         # Use math.trunc for truncation toward zero (not floor)
         return math.trunc(float(left) / float(right))
 

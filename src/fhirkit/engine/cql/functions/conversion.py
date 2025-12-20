@@ -295,6 +295,7 @@ def _round(args: list[Any]) -> Decimal | int | None:
         shifted = decimal_val * shift + Decimal("0.5")
 
         import math
+
         result = Decimal(math.floor(float(shifted))) / shift
 
         # Quantize to the correct precision

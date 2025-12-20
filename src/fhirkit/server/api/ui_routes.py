@@ -11,7 +11,9 @@ from ..storage.fhir_store import FHIRStore
 from ..ui.helpers import (
     RESOURCE_CATEGORIES,
     format_date,
+    get_resource_description,
     get_resource_display,
+    load_resource_documentation,
 )
 from .routes import SUPPORTED_TYPES
 from .search import SEARCH_PARAMS
@@ -259,7 +261,7 @@ def create_ui_router(
     @router.get("/resources", response_class=HTMLResponse, name="ui_resource_types")
     async def resource_types(request: Request) -> HTMLResponse:
         """List all resource types by category."""
-        # Build categorized resource list with counts
+        # Build categorized resource list with counts and descriptions
         categories: dict[str, list[dict[str, Any]]] = {}
 
         for category, types in RESOURCE_CATEGORIES.items():
@@ -270,6 +272,7 @@ def create_ui_router(
                         {
                             "name": resource_type,
                             "count": store.count(resource_type),
+                            "description": get_resource_description(resource_type),
                         }
                     )
             if category_types:
@@ -439,6 +442,9 @@ def create_ui_router(
             if not name.startswith("_") or name == "_id"
         ]
 
+        # Load documentation for this resource type
+        documentation = load_resource_documentation(resource_type)
+
         context = get_context(
             request,
             resource_type=resource_type,
@@ -448,6 +454,7 @@ def create_ui_router(
             per_page=per_page,
             total_pages=total_pages,
             search_params=search_param_list,
+            documentation=documentation,
         )
 
         return templates.TemplateResponse("pages/resource_list.html", context)
@@ -535,12 +542,16 @@ def create_ui_router(
         # Extract references from resource
         references = _extract_references(resource)
 
+        # Load documentation for this resource type
+        documentation = load_resource_documentation(resource_type)
+
         context = get_context(
             request,
             resource_type=resource_type,
             resource=resource,
             resource_json=json.dumps(resource, indent=2),
             references=references,
+            documentation=documentation,
         )
 
         return templates.TemplateResponse("pages/resource_detail.html", context)

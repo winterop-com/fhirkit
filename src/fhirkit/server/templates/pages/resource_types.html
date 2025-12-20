@@ -25,25 +25,31 @@
         <div class="p-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {% for type_info in types %}
-                <a href="{{ url_for('ui_resource_list', resource_type=type_info.name) }}"
-                   class="group flex items-center justify-between p-3 bg-gray-50 hover:bg-fhir-50 rounded-lg border border-gray-200 hover:border-fhir-300 transition-colors">
-                    <div class="flex items-center min-w-0">
-                        <span class="text-sm font-medium text-gray-900 group-hover:text-fhir-700 truncate">
-                            {{ type_info.name }}
-                        </span>
-                    </div>
-                    <div class="ml-2 flex-shrink-0">
-                        {% if type_info.count > 0 %}
-                        <span class="inline-flex items-center rounded-full bg-fhir-100 px-2.5 py-0.5 text-xs font-medium text-fhir-800">
-                            {{ type_info.count }}
-                        </span>
-                        {% else %}
-                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                            0
-                        </span>
-                        {% endif %}
-                    </div>
-                </a>
+                <div class="group relative">
+                    <a href="{{ url_for('ui_resource_list', resource_type=type_info.name) }}"
+                       class="flex items-center justify-between p-3 bg-gray-50 hover:bg-fhir-50 rounded-lg border border-gray-200 hover:border-fhir-300 transition-colors"
+                       {% if type_info.description %}title="{{ type_info.description }}"{% endif %}>
+                        <div class="flex items-center min-w-0">
+                            <span class="text-sm font-medium text-gray-900 group-hover:text-fhir-700 truncate">
+                                {{ type_info.name }}
+                            </span>
+                        </div>
+                        <div class="ml-2 flex-shrink-0">
+                            {% if type_info.count > 0 %}
+                            <span class="inline-flex items-center rounded-full bg-fhir-100 px-2.5 py-0.5 text-xs font-medium text-fhir-800">
+                                {{ type_info.count }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                                0
+                            </span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% if type_info.description %}
+                    <span class="tooltip tooltip-bottom max-w-xs text-left">{{ type_info.description }}</span>
+                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
         </div>

@@ -41,6 +41,119 @@
         </div>
     </div>
 
+    <!-- Documentation Box -->
+    {% if documentation and documentation.exists %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-4 sm:px-6 bg-gradient-to-r from-fhir-50 to-blue-50 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="h-6 w-6 text-fhir-600 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                    <h2 class="text-lg font-semibold text-gray-900">{{ resource_type }} Resource</h2>
+                </div>
+                <a href="https://hl7.org/fhir/R4/{{ resource_type.lower() }}.html" target="_blank"
+                   class="text-sm text-fhir-600 hover:text-fhir-800 flex items-center">
+                    FHIR R4 Spec
+                    <svg class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="p-4 space-y-4">
+            <!-- Overview -->
+            {% if documentation.overview %}
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">Overview</h3>
+                <div class="prose prose-sm max-w-none text-gray-600">
+                    {{ documentation.overview | safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Collapsible sections -->
+            <details class="group border-t border-gray-100 pt-4">
+                <summary class="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    <span class="flex items-center">
+                        <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                        </svg>
+                        API Examples
+                    </span>
+                    <svg class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </summary>
+                <div class="mt-3 space-y-3">
+                    <!-- Quick API Examples -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Read a {{ resource_type }}</h4>
+                        <pre class="text-xs bg-gray-900 text-green-400 p-2 rounded overflow-x-auto"><code>curl {{ api_base_path }}/{{ resource_type }}/{id}</code></pre>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Search {{ resource_type }}s</h4>
+                        <pre class="text-xs bg-gray-900 text-green-400 p-2 rounded overflow-x-auto"><code>curl "{{ api_base_path }}/{{ resource_type }}?_count=10"</code></pre>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Create a {{ resource_type }}</h4>
+                        <pre class="text-xs bg-gray-900 text-green-400 p-2 rounded overflow-x-auto"><code>curl -X POST {{ api_base_path }}/{{ resource_type }} \
+  -H "Content-Type: application/fhir+json" \
+  -d '{"resourceType": "{{ resource_type }}", ...}'</code></pre>
+                    </div>
+                    {% if documentation.examples %}
+                    <div class="border-t border-gray-200 pt-3">
+                        <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">More Examples</h4>
+                        <div class="prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                            <div class="markdown-content">{{ documentation.examples | safe }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </details>
+
+            {% if documentation.search_parameters %}
+            <details class="group border-t border-gray-100 pt-4">
+                <summary class="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    <span class="flex items-center">
+                        <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                        Search Parameters
+                    </span>
+                    <svg class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </summary>
+                <div class="mt-3 prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                    <div class="markdown-content">{{ documentation.search_parameters | safe }}</div>
+                </div>
+            </details>
+            {% endif %}
+
+            {% if documentation.generator_usage %}
+            <details class="group border-t border-gray-100 pt-4">
+                <summary class="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    <span class="flex items-center">
+                        <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                        </svg>
+                        Generator Usage (Python)
+                    </span>
+                    <svg class="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </summary>
+                <div class="mt-3 prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                    <div class="markdown-content">{{ documentation.generator_usage | safe }}</div>
+                </div>
+            </details>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Search Form -->
     {% if search_params %}
     <div class="bg-white shadow rounded-lg">

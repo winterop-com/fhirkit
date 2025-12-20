@@ -1,6 +1,8 @@
 """Template helper functions for FHIR UI."""
 
+import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -620,3 +622,168 @@ def get_resource_category(resource_type: str) -> str:
         if resource_type in types:
             return category
     return "Other"
+
+
+def _get_docs_path() -> Path:
+    """Get the path to the documentation directory.
+
+    Returns:
+        Path to docs/fhir-server/resources/
+    """
+    # Navigate from src/fhirkit/server/ui/ to docs/fhir-server/resources/
+    current_file = Path(__file__).resolve()
+    project_root = current_file.parent.parent.parent.parent.parent
+    return project_root / "docs" / "fhir-server" / "resources"
+
+
+def _resource_type_to_filename(resource_type: str) -> str:
+    """Convert a resource type to its documentation filename.
+
+    Args:
+        resource_type: FHIR resource type (e.g., "MedicationRequest")
+
+    Returns:
+        Filename with dashes (e.g., "medication-request.md")
+    """
+    # Convert CamelCase to kebab-case
+    # Insert dash before uppercase letters (except at start)
+    result = re.sub(r"(?<!^)(?=[A-Z])", "-", resource_type)
+    return result.lower() + ".md"
+
+
+def parse_markdown_sections(content: str) -> dict[str, str]:
+    """Parse markdown content into sections by headers.
+
+    Splits markdown by ## headers and returns a dict of section name -> content.
+
+    Args:
+        content: Full markdown content
+
+    Returns:
+        Dict mapping section names to their content
+    """
+    sections: dict[str, str] = {}
+
+    # Split by ## headers (level 2)
+    parts = re.split(r"^## ", content, flags=re.MULTILINE)
+
+    # First part is the intro/overview (before first ##)
+    if parts:
+        intro = parts[0].strip()
+        # Extract title from # header if present
+        title_match = re.match(r"^# (.+?)(?:\n|$)", intro)
+        if title_match:
+            sections["title"] = title_match.group(1).strip()
+            # Content after title is overview
+            overview = intro[title_match.end() :].strip()
+            if overview:
+                sections["overview"] = overview
+        elif intro:
+            sections["overview"] = intro
+
+    # Process remaining sections
+    for part in parts[1:]:
+        lines = part.split("\n", 1)
+        if lines:
+            section_name = lines[0].strip()
+            section_content = lines[1].strip() if len(lines) > 1 else ""
+            # Normalize section name to lowercase key
+            key = section_name.lower().replace(" ", "_")
+            sections[key] = section_content
+
+    return sections
+
+
+def load_resource_documentation(resource_type: str) -> dict[str, Any]:
+    """Load and parse markdown documentation for a resource type.
+
+    Reads the documentation file for a resource and parses it into
+    structured sections for display in the UI.
+
+    Args:
+        resource_type: FHIR resource type (e.g., "Patient", "MedicationRequest")
+
+    Returns:
+        Dict containing parsed documentation:
+        - exists: bool indicating if documentation file exists
+        - title: Resource title from # header
+        - overview: Introduction/overview text
+        - supported_fields: Fields section content
+        - search_parameters: Search params section content
+        - examples: CRUD/usage examples section
+        - generator_usage: Python generator usage section
+        - related_resources: Links to related resources
+        - raw_content: Full raw markdown content
+    """
+    docs_path = _get_docs_path()
+    filename = _resource_type_to_filename(resource_type)
+    file_path = docs_path / filename
+
+    result: dict[str, Any] = {
+        "exists": False,
+        "title": resource_type,
+        "overview": "",
+        "supported_fields": "",
+        "search_parameters": "",
+        "examples": "",
+        "generator_usage": "",
+        "related_resources": "",
+        "raw_content": "",
+    }
+
+    if not file_path.exists():
+        return result
+
+    try:
+        content = file_path.read_text(encoding="utf-8")
+        result["exists"] = True
+        result["raw_content"] = content
+
+        sections = parse_markdown_sections(content)
+
+        # Map parsed sections to result keys
+        if "title" in sections:
+            result["title"] = sections["title"]
+        if "overview" in sections:
+            result["overview"] = sections["overview"]
+        if "supported_fields" in sections:
+            result["supported_fields"] = sections["supported_fields"]
+        if "search_parameters" in sections:
+            result["search_parameters"] = sections["search_parameters"]
+        if "examples" in sections:
+            result["examples"] = sections["examples"]
+        if "crud_examples" in sections:
+            result["examples"] = sections["crud_examples"]
+        if "generator_usage" in sections:
+            result["generator_usage"] = sections["generator_usage"]
+        if "related_resources" in sections:
+            result["related_resources"] = sections["related_resources"]
+
+    except Exception:
+        # If any error reading/parsing, return with exists=False
+        result["exists"] = False
+
+    return result
+
+
+def get_resource_description(resource_type: str) -> str:
+    """Get a brief description for a resource type (for tooltips).
+
+    Args:
+        resource_type: FHIR resource type
+
+    Returns:
+        Brief description string (first paragraph of overview)
+    """
+    doc = load_resource_documentation(resource_type)
+    if not doc["exists"] or not doc["overview"]:
+        return f"FHIR R4 {resource_type} resource"
+
+    # Return first paragraph/sentence for tooltip
+    overview = doc["overview"]
+    # Get first paragraph (up to double newline or first 200 chars)
+    first_para = overview.split("\n\n")[0]
+    if len(first_para) > 200:
+        # Truncate at word boundary
+        first_para = first_para[:197].rsplit(" ", 1)[0] + "..."
+    return first_para

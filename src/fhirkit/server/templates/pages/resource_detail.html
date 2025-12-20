@@ -76,6 +76,69 @@
         </div>
     </div>
 
+    <!-- Documentation Section -->
+    {% if documentation and documentation.exists %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <details class="group">
+            <summary class="px-4 py-4 sm:px-6 border-b border-gray-200 flex justify-between items-center cursor-pointer list-none hover:bg-gray-50">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 mr-2 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                    <h2 class="text-lg font-medium text-gray-900">Documentation</h2>
+                </div>
+                <span class="text-sm text-gray-500">{{ resource_type }} resource reference</span>
+            </summary>
+            <div class="p-4 space-y-6">
+                {% if documentation.overview %}
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">Overview</h3>
+                    <div class="prose prose-sm max-w-none text-gray-600">
+                        {{ documentation.overview | safe }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if documentation.supported_fields %}
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">Supported Fields</h3>
+                    <div class="prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                        <div class="markdown-content">{{ documentation.supported_fields | safe }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if documentation.search_parameters %}
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">Search Parameters</h3>
+                    <div class="prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                        <div class="markdown-content">{{ documentation.search_parameters | safe }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if documentation.examples %}
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">Examples</h3>
+                    <div class="prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                        <div class="markdown-content">{{ documentation.examples | safe }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if documentation.generator_usage %}
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">Generator Usage</h3>
+                    <div class="prose prose-sm max-w-none text-gray-600 overflow-x-auto">
+                        <div class="markdown-content">{{ documentation.generator_usage | safe }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </details>
+    </div>
+    {% endif %}
+
     <!-- Resource JSON -->
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <div class="px-4 py-4 sm:px-6 border-b border-gray-200 flex justify-between items-center">
