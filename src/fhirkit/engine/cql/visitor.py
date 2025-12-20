@@ -679,20 +679,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         # Equivalent operator (~) handles nulls specially
         if op == "~":
-            # null ~ null = true, null ~ x = false, x ~ null = false
-            if left is None and right is None:
-                return True
-            if left is None or right is None:
-                return False
-            return self._equals(left, right)
+            # Use _equivalent which handles null ~ null = true in lists
+            return self._equivalent(left, right)
         elif op == "!~":
             # Not equivalent
-            if left is None and right is None:
-                return False  # null ~! null = false
-            if left is None or right is None:
-                return True  # null ~! x = true
-            result = self._equals(left, right)
-            return not result if result is not None else None
+            return not self._equivalent(left, right)
 
         # Equality operator (=) propagates nulls
         if left is None or right is None:
@@ -2736,6 +2727,45 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return left == right
 
+    def _equivalent(self, left: Any, right: Any) -> bool:
+        """Check equivalence with CQL semantics (null ~ null = true)."""
+        # null ~ null = true, null ~ x = false
+        if left is None and right is None:
+            return True
+        if left is None or right is None:
+            return False
+
+        # Handle lists - compare element-wise with equivalence semantics
+        if isinstance(left, list) and isinstance(right, list):
+            if len(left) != len(right):
+                return False
+            return all(self._equivalent(left_item, right_item) for left_item, right_item in zip(left, right))
+
+        # Handle Quantity with unit conversion
+        if isinstance(left, Quantity) and isinstance(right, Quantity):
+            try:
+                return left == right
+            except TypeError:
+                return False  # Incompatible units are not equivalent
+
+        # Handle Interval
+        if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
+            return left == right
+
+        # Handle Code
+        if isinstance(left, CQLCode) and isinstance(right, CQLCode):
+            return left.equivalent(right)
+
+        # Handle CodeableConcept (dict with 'coding') vs CQLCode
+        if isinstance(left, dict) and "coding" in left and isinstance(right, CQLCode):
+            codings = left.get("coding", [])
+            return any(c.get("system") == right.system and c.get("code") == right.code for c in codings)
+        if isinstance(right, dict) and "coding" in right and isinstance(left, CQLCode):
+            codings = right.get("coding", [])
+            return any(c.get("system") == left.system and c.get("code") == left.code for c in codings)
+
+        return left == right
+
     # Type checking helpers
     def _check_type(self, value: Any, type_name: str) -> bool:
         """Check if value is of the given type."""
@@ -2827,6 +2857,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if isinstance(value, FHIRDate):
             d = value.to_date()
             return datetime.combine(d, time(0, 0, 0)) if d else None
+        return None
+
+    def _to_time(self, value: Any) -> time | None:
+        """Convert a value to a Python time."""
+        if value is None:
+            return None
+        if isinstance(value, time):
+            return value
+        if isinstance(value, FHIRTime):
+            return value.to_time()
         return None
 
     def _get_patient_birthdate(self) -> date | None:
@@ -3281,14 +3321,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if isinstance(value, int):
             return value + 1
 
-        # Decimal successor (add minimum precision)
+        # Decimal successor - CQL uses 8 decimal places precision
         if isinstance(value, Decimal):
-            # Get the scale and add the smallest increment
-            sign, digits, exp = value.as_tuple()
-            if isinstance(exp, int) and exp < 0:
-                increment = Decimal(10) ** exp
-            else:
-                increment = Decimal(1)
+            increment = Decimal("0.00000001")
             return value + increment
 
         # Date successor (next day)
@@ -3298,20 +3333,44 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 next_day = d + timedelta(days=1)
                 return FHIRDate(year=next_day.year, month=next_day.month, day=next_day.day)
 
-        # DateTime successor (next millisecond)
+        # DateTime successor - precision-aware
         if isinstance(value, (datetime, FHIRDateTime)):
-            dt = self._to_datetime(value)
-            if dt:
-                next_ms = dt + timedelta(milliseconds=1)
-                return FHIRDateTime(
-                    year=next_ms.year,
-                    month=next_ms.month,
-                    day=next_ms.day,
-                    hour=next_ms.hour,
-                    minute=next_ms.minute,
-                    second=next_ms.second,
-                    millisecond=next_ms.microsecond // 1000,
-                )
+            # For FHIRDateTime, respect precision
+            if isinstance(value, FHIRDateTime):
+                if value.hour is None:
+                    # Date precision - add 1 day
+                    d = self._to_date(value)
+                    if d:
+                        next_day = d + timedelta(days=1)
+                        return FHIRDateTime(year=next_day.year, month=next_day.month, day=next_day.day)
+                else:
+                    # Time precision - add 1 millisecond
+                    dt = self._to_datetime(value)
+                    if dt:
+                        next_ms = dt + timedelta(milliseconds=1)
+                        return FHIRDateTime(
+                            year=next_ms.year,
+                            month=next_ms.month,
+                            day=next_ms.day,
+                            hour=next_ms.hour,
+                            minute=next_ms.minute,
+                            second=next_ms.second,
+                            millisecond=next_ms.microsecond // 1000,
+                        )
+            else:
+                # Python datetime - add 1 millisecond
+                dt = self._to_datetime(value)
+                if dt:
+                    next_ms = dt + timedelta(milliseconds=1)
+                    return FHIRDateTime(
+                        year=next_ms.year,
+                        month=next_ms.month,
+                        day=next_ms.day,
+                        hour=next_ms.hour,
+                        minute=next_ms.minute,
+                        second=next_ms.second,
+                        millisecond=next_ms.microsecond // 1000,
+                    )
 
         # Time successor
         if isinstance(value, (time, FHIRTime)):
@@ -3327,6 +3386,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 ms = total_ms % 1000
                 return FHIRTime(hour=h, minute=m, second=s, millisecond=ms)
 
+        # Quantity successor - CQL uses 8 decimal places precision
+        if isinstance(value, Quantity):
+            increment = Decimal("0.00000001")
+            return Quantity(value=value.value + increment, unit=value.unit)
+
         return None
 
     def visitPredecessorExpressionTerm(self, ctx: cqlParser.PredecessorExpressionTermContext) -> Any:
@@ -3341,13 +3405,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if isinstance(value, int):
             return value - 1
 
-        # Decimal predecessor
+        # Decimal predecessor - CQL uses 8 decimal places precision
         if isinstance(value, Decimal):
-            sign, digits, exp = value.as_tuple()
-            if isinstance(exp, int) and exp < 0:
-                decrement = Decimal(10) ** exp
-            else:
-                decrement = Decimal(1)
+            decrement = Decimal("0.00000001")
             return value - decrement
 
         # Date predecessor (previous day)
@@ -3357,20 +3417,44 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 prev_day = d - timedelta(days=1)
                 return FHIRDate(year=prev_day.year, month=prev_day.month, day=prev_day.day)
 
-        # DateTime predecessor
+        # DateTime predecessor - precision-aware
         if isinstance(value, (datetime, FHIRDateTime)):
-            dt = self._to_datetime(value)
-            if dt:
-                prev_ms = dt - timedelta(milliseconds=1)
-                return FHIRDateTime(
-                    year=prev_ms.year,
-                    month=prev_ms.month,
-                    day=prev_ms.day,
-                    hour=prev_ms.hour,
-                    minute=prev_ms.minute,
-                    second=prev_ms.second,
-                    millisecond=prev_ms.microsecond // 1000,
-                )
+            # For FHIRDateTime, respect precision
+            if isinstance(value, FHIRDateTime):
+                if value.hour is None:
+                    # Date precision - subtract 1 day
+                    d = self._to_date(value)
+                    if d:
+                        prev_day = d - timedelta(days=1)
+                        return FHIRDateTime(year=prev_day.year, month=prev_day.month, day=prev_day.day)
+                else:
+                    # Time precision - subtract 1 millisecond
+                    dt = self._to_datetime(value)
+                    if dt:
+                        prev_ms = dt - timedelta(milliseconds=1)
+                        return FHIRDateTime(
+                            year=prev_ms.year,
+                            month=prev_ms.month,
+                            day=prev_ms.day,
+                            hour=prev_ms.hour,
+                            minute=prev_ms.minute,
+                            second=prev_ms.second,
+                            millisecond=prev_ms.microsecond // 1000,
+                        )
+            else:
+                # Python datetime - subtract 1 millisecond
+                dt = self._to_datetime(value)
+                if dt:
+                    prev_ms = dt - timedelta(milliseconds=1)
+                    return FHIRDateTime(
+                        year=prev_ms.year,
+                        month=prev_ms.month,
+                        day=prev_ms.day,
+                        hour=prev_ms.hour,
+                        minute=prev_ms.minute,
+                        second=prev_ms.second,
+                        millisecond=prev_ms.microsecond // 1000,
+                    )
 
         # Time predecessor
         if isinstance(value, (time, FHIRTime)):
@@ -3384,6 +3468,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 s = (total_ms // 1000) % 60
                 ms = total_ms % 1000
                 return FHIRTime(hour=h, minute=m, second=s, millisecond=ms)
+
+        # Quantity predecessor - CQL uses 8 decimal places precision
+        if isinstance(value, Quantity):
+            decrement = Decimal("0.00000001")
+            return Quantity(value=value.value - decrement, unit=value.unit)
 
         return None
 

@@ -104,6 +104,8 @@ def fn_converts_to_boolean(ctx: EvaluationContext, collection: list[Any]) -> lis
 @FunctionRegistry.register("toInteger")
 def fn_to_integer(ctx: EvaluationContext, collection: list[Any]) -> list[int]:
     """Converts the input to an integer."""
+    from decimal import Decimal
+
     if not collection:
         return []
 
@@ -114,6 +116,12 @@ def fn_to_integer(ctx: EvaluationContext, collection: list[Any]) -> list[int]:
 
     if isinstance(value, int):
         return [value]
+
+    if isinstance(value, Decimal):
+        int_val = int(value)
+        if value == Decimal(int_val):
+            return [int_val]
+        return []
 
     if isinstance(value, float):
         int_val = int(value)
@@ -146,6 +154,8 @@ def fn_converts_to_integer(ctx: EvaluationContext, collection: list[Any]) -> lis
 @FunctionRegistry.register("toDecimal")
 def fn_to_decimal(ctx: EvaluationContext, collection: list[Any]) -> list[float]:
     """Converts the input to a decimal."""
+    from decimal import Decimal
+
     if not collection:
         return []
 
@@ -153,6 +163,9 @@ def fn_to_decimal(ctx: EvaluationContext, collection: list[Any]) -> list[float]:
 
     if isinstance(value, bool):
         return [1.0 if value else 0.0]
+
+    if isinstance(value, Decimal):
+        return [float(value)]
 
     if isinstance(value, (int, float)):
         return [float(value)]
