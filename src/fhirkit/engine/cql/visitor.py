@@ -2974,13 +2974,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
         return None, None
 
     def _to_datetime_with_defaults(self, value: Any) -> datetime | None:
-        """Convert to datetime using defaults for missing precision."""
+        """Convert to datetime using defaults for missing precision.
+
+        For timezone-aware datetimes, converts to UTC for comparison.
+        """
         if isinstance(value, datetime):
             return value
         if isinstance(value, date):
             return datetime.combine(value, time())
         if isinstance(value, FHIRDateTime):
-            return datetime(
+            dt = datetime(
                 value.year,
                 value.month or 1,
                 value.day or 1,
@@ -2989,6 +2992,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 value.second or 0,
                 (value.millisecond or 0) * 1000,
             )
+            # Apply timezone offset to normalize to UTC
+            if value.tz_offset:
+                offset_minutes = self._parse_tz_offset(value.tz_offset)
+                if offset_minutes is not None:
+                    # Subtract offset to convert to UTC
+                    dt = dt - timedelta(minutes=offset_minutes)
+            return dt
         if isinstance(value, FHIRDate):
             return datetime(value.year, value.month or 1, value.day or 1)
         if isinstance(value, FHIRTime):
@@ -3004,6 +3014,30 @@ class CQLEvaluatorVisitor(cqlVisitor):
             )
         if isinstance(value, time):
             return datetime.combine(date(1970, 1, 1), value)
+        return None
+
+    def _parse_tz_offset(self, tz_offset: str) -> int | None:
+        """Parse timezone offset string to minutes from UTC.
+
+        Examples: "Z" -> 0, "+05:00" -> 300, "-06.0" -> -360
+        """
+        if tz_offset == "Z":
+            return 0
+        # Handle formats like "+05:00", "-08:00", "-6.0"
+        import re
+
+        # Match +/-HH:MM or +/-H.H format
+        match = re.match(r"^([+-])(\d{1,2})(?::(\d{2})|\.(\d+))?$", tz_offset)
+        if match:
+            sign = 1 if match.group(1) == "+" else -1
+            hours = int(match.group(2))
+            if match.group(3):  # :MM format
+                minutes = int(match.group(3))
+            elif match.group(4):  # .H format (fractional hours)
+                minutes = int(float("0." + match.group(4)) * 60)
+            else:
+                minutes = 0
+            return sign * (hours * 60 + minutes)
         return None
 
     def _add_duration(self, dt: Any, value: int, unit: str) -> Any:
