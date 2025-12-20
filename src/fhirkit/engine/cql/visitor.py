@@ -2872,6 +2872,14 @@ class CQLEvaluatorVisitor(cqlVisitor):
             delta = end_dt - start_dt
             return int(delta.total_seconds())
 
+        if unit_lower in ("millisecond", "milliseconds"):
+            start_dt = self._to_datetime_with_defaults(start)
+            end_dt = self._to_datetime_with_defaults(end)
+            if start_dt is None or end_dt is None:
+                return None
+            delta = end_dt - start_dt
+            return int(delta.total_seconds() * 1000)
+
         # For week/day, need full precision
         start_date = self._to_date(start)
         end_date = self._to_date(end)
@@ -2920,6 +2928,17 @@ class CQLEvaluatorVisitor(cqlVisitor):
             )
         if isinstance(value, FHIRDate):
             return datetime(value.year, value.month or 1, value.day or 1)
+        if isinstance(value, FHIRTime):
+            # Use epoch date (1970-01-01) for time-only values
+            return datetime(
+                1970, 1, 1,
+                value.hour or 0,
+                value.minute or 0,
+                value.second or 0,
+                (value.millisecond or 0) * 1000,
+            )
+        if isinstance(value, time):
+            return datetime.combine(date(1970, 1, 1), value)
         return None
 
     def _add_duration(self, dt: Any, value: int, unit: str) -> Any:
