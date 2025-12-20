@@ -1,4 +1,4 @@
-.PHONY: help install generate lint check test coverage docs docs-serve clean
+.PHONY: help install generate lint check test coverage compliance docs docs-serve clean
 
 GRAMMAR_DIR := grammars
 GENERATED_DIR := generated
@@ -13,6 +13,7 @@ help:
 	@echo "  check      Check code without fixing"
 	@echo "  test       Run parser tests"
 	@echo "  coverage   Run tests with coverage report"
+	@echo "  compliance Run HL7 CQL/FHIRPath compliance tests"
 	@echo "  docs       Build documentation"
 	@echo "  docs-serve Serve documentation locally"
 	@echo "  clean      Remove generated files and caches"
@@ -62,6 +63,19 @@ coverage:
 	@echo ">>> Running tests with coverage"
 	@uv run pytest tests/ --cov=src/fhirkit --cov-report=term-missing --cov-report=html
 	@echo ">>> HTML report generated in htmlcov/"
+
+compliance:
+	@echo ">>> Running HL7 CQL/FHIRPath compliance tests"
+	@uv run pytest tests/compliance/ -v --tb=short 2>&1 | tee compliance-report.txt
+	@echo ">>> Report saved to compliance-report.txt"
+
+compliance-cql:
+	@echo ">>> Running CQL compliance tests"
+	@uv run pytest tests/compliance/cql/ -v --tb=short
+
+compliance-fhirpath:
+	@echo ">>> Running FHIRPath compliance tests"
+	@uv run pytest tests/compliance/fhirpath/ -v --tb=short
 
 docs:
 	@echo ">>> Building documentation"
