@@ -37,10 +37,60 @@ class Quantity(BaseModel):
     value: Decimal
     unit: str
 
+    def _convert_for_comparison(self, other: "Quantity") -> tuple[Decimal, Decimal] | None:
+        """Try to convert both quantities to comparable units."""
+        if self.unit == other.unit:
+            return (self.value, other.value)
+        # Try unit conversion
+        try:
+            from fhirkit.engine.units import convert_quantity
+
+            converted = convert_quantity(other.value, other.unit, self.unit)
+            if converted is not None:
+                return (self.value, Decimal(str(converted)))
+        except (ImportError, ValueError):
+            pass
+        return None
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Quantity):
-            return self.value == other.value and self.unit == other.unit
+            result = self._convert_for_comparison(other)
+            if result:
+                return result[0] == result[1]
+            return False
         return False
+
+    def __lt__(self, other: "Quantity") -> bool:
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        result = self._convert_for_comparison(other)
+        if result:
+            return result[0] < result[1]
+        raise TypeError(f"Cannot compare quantities with incompatible units: {self.unit} and {other.unit}")
+
+    def __le__(self, other: "Quantity") -> bool:
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        result = self._convert_for_comparison(other)
+        if result:
+            return result[0] <= result[1]
+        raise TypeError(f"Cannot compare quantities with incompatible units: {self.unit} and {other.unit}")
+
+    def __gt__(self, other: "Quantity") -> bool:
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        result = self._convert_for_comparison(other)
+        if result:
+            return result[0] > result[1]
+        raise TypeError(f"Cannot compare quantities with incompatible units: {self.unit} and {other.unit}")
+
+    def __ge__(self, other: "Quantity") -> bool:
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        result = self._convert_for_comparison(other)
+        if result:
+            return result[0] >= result[1]
+        raise TypeError(f"Cannot compare quantities with incompatible units: {self.unit} and {other.unit}")
 
     def __hash__(self) -> int:
         return hash((self.value, self.unit))
@@ -243,9 +293,7 @@ class FHIRDateTime(BaseModel):
         """Check if both datetimes have comparable precision levels."""
         # Both must have same precision level for reliable comparison
         self_precision = sum(
-            1
-            for x in [self.month, self.day, self.hour, self.minute, self.second, self.millisecond]
-            if x is not None
+            1 for x in [self.month, self.day, self.hour, self.minute, self.second, self.millisecond] if x is not None
         )
         other_precision = sum(
             1

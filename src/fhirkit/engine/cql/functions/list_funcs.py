@@ -82,11 +82,17 @@ def _flatten(args: list[Any]) -> list[Any]:
 
 
 def _distinct(args: list[Any]) -> list[Any]:
-    """Get distinct values from a list."""
+    """Get distinct values from a list.
+
+    Per CQL spec: Null elements are ignored/removed.
+    """
     if not args or not isinstance(args[0], list):
         return []
     seen = []
     for item in args[0]:
+        # Skip null values per CQL spec
+        if item is None:
+            continue
         if item not in seen:
             seen.append(item)
     return seen

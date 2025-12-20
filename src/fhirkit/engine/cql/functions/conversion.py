@@ -274,14 +274,34 @@ def _truncate(args: list[Any]) -> int | None:
     return None
 
 
-def _round(args: list[Any]) -> float | int | None:
-    """Round to nearest integer or specified precision."""
+def _round(args: list[Any]) -> Decimal | int | None:
+    """Round to nearest integer or specified precision.
+
+    Per CQL tests: Uses "round half toward positive infinity" for .5 cases.
+    - 0.5 -> 1 (up)
+    - -0.5 -> 0 (toward positive infinity)
+    - -1.5 -> -1 (toward positive infinity)
+    """
     if args and args[0] is not None:
         val = args[0]
         precision = int(args[1]) if len(args) > 1 and args[1] is not None else 0
-        # Always convert to float for consistency
-        result = round(float(val), precision)
-        # Return int if precision is 0
+
+        # Use Decimal for precise rounding
+        decimal_val = Decimal(str(val))
+
+        # Custom implementation: round half toward positive infinity
+        # This is equivalent to floor(x + 0.5) for the specified precision
+        shift = Decimal(10) ** precision
+        shifted = decimal_val * shift + Decimal("0.5")
+
+        import math
+        result = Decimal(math.floor(float(shifted))) / shift
+
+        # Quantize to the correct precision
+        quantize_str = "1" if precision == 0 else "1." + "0" * precision
+        result = result.quantize(Decimal(quantize_str))
+
+        # Return int for 0 precision
         if precision == 0:
             return int(result)
         return result
@@ -289,11 +309,17 @@ def _round(args: list[Any]) -> float | int | None:
 
 
 def _ln(args: list[Any]) -> float | None:
-    """Natural logarithm."""
+    """Natural logarithm.
+
+    Per CQL spec: Ln(0) and Ln of negative numbers raise an error.
+    """
     import math
 
-    if args and args[0] is not None and args[0] > 0:
-        return math.log(float(args[0]))
+    if args and args[0] is not None:
+        val = float(args[0])
+        if val <= 0:
+            raise ValueError(f"Ln is undefined for {val}")
+        return math.log(val)
     return None
 
 

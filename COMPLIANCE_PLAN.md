@@ -2,12 +2,12 @@
 
 ## Current Status
 
-**Overall: 1,452 / 2,246 tests passing (64.6%)**
+**Overall: 1,611 / 2,246 tests passing (71.7%)**
 
 | Component | Passed | Failed | Rate |
 |-----------|--------|--------|------|
-| CQL | 981 | 578 | 63% |
-| FHIRPath | 471 | 216 | 69% |
+| CQL | 1,140 | 418 | 73% |
+| FHIRPath | 471 | 217 | 68% |
 
 ---
 

@@ -141,6 +141,7 @@ def normalize_result(result: Any) -> Any:
 def parse_interval_string(s: str) -> tuple[str, str, bool, bool] | None:
     """Parse an interval string like 'Interval [ 1, 10 ]' or 'Interval ( 1, 10 )'."""
     import re
+
     # Pattern: Interval [/( low, high ]/)]
     pattern = r"Interval\s*([\[\(])\s*(.+?)\s*,\s*(.+?)\s*([\]\)])"
     match = re.match(pattern, s.strip())
@@ -223,6 +224,50 @@ def compare_interval_list(actual: Any, expected: str) -> bool:
     return True
 
 
+def parse_cql_list(expected: str) -> list[Any]:
+    """Parse a CQL list literal like {'a', 'b'} or {1, 2, 3}."""
+    import re
+
+    inner = expected.strip()[1:-1].strip()  # Remove { }
+    if not inner:
+        return []
+
+    # Handle string elements (quoted)
+    if "'" in inner:
+        # Find all quoted strings
+        pattern = r"'([^']*)'|\"([^\"]*)\""
+        matches = re.findall(pattern, inner)
+        # Each match is a tuple (single_quoted, double_quoted)
+        return [m[0] if m[0] else m[1] for m in matches]
+
+    # Handle numeric elements
+    elements = [e.strip() for e in inner.split(",")]
+    result = []
+    for elem in elements:
+        try:
+            if "." in elem:
+                result.append(Decimal(elem))
+            else:
+                result.append(int(elem))
+        except ValueError:
+            result.append(elem)
+    return result
+
+
+def compare_cql_list(actual: Any, expected: str) -> bool:
+    """Compare actual result against CQL list format {element, element}."""
+    expected_list = parse_cql_list(expected)
+
+    # Handle actual - should be a list
+    if not isinstance(actual, list):
+        actual = [actual] if actual else []
+
+    if len(actual) != len(expected_list):
+        return False
+
+    return all(compare_results(a, e) for a, e in zip(actual, expected_list))
+
+
 def compare_datetime_strings(actual: str, expected: str) -> bool:
     """Compare datetime strings with precision awareness.
 
@@ -301,9 +346,16 @@ def compare_results(actual: Any, expected: Any) -> bool:
 
     # Handle string comparison
     if isinstance(expected, str):
+        # Handle quoted string literals from CQL tests (e.g., 'abc' should match abc)
+        if expected.startswith("'") and expected.endswith("'"):
+            expected_unquoted = expected[1:-1]
+            return str(actual) == expected_unquoted
         # Handle interval list format: {Interval [...], Interval [...]}
         if expected.startswith("{") and "Interval" in expected:
             return compare_interval_list(actual, expected)
+        # Handle general CQL list format: {'a', 'b'} or {1, 2}
+        if expected.startswith("{") and expected.endswith("}"):
+            return compare_cql_list(actual, expected)
         # Handle single interval format: Interval [...]
         if expected.startswith("Interval"):
             if isinstance(actual, str) and actual.startswith("Interval"):

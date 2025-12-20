@@ -11,15 +11,16 @@ if TYPE_CHECKING:
     from .registry import FunctionRegistry
 
 
-def _concatenate(args: list[Any]) -> str:
+def _concatenate(args: list[Any]) -> str | None:
     """Concatenate strings.
 
-    Null arguments are skipped.
+    Per CQL spec: If any argument is null, the result is null.
     """
     result = ""
     for arg in args:
-        if arg is not None:
-            result += str(arg)
+        if arg is None:
+            return None
+        result += str(arg)
     return result
 
 
@@ -62,13 +63,24 @@ def _ends_with(args: list[Any]) -> bool | None:
 
 
 def _substring(args: list[Any]) -> str | None:
-    """Get substring from start index with optional length."""
+    """Get substring from start index with optional length.
+
+    Per CQL spec:
+    - Negative start index returns null
+    - Start index beyond string length returns null
+    """
     if len(args) >= 2 and args[0] is not None:
         s = str(args[0])
         start = args[1]
         if start is None:
             return None
         start = int(start)
+        # Negative index is invalid in CQL
+        if start < 0:
+            return None
+        # Start beyond string length returns null
+        if start >= len(s):
+            return None
         if len(args) >= 3 and args[2] is not None:
             length = int(args[2])
             return s[start : start + length]
@@ -77,39 +89,50 @@ def _substring(args: list[Any]) -> str | None:
 
 
 def _position_of(args: list[Any]) -> int | None:
-    """Find position of pattern in string."""
+    """Find position of pattern in string.
+
+    Per CQL spec: Returns -1 if pattern is not found.
+    """
     if len(args) >= 2 and args[0] is not None and args[1] is not None:
         pattern = str(args[0])
         s = str(args[1])
-        pos = s.find(pattern)
-        return pos if pos >= 0 else None
+        return s.find(pattern)  # Returns -1 if not found
     return None
 
 
 def _last_position_of(args: list[Any]) -> int | None:
-    """Find last position of pattern in string."""
+    """Find last position of pattern in string.
+
+    Per CQL spec: Returns -1 if pattern is not found.
+    """
     if len(args) >= 2 and args[0] is not None and args[1] is not None:
         pattern = str(args[0])
         s = str(args[1])
-        pos = s.rfind(pattern)
-        return pos if pos >= 0 else None
+        return s.rfind(pattern)  # Returns -1 if not found
     return None
 
 
 def _matches(args: list[Any]) -> bool | None:
-    """Check if string matches regex pattern."""
+    """Check if string matches regex pattern.
+
+    Per CQL spec: The pattern must match the entire string (fullmatch).
+    """
     if len(args) >= 2 and args[0] is not None and args[1] is not None:
         s = str(args[0])
         pattern = str(args[1])
         try:
-            return bool(re.search(pattern, s))
+            return bool(re.fullmatch(pattern, s))
         except re.error:
             return None
     return None
 
 
 def _replace_matches(args: list[Any]) -> str | None:
-    """Replace regex matches in string."""
+    """Replace regex matches in string.
+
+    Per CQL spec: The replacement string follows regex replacement rules
+    where \\$ becomes literal $, etc.
+    """
     if len(args) >= 3 and args[0] is not None:
         s = str(args[0])
         pattern = args[1]
@@ -117,7 +140,14 @@ def _replace_matches(args: list[Any]) -> str | None:
         if pattern is None or replacement is None:
             return None
         try:
-            return re.sub(str(pattern), str(replacement), s)
+            # Process CQL escape sequences in replacement:
+            # \\$ -> $ (literal dollar sign)
+            # \\\ -> \ (literal backslash)
+            repl = str(replacement)
+            # First unescape CQL-style escapes to actual characters
+            repl = repl.replace("\\$", "$")
+            repl = repl.replace("\\\\", "\\")
+            return re.sub(str(pattern), repl, s)
         except re.error:
             return None
     return None
@@ -136,8 +166,13 @@ def _replace(args: list[Any]) -> str | None:
 
 
 def _string_length(args: list[Any]) -> int | None:
-    """Get length of a string."""
-    if args and args[0] is not None:
+    """Get length of a string.
+
+    Per HL7 tests: Length(null) = 0.
+    """
+    if args:
+        if args[0] is None:
+            return 0
         return len(str(args[0]))
     return None
 

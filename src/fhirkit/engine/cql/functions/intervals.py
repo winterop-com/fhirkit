@@ -132,8 +132,9 @@ def _are_adjacent(high: Any, low: Any) -> bool:
     For dates: next day
     For times: next millisecond
     """
-    from datetime import date, datetime, time, timedelta
+    from datetime import date, datetime, timedelta
     from decimal import Decimal
+
     from ...types import FHIRDate, FHIRDateTime, FHIRTime
 
     # Integer adjacency

@@ -21,9 +21,9 @@ make compliance-fhirpath
 
 | Component | Tests | Passed | Failed | Pass Rate |
 |-----------|-------|--------|--------|-----------|
-| **CQL** | 1,558 | 973 | 585 | 62% |
+| **CQL** | 1,558 | 1,140 | 418 | 73% |
 | **FHIRPath** | 688 | 471 | 217 | 68% |
-| **Total** | 2,246 | 1,444 | 802 | 64% |
+| **Total** | 2,246 | 1,611 | 635 | 72% |
 
 ### CQL Compliance by Category
 

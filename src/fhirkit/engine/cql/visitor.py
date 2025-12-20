@@ -668,17 +668,35 @@ class CQLEvaluatorVisitor(cqlVisitor):
     # =========================================================================
 
     def visitEqualityExpression(self, ctx: cqlParser.EqualityExpressionContext) -> bool | None:
-        """Visit equality expression (= or !=)."""
+        """Visit equality expression (=, ~, !=, !~)."""
         left = self.visit(ctx.expression(0))
         right = self.visit(ctx.expression(1))
         op = ctx.getChild(1).getText()
 
+        # Equivalent operator (~) handles nulls specially
+        if op == "~":
+            # null ~ null = true, null ~ x = false, x ~ null = false
+            if left is None and right is None:
+                return True
+            if left is None or right is None:
+                return False
+            return self._equals(left, right)
+        elif op == "!~":
+            # Not equivalent
+            if left is None and right is None:
+                return False  # null ~! null = false
+            if left is None or right is None:
+                return True  # null ~! x = true
+            result = self._equals(left, right)
+            return not result if result is not None else None
+
+        # Equality operator (=) propagates nulls
         if left is None or right is None:
             return None
 
-        if op == "=" or op == "~":
+        if op == "=":
             return self._equals(left, right)
-        elif op == "!=" or op == "!~":
+        elif op == "!=":
             result = self._equals(left, right)
             return not result if result is not None else None
 
@@ -934,19 +952,53 @@ class CQLEvaluatorVisitor(cqlVisitor):
         return value is not None
 
     def visitMembershipExpression(self, ctx: cqlParser.MembershipExpressionContext) -> bool | None:
-        """Visit membership expression (in, contains)."""
+        """Visit membership expression (in, contains).
+
+        Per CQL spec: If the element being tested is null, the result is null
+        (because null = x is always null).
+        """
         left = self.visit(ctx.expression(0))
         right = self.visit(ctx.expression(1))
         op = ctx.getChild(1).getText().lower()
 
         if op == "in":
+            # If element is null, result is null
+            if left is None:
+                return None
             if isinstance(right, list):
-                return left in right
+                # Check if any element in the list equals left
+                # If list contains nulls, result may be null
+                found = False
+                has_null = False
+                for item in right:
+                    if item is None:
+                        has_null = True
+                    elif item == left:
+                        found = True
+                        break
+                if found:
+                    return True
+                # If we didn't find it and there are nulls, result is null
+                return None if has_null else False
             elif isinstance(right, CQLInterval):
                 return right.contains(left)
         elif op == "contains":
+            # If element is null, result is null
+            if right is None:
+                return None
             if isinstance(left, list):
-                return right in left
+                # Same logic as 'in' but reversed
+                found = False
+                has_null = False
+                for item in left:
+                    if item is None:
+                        has_null = True
+                    elif item == right:
+                        found = True
+                        break
+                if found:
+                    return True
+                return None if has_null else False
             elif isinstance(left, CQLInterval):
                 return left.contains(right)
 
@@ -1620,17 +1672,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
             # Extract time component from DateTime
             if isinstance(value, FHIRDateTime):
                 return FHIRTime(
-                    hour=value.hour or 0,
-                    minute=value.minute,
-                    second=value.second,
-                    millisecond=value.millisecond
+                    hour=value.hour or 0, minute=value.minute, second=value.second, millisecond=value.millisecond
                 )
             if isinstance(value, datetime):
                 return FHIRTime(
-                    hour=value.hour,
-                    minute=value.minute,
-                    second=value.second,
-                    millisecond=value.microsecond // 1000
+                    hour=value.hour, minute=value.minute, second=value.second, millisecond=value.microsecond // 1000
                 )
 
         return None
@@ -2170,20 +2216,34 @@ class CQLEvaluatorVisitor(cqlVisitor):
         return left * right  # type: ignore[operator]
 
     def _divide(self, left: Any, right: Any) -> Any:
-        """Divide two values."""
+        """Divide two values.
+
+        Per CQL spec: Division is limited to 8 decimal places.
+        """
         if right == 0:
             return None
         if isinstance(left, Quantity) and isinstance(right, (int, float, Decimal)):
-            return Quantity(value=left.value / Decimal(str(right)), unit=left.unit)
-        if isinstance(left, int) and isinstance(right, int):
-            return Decimal(left) / Decimal(right)
+            result = left.value / Decimal(str(right))
+            # Limit to 8 decimal places
+            result = result.quantize(Decimal("0.00000001"))
+            return Quantity(value=result, unit=left.unit)
+        if isinstance(left, (int, float, Decimal)) and isinstance(right, (int, float, Decimal)):
+            result = Decimal(str(left)) / Decimal(str(right))
+            # Limit to 8 decimal places per CQL spec
+            result = result.quantize(Decimal("0.00000001"))
+            return result
         return left / right
 
     def _truncated_divide(self, left: Any, right: Any) -> int | None:
-        """Truncated division (div)."""
+        """Truncated division (div).
+
+        Per CQL spec: Truncates toward zero (not Python's floor division).
+        """
         if right == 0:
             return None
-        return int(left // right)
+        import math
+        # Use math.trunc for truncation toward zero (not floor)
+        return math.trunc(float(left) / float(right))
 
     def _modulo(self, left: Any, right: Any) -> Any:
         """Modulo operation."""
@@ -2236,11 +2296,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 return False
             return all(self._equals(left_item, right_item) for left_item, right_item in zip(left, right))
 
-        # Handle Quantity
+        # Handle Quantity with unit conversion
         if isinstance(left, Quantity) and isinstance(right, Quantity):
-            if left.unit != right.unit:
+            # Use Quantity's comparison which handles unit conversion
+            try:
+                return left == right
+            except TypeError:
                 return None  # Incompatible units
-            return left.value == right.value
 
         # Handle Interval
         if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
@@ -2504,7 +2566,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 value.hour or 0,
                 value.minute or 0,
                 value.second or 0,
-                (value.millisecond or 0) * 1000
+                (value.millisecond or 0) * 1000,
             )
         if isinstance(value, FHIRDate):
             return datetime(value.year, value.month or 1, value.day or 1)
@@ -2522,6 +2584,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 # Handle leap year: Feb 29 -> Feb 28 if target year is not a leap year
                 if dt.month == 2 and dt.day == 29:
                     import calendar
+
                     if not calendar.isleap(new_year):
                         day = 28
                 return FHIRDate(year=new_year, month=dt.month, day=day)
@@ -2534,6 +2597,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     day = dt.day
                     if day is not None:
                         import calendar
+
                         max_day = calendar.monthrange(year, month)[1]
                         day = min(day, max_day)
                     return FHIRDate(year=year, month=month, day=day)
@@ -2564,12 +2628,18 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 # Handle leap year: Feb 29 -> Feb 28 if target year is not a leap year
                 if dt.month == 2 and dt.day == 29:
                     import calendar
+
                     if not calendar.isleap(new_year):
                         day = 28
                 return FHIRDateTime(
-                    year=new_year, month=dt.month, day=day,
-                    hour=dt.hour, minute=dt.minute, second=dt.second,
-                    millisecond=dt.millisecond, tz_offset=dt.tz_offset
+                    year=new_year,
+                    month=dt.month,
+                    day=day,
+                    hour=dt.hour,
+                    minute=dt.minute,
+                    second=dt.second,
+                    millisecond=dt.millisecond,
+                    tz_offset=dt.tz_offset,
                 )
             elif unit_lower == "month":
                 # Use month=1 as default for year-only dates
@@ -2579,12 +2649,18 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 day = dt.day
                 if day is not None:
                     import calendar
+
                     max_day = calendar.monthrange(year, month)[1]
                     day = min(day, max_day)
                 return FHIRDateTime(
-                    year=year, month=month if has_month else None, day=day,
-                    hour=dt.hour, minute=dt.minute, second=dt.second,
-                    millisecond=dt.millisecond, tz_offset=dt.tz_offset
+                    year=year,
+                    month=month if has_month else None,
+                    day=day,
+                    hour=dt.hour,
+                    minute=dt.minute,
+                    second=dt.second,
+                    millisecond=dt.millisecond,
+                    tz_offset=dt.tz_offset,
                 )
             # For week/day/hour/minute/second, use defaults for missing precision
             # and preserve the original precision level in the result
@@ -2595,7 +2671,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 dt.hour or 0,
                 dt.minute or 0,
                 dt.second or 0,
-                (dt.millisecond or 0) * 1000
+                (dt.millisecond or 0) * 1000,
             )
             result = self._add_to_datetime(temp_dt, value, unit_lower)
             if result:
@@ -2607,7 +2683,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     minute=result.minute if has_minute else None,
                     second=result.second if has_second else None,
                     millisecond=(result.microsecond // 1000) if has_ms else None,
-                    tz_offset=dt.tz_offset
+                    tz_offset=dt.tz_offset,
                 )
             return None
 
