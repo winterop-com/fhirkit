@@ -187,6 +187,14 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
 
         left_val = left[0]
         right_val = right[0]
+        op = ctx.getChild(1).getText()
+
+        # Handle Quantity arithmetic
+        left_is_qty = isinstance(left_val, Quantity)
+        right_is_qty = isinstance(right_val, Quantity)
+
+        if left_is_qty or right_is_qty:
+            return self._quantity_arithmetic(left_val, right_val, op, left_is_qty, right_is_qty)
 
         if not isinstance(left_val, (int, float, Decimal)) or not isinstance(right_val, (int, float, Decimal)):
             return []
@@ -195,7 +203,6 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         left_dec = Decimal(str(left_val))
         right_dec = Decimal(str(right_val))
 
-        op = ctx.getChild(1).getText()
         try:
             if op == "*":
                 return [left_dec * right_dec]
@@ -215,6 +222,72 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
             return []
 
         return []
+
+    def _quantity_arithmetic(
+        self, left_val: Any, right_val: Any, op: str, left_is_qty: bool, right_is_qty: bool
+    ) -> list[Any]:
+        """Handle quantity arithmetic operations."""
+        try:
+            if op == "*":
+                if left_is_qty and right_is_qty:
+                    # Quantity * Quantity: combine units
+                    left_qty: Quantity = left_val
+                    right_qty: Quantity = right_val
+                    # Try to convert right to left's unit for same-dimension quantities
+                    from fhirkit.engine.units import convert_quantity
+
+                    converted = convert_quantity(right_qty.value, right_qty.unit, left_qty.unit)
+                    if converted is not None:
+                        # Same dimension - multiply values and square the unit
+                        new_value = left_qty.value * Decimal(str(converted))
+                        new_unit = left_qty.unit + "2"
+                        return [Quantity(value=new_value, unit=new_unit)]
+                    else:
+                        # Different dimensions - combine units
+                        new_value = left_qty.value * right_qty.value
+                        new_unit = f"{left_qty.unit}.{right_qty.unit}"
+                        return [Quantity(value=new_value, unit=new_unit)]
+                elif left_is_qty:
+                    # Quantity * number
+                    qty: Quantity = left_val
+                    num = Decimal(str(right_val))
+                    return [Quantity(value=qty.value * num, unit=qty.unit)]
+                else:
+                    # number * Quantity
+                    num = Decimal(str(left_val))
+                    qty = right_val
+                    return [Quantity(value=num * qty.value, unit=qty.unit)]
+
+            elif op == "/":
+                if left_is_qty and right_is_qty:
+                    # Quantity / Quantity
+                    left_qty = left_val
+                    right_qty = right_val
+                    if right_qty.value == 0:
+                        return []
+                    if left_qty.unit == right_qty.unit:
+                        # Same unit - result is unitless
+                        return [Quantity(value=left_qty.value / right_qty.value, unit="1")]
+                    else:
+                        # Different units - combine as division
+                        new_value = left_qty.value / right_qty.value
+                        new_unit = f"{left_qty.unit}/{right_qty.unit}"
+                        return [Quantity(value=new_value, unit=new_unit)]
+                elif left_is_qty:
+                    # Quantity / number
+                    qty = left_val
+                    num = Decimal(str(right_val))
+                    if num == 0:
+                        return []
+                    return [Quantity(value=qty.value / num, unit=qty.unit)]
+                else:
+                    # number / Quantity - not typically supported
+                    return []
+
+            # div and mod not supported for quantities
+            return []
+        except (ZeroDivisionError, ArithmeticError):
+            return []
 
     def visitAdditiveExpression(self, ctx: fhirpathParser.AdditiveExpressionContext) -> list[Any]:
         """Visit additive expression (+, -, &)."""
@@ -625,6 +698,7 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         value = Decimal(number) if "." in number else int(number)
 
         unit = ""
+        original_unit = None
         if ctx.unit():
             unit = ctx.unit().getText()
             if unit.startswith("'") and unit.endswith("'"):
@@ -649,9 +723,10 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
                     "milliseconds": "ms",
                 }
                 if unit in calendar_to_ucum:
+                    original_unit = unit  # Preserve original calendar duration name
                     unit = calendar_to_ucum[unit]
 
-        return [Quantity(value=Decimal(str(value)), unit=unit)]
+        return [Quantity(value=Decimal(str(value)), unit=unit, original_unit=original_unit)]
 
     def visitExternalConstant(self, ctx: fhirpathParser.ExternalConstantContext) -> list[Any]:
         """Visit external constant (%name)."""

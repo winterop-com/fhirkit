@@ -36,6 +36,8 @@ class Quantity(BaseModel):
 
     value: Decimal
     unit: str
+    # Original unit name for calendar durations (e.g., "week" instead of "wk")
+    original_unit: str | None = None
 
     def _convert_for_comparison(self, other: "Quantity") -> tuple[Decimal, Decimal] | None:
         """Try to convert both quantities to comparable units."""

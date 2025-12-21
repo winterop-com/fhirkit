@@ -204,6 +204,7 @@ def equivalent(left: Any, right: Any) -> bool:
 
     Empty collections are equivalent to empty collections.
     Comparison is case-insensitive for strings.
+    For quantities, uses precision-based comparison after unit conversion.
     """
     # Handle lists
     if isinstance(left, list):
@@ -221,7 +222,55 @@ def equivalent(left: Any, right: Any) -> bool:
     if isinstance(left, str) and isinstance(right, str):
         return left.lower() == right.lower()
 
+    # Quantity equivalence with precision-based comparison
+    if isinstance(left, Quantity) and isinstance(right, Quantity):
+        return _quantity_equivalent(left, right)
+
     return left == right
+
+
+def _quantity_equivalent(left: Quantity, right: Quantity) -> bool:
+    """Check if two quantities are equivalent using precision-based comparison."""
+    from fhirkit.engine.units import convert_quantity
+
+    # Try to convert right to left's unit
+    converted = convert_quantity(right.value, right.unit, left.unit)
+    if converted is None:
+        # Try the other direction
+        converted_left = convert_quantity(left.value, left.unit, right.unit)
+        if converted_left is None:
+            return False
+        # Compare in right's unit
+        left_val = Decimal(str(converted_left))
+        right_val = right.value
+    else:
+        # Compare in left's unit
+        left_val = left.value
+        right_val = Decimal(str(converted))
+
+    # Get precision of both values (number of decimal places)
+    left_precision = _get_quantity_precision(left.value)
+    right_precision = _get_quantity_precision(right.value)
+
+    # Use the minimum precision (least precise value determines tolerance)
+    min_precision = min(left_precision, right_precision)
+
+    # Calculate tolerance based on precision
+    # For precision 0 (integer), tolerance is 0.5
+    # For precision 1 (1 decimal), tolerance is 0.05
+    tolerance = Decimal("0.5") * (Decimal(10) ** (-min_precision))
+
+    return abs(left_val - right_val) <= tolerance
+
+
+def _get_quantity_precision(value: Decimal) -> int:
+    """Get the precision (number of decimal places) of a Decimal value."""
+    sign, digits, exponent = value.as_tuple()
+    if not isinstance(exponent, int):
+        return 0  # Handle NaN/Infinity
+    if exponent >= 0:
+        return 0
+    return -exponent
 
 
 def compare(left: Any, right: Any) -> int | None:

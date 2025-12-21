@@ -219,10 +219,12 @@ def fn_to_string(ctx: EvaluationContext, collection: list[Any]) -> list[str]:
         return [value]
 
     if isinstance(value, Quantity):
-        # Format: value unit (with unit quoted if not simple)
-        unit = value.unit
         # Format value preserving precision
         val_str = str(value.value)
+        # Use original_unit for calendar durations (e.g., "week" instead of "wk")
+        if value.original_unit:
+            return [f"{val_str} {value.original_unit}"]
+        unit = value.unit
         if unit == "1":
             return [val_str]
         return [f"{val_str} '{unit}'"]
