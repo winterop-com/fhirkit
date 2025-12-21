@@ -109,6 +109,11 @@ class FHIRPathEvaluator:
             return None
         if len(result) == 1:
             val = result[0]
+            # Unwrap _PrimitiveWithExtension if present
+            from .visitor import _PrimitiveWithExtension
+
+            if isinstance(val, _PrimitiveWithExtension):
+                val = val.value
             if isinstance(val, bool):
                 return val
             return True  # Non-empty, non-boolean is truthy

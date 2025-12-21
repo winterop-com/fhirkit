@@ -62,6 +62,8 @@ def fn_trace(ctx: EvaluationContext, collection: list[Any], name: str = "", *arg
 @FunctionRegistry.register("toBoolean")
 def fn_to_boolean(ctx: EvaluationContext, collection: list[Any]) -> list[bool]:
     """Converts the input to a boolean."""
+    from decimal import Decimal
+
     if not collection:
         return []
 
@@ -85,10 +87,10 @@ def fn_to_boolean(ctx: EvaluationContext, collection: list[Any]) -> list[bool]:
             return [False]
         return []
 
-    if isinstance(value, float):
-        if value == 1.0:
+    if isinstance(value, (float, Decimal)):
+        if value == 1 or value == Decimal("1") or value == Decimal("1.0"):
             return [True]
-        if value == 0.0:
+        if value == 0 or value == Decimal("0") or value == Decimal("0.0"):
             return [False]
         return []
 
@@ -194,6 +196,10 @@ def fn_converts_to_decimal(ctx: EvaluationContext, collection: list[Any]) -> lis
 @FunctionRegistry.register("toString")
 def fn_to_string(ctx: EvaluationContext, collection: list[Any]) -> list[str]:
     """Converts the input to a string."""
+    from decimal import Decimal as PyDecimal
+
+    from ...types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
+
     if not collection:
         return []
 
@@ -202,11 +208,33 @@ def fn_to_string(ctx: EvaluationContext, collection: list[Any]) -> list[str]:
     if isinstance(value, bool):
         return ["true" if value else "false"]
 
-    if isinstance(value, (int, float)):
+    if isinstance(value, int):
+        return [str(value)]
+
+    if isinstance(value, (float, PyDecimal)):
+        # Format decimal: FHIRPath requires preserving trailing zeros
         return [str(value)]
 
     if isinstance(value, str):
         return [value]
+
+    if isinstance(value, Quantity):
+        # Format: value unit (with unit quoted if not simple)
+        unit = value.unit
+        # Format value preserving precision
+        val_str = str(value.value)
+        if unit == "1":
+            return [val_str]
+        return [f"{val_str} '{unit}'"]
+
+    if isinstance(value, FHIRDateTime):
+        return [str(value)]
+
+    if isinstance(value, FHIRDate):
+        return [str(value)]
+
+    if isinstance(value, FHIRTime):
+        return [str(value)]
 
     return []
 

@@ -631,11 +631,10 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
                 unit = unit[1:-1]
             else:
                 # Convert calendar duration units to UCUM equivalents
+                # Note: year/month are NOT converted because they have variable lengths
+                # (calendar months/years differ from UCUM mo/a which are fixed averages)
+                # Only exact-duration units are converted:
                 calendar_to_ucum = {
-                    "year": "a",
-                    "years": "a",
-                    "month": "mo",
-                    "months": "mo",
                     "week": "wk",
                     "weeks": "wk",
                     "day": "d",
@@ -1062,7 +1061,8 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
 
             if condition is True and true_ctx:
                 return sub_visitor.visit(true_ctx) or []
-            elif condition is False and otherwise_ctx:
+            elif otherwise_ctx:
+                # Per FHIRPath spec: if criterion is empty (None) or False, return otherwise
                 return sub_visitor.visit(otherwise_ctx) or []
             return []
 
@@ -1078,7 +1078,8 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
                 if condition is True and true_ctx:
                     result = sub_visitor.visit(true_ctx)
                     return result if isinstance(result, list) else [result] if result is not None else []
-                elif condition is False and otherwise_ctx:
+                elif otherwise_ctx:
+                    # Per FHIRPath spec: if criterion is empty (None) or False, return otherwise
                     result = sub_visitor.visit(otherwise_ctx)
                     return result if isinstance(result, list) else [result] if result is not None else []
                 return []

@@ -590,8 +590,10 @@ class TestTypeConversion:
         assert result == [42]
 
     def test_to_decimal(self, evaluator):
+        from decimal import Decimal
+
         result = evaluator.evaluate("'3.14'.toDecimal()", None)
-        assert result == [3.14]
+        assert result == [Decimal("3.14")]
 
     def test_to_boolean(self, evaluator):
         result = evaluator.evaluate("'true'.toBoolean()", None)
@@ -1193,8 +1195,9 @@ class TestTypeConversions:
         assert result == []
 
     def test_to_integer_from_string_decimal(self, evaluator):
+        # Per FHIRPath spec, strings with decimal points should NOT convert to integer
         result = evaluator.evaluate("'5.0'.toInteger()", None)
-        assert result == [5]
+        assert result == []
 
     def test_to_integer_from_string_not_whole(self, evaluator):
         result = evaluator.evaluate("'5.5'.toInteger()", None)
@@ -1221,12 +1224,16 @@ class TestTypeConversions:
         assert result == [0.0]
 
     def test_to_decimal_from_int(self, evaluator):
+        from decimal import Decimal
+
         result = evaluator.evaluate("(42).toDecimal()", None)
-        assert result == [42.0]
+        assert result == [Decimal("42")]
 
     def test_to_decimal_from_string(self, evaluator):
+        from decimal import Decimal
+
         result = evaluator.evaluate("'3.14'.toDecimal()", None)
-        assert result == [3.14]
+        assert result == [Decimal("3.14")]
 
     def test_to_decimal_invalid_string(self, evaluator):
         result = evaluator.evaluate("'abc'.toDecimal()", None)
@@ -1330,7 +1337,8 @@ class TestTypeConversions:
         assert result[0].value == Decimal("42")
 
     def test_to_quantity_from_string(self, evaluator):
-        result = evaluator.evaluate("'10 kg'.toQuantity()", None)
+        # Per FHIRPath spec, UCUM units in strings need quotes
+        result = evaluator.evaluate("\"10 'kg'\".toQuantity()", None)
         assert len(result) == 1
         assert result[0].value == Decimal("10")
         assert result[0].unit == "kg"

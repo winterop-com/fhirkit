@@ -132,6 +132,13 @@ def _equals_single(left: Any, right: Any) -> bool | None:
         if left.tz_offset is not None and right.tz_offset is not None:
             return left._to_utc_tuple() == right._to_utc_tuple()
 
+    # Special handling for Quantity - incompatible units return None (incomparable)
+    if isinstance(left, Quantity) and isinstance(right, Quantity):
+        result = left._convert_for_comparison(right)
+        if result is None:
+            return None  # Incomparable units
+        return result[0] == result[1]
+
     return left == right
 
 

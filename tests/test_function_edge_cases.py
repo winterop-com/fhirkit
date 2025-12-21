@@ -274,9 +274,12 @@ class TestBooleanFunctionsEdgeCases:
         assert fn_to_integer(ctx, [3.5]) == []
 
     def test_to_integer_string_with_decimal(self) -> None:
-        """Test toInteger with string containing decimal."""
+        """Test toInteger with string containing decimal.
+
+        Per FHIRPath spec, strings with decimal points don't convert to integers.
+        """
         ctx = EvaluationContext()
-        assert fn_to_integer(ctx, ["5.0"]) == [5]
+        assert fn_to_integer(ctx, ["5.0"]) == []  # Has decimal point, so no conversion
         assert fn_to_integer(ctx, ["5.5"]) == []
 
     def test_to_integer_invalid_string(self) -> None:
@@ -344,9 +347,9 @@ class TestBooleanFunctionsEdgeCases:
         assert result[0].value == Decimal(10)
 
     def test_to_quantity_string(self) -> None:
-        """Test toQuantity with string."""
+        """Test toQuantity with string. Per FHIRPath spec, UCUM units need quotes."""
         ctx = EvaluationContext()
-        result = fn_to_quantity(ctx, ["10 mg"])
+        result = fn_to_quantity(ctx, ["10 'mg'"])
         assert len(result) == 1
         assert result[0].value == Decimal("10")
         assert result[0].unit == "mg"
@@ -384,5 +387,5 @@ class TestBooleanFunctionsEdgeCases:
         assert fn_converts_to_time(ctx, ["10:30:00"]) == [True]
         assert fn_converts_to_time(ctx, ["invalid"]) == [False]
 
-        assert fn_converts_to_quantity(ctx, ["10 mg"]) == [True]
+        assert fn_converts_to_quantity(ctx, ["10 'mg'"]) == [True]
         assert fn_converts_to_quantity(ctx, ["invalid"]) == [False]

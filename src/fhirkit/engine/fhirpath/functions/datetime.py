@@ -65,9 +65,14 @@ def fn_time_of_day(ctx: EvaluationContext, collection: list[Any]) -> list[FHIRTi
 
 def _extract_date_value(collection: list[Any]) -> FHIRDate | FHIRDateTime | None:
     """Extract a date or datetime value from a collection."""
+    from ..visitor import _PrimitiveWithExtension
+
     if not collection:
         return None
     value = collection[0]
+    # Unwrap _PrimitiveWithExtension if present
+    if isinstance(value, _PrimitiveWithExtension):
+        value = value.value
     if isinstance(value, (FHIRDate, FHIRDateTime)):
         return value
     # Try to parse string values
@@ -83,9 +88,14 @@ def _extract_date_value(collection: list[Any]) -> FHIRDate | FHIRDateTime | None
 
 def _extract_time_value(collection: list[Any]) -> FHIRTime | FHIRDateTime | None:
     """Extract a time or datetime value from a collection."""
+    from ..visitor import _PrimitiveWithExtension
+
     if not collection:
         return None
     value = collection[0]
+    # Unwrap _PrimitiveWithExtension if present
+    if isinstance(value, _PrimitiveWithExtension):
+        value = value.value
     if isinstance(value, (FHIRTime, FHIRDateTime)):
         return value
     # Try to parse string values

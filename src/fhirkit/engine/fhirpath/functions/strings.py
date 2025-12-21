@@ -89,9 +89,15 @@ def fn_matches_full(ctx: EvaluationContext, collection: list[Any], pattern: str 
 
 
 @FunctionRegistry.register("replace")
-def fn_replace(ctx: EvaluationContext, collection: list[Any], pattern: str, substitution: str) -> list[str]:
-    """Replaces all occurrences of pattern with substitution (simple string replacement)."""
+def fn_replace(ctx: EvaluationContext, collection: list[Any], pattern: str | None, substitution: str | None) -> list[str]:
+    """Replaces all occurrences of pattern with substitution (simple string replacement).
+
+    Per FHIRPath spec: if pattern or substitution is empty, returns empty.
+    """
     if not collection:
+        return []
+    # If pattern or substitution is None/empty, return empty
+    if pattern is None or substitution is None:
         return []
     value = _unwrap_value(collection[0])
     if not isinstance(value, str):
@@ -134,17 +140,28 @@ def fn_length(ctx: EvaluationContext, collection: list[Any]) -> list[int]:
 
 @FunctionRegistry.register("substring")
 def fn_substring(ctx: EvaluationContext, collection: list[Any], start: int, length: int | None = None) -> list[str]:
-    """Returns a substring starting at start index."""
+    """Returns a substring starting at start index.
+
+    Per FHIRPath spec:
+    - If start >= length of string, returns empty
+    - If start < 0, it's treated as 0
+    - If start + length goes past end of string, only returns what's there
+    """
     if not collection:
         return []
     value = _unwrap_value(collection[0])
     if not isinstance(value, str):
         return []
     start = int(start)
+    # If start is negative or beyond the string length, return empty
+    if start < 0 or start >= len(value):
+        return []
     if length is not None:
         length = int(length)
-        return [value[start : start + length]]
-    return [value[start:]]
+        result = value[start : start + length]
+    else:
+        result = value[start:]
+    return [result]
 
 
 @FunctionRegistry.register("upper")
@@ -201,9 +218,15 @@ def fn_join(ctx: EvaluationContext, collection: list[Any], separator: str = "") 
 
 
 @FunctionRegistry.register("indexOf")
-def fn_index_of(ctx: EvaluationContext, collection: list[Any], substring: str) -> list[int]:
-    """Returns the index of substring, or -1 if not found."""
+def fn_index_of(ctx: EvaluationContext, collection: list[Any], substring: str | None) -> list[int]:
+    """Returns the index of substring, or -1 if not found.
+
+    Per FHIRPath spec: if substring is empty, returns empty.
+    """
     if not collection:
+        return []
+    # If substring is None/empty, return empty
+    if substring is None:
         return []
     value = _unwrap_value(collection[0])
     if not isinstance(value, str):
