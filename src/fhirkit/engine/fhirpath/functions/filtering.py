@@ -130,9 +130,10 @@ def _is_type(item: Any, type_name: str) -> bool:
 
     # Handle FHIR string-based element types (subtypes of string)
     if type_name in ("code", "id", "uri", "url", "canonical", "oid", "uuid", "markdown", "xhtml", "base64Binary"):
-        # These are NOT equivalent to each other - a code is not an id
-        # Without type metadata, we can't distinguish them from plain strings
-        # Return False for specific subtypes to avoid false positives
+        # Without FHIR schema metadata, we cannot definitively determine which
+        # specific string subtype a value is. These types are all subtypes of
+        # string, but we cannot distinguish between them at runtime.
+        # Return False - tests requiring this need schema integration.
         return False
 
     # Handle FHIR numeric element types (subtypes of Integer)
