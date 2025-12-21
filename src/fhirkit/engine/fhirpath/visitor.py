@@ -20,6 +20,59 @@ from ..functions import FunctionRegistry  # noqa: E402
 from ..types import FHIRDate, FHIRDateTime, FHIRTime, Quantity  # noqa: E402
 
 
+class _PrimitiveWithExtension:
+    """Wrapper for FHIR primitive values that have extensions.
+
+    In FHIR JSON, primitive values with extensions are represented as:
+        {"birthDate": "1974-12-25", "_birthDate": {"extension": [...]}}
+
+    This wrapper keeps the primitive value and extension data together
+    so that the extension() function can access the extensions.
+    """
+
+    __slots__ = ("value", "extension_data")
+
+    def __init__(self, value: Any, extension_data: dict[str, Any]):
+        self.value = value
+        self.extension_data = extension_data
+
+    def __eq__(self, other: Any) -> bool:
+        """For comparison, use the underlying value."""
+        if isinstance(other, _PrimitiveWithExtension):
+            return self.value == other.value
+        return self.value == other
+
+    def __hash__(self) -> int:
+        """For hashing, use the underlying value."""
+        return hash(self.value)
+
+    def __repr__(self) -> str:
+        return f"_PrimitiveWithExtension({self.value!r})"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, _PrimitiveWithExtension):
+            return self.value < other.value
+        return self.value < other
+
+    def __le__(self, other: Any) -> bool:
+        if isinstance(other, _PrimitiveWithExtension):
+            return self.value <= other.value
+        return self.value <= other
+
+    def __gt__(self, other: Any) -> bool:
+        if isinstance(other, _PrimitiveWithExtension):
+            return self.value > other.value
+        return self.value > other
+
+    def __ge__(self, other: Any) -> bool:
+        if isinstance(other, _PrimitiveWithExtension):
+            return self.value >= other.value
+        return self.value >= other
+
+
 class FHIRPathEvaluatorVisitor(fhirpathVisitor):
     """
     Visitor that evaluates FHIRPath expressions.
@@ -612,7 +665,7 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
 
     def _evaluate_member(self, collection: list[Any], member_name: str) -> list[Any]:
         """Navigate to a member on each item in the collection."""
-        result = []
+        result: list[Any] = []
         for item in collection:
             if isinstance(item, dict):
                 # Check if member_name matches resourceType (type filter)
@@ -625,10 +678,27 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
                 # Standard property access
                 value = item.get(member_name)
                 if value is not None:
+                    # Check for primitive extension in _memberName
+                    underscore_key = f"_{member_name}"
+                    extension_data = item.get(underscore_key)
+
                     if isinstance(value, list):
-                        result.extend(value)
+                        # Handle list of primitives with extensions
+                        if extension_data and isinstance(extension_data, list):
+                            for i, v in enumerate(value):
+                                if i < len(extension_data) and extension_data[i]:
+                                    # Wrap primitive with extension data
+                                    result.append(_PrimitiveWithExtension(v, extension_data[i]))
+                                else:
+                                    result.append(v)
+                        else:
+                            result.extend(value)
                     else:
-                        result.append(value)
+                        if extension_data and isinstance(extension_data, dict):
+                            # Wrap single primitive with extension data
+                            result.append(_PrimitiveWithExtension(value, extension_data))
+                        else:
+                            result.append(value)
                 else:
                     # Handle polymorphic/choice types (e.g., value -> valueQuantity, valueString, etc.)
                     # In FHIR, a choice type like value[x] can be valueQuantity, valueString, etc.

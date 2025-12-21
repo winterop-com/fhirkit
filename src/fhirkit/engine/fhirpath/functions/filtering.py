@@ -46,41 +46,92 @@ def fn_repeat(ctx: EvaluationContext, collection: list[Any], *args: Any) -> list
 
 
 def _is_type(item: Any, type_name: str) -> bool:
-    """Check if an item is of the specified FHIRPath type."""
+    """Check if an item is of the specified FHIRPath type.
+
+    FHIRPath distinguishes between FHIR types and System types:
+    - FHIR types: lowercase (boolean, integer, string, etc.)
+    - System types: PascalCase (Boolean, Integer, String, etc.)
+
+    These are NOT equivalent:
+    - Patient.active.is(boolean) = true (FHIR boolean)
+    - Patient.active.is(Boolean) = false (System Boolean)
+    """
     from decimal import Decimal as PyDecimal
 
     from ...types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
 
-    # Strip System. or FHIR. prefix if present
+    # Parse namespace prefix
+    namespace = None
     if type_name.startswith("System."):
+        namespace = "System"
         type_name = type_name[7:]
     elif type_name.startswith("FHIR."):
+        namespace = "FHIR"
         type_name = type_name[5:]
 
-    # Handle FHIRPath system types
+    # Get the actual type info of the item
+    item_namespace, item_type = _get_type_info(item)
+
+    # Handle FHIRPath System types (PascalCase)
     if type_name == "DateTime":
         return isinstance(item, FHIRDateTime)
     elif type_name == "Date":
         return isinstance(item, FHIRDate)
     elif type_name == "Time":
         return isinstance(item, FHIRTime)
-    elif type_name in ("String", "string"):
-        # String covers all string-based types in FHIR (code, id, uri, etc.)
-        return isinstance(item, str)
     elif type_name == "Boolean":
-        return isinstance(item, bool)
+        # System.Boolean - only match if explicitly System namespace or no FHIR values
+        if namespace == "FHIR":
+            return False  # FHIR.Boolean is not a valid type
+        if namespace == "System":
+            return False  # FHIR boolean is not System.Boolean
+        # No namespace - check if it's a System type (should not match FHIR boolean)
+        return False  # Don't match FHIR booleans with System.Boolean
     elif type_name == "Integer":
-        # Integer covers all integer types (positiveInt, unsignedInt, integer64)
-        return isinstance(item, int) and not isinstance(item, bool)
+        if namespace == "FHIR":
+            return False
+        if namespace == "System":
+            return False
+        return False
     elif type_name == "Decimal":
-        return isinstance(item, (float, PyDecimal)) and not isinstance(item, bool)
+        if namespace == "FHIR":
+            return False
+        if namespace == "System":
+            return False
+        return False
+    elif type_name == "String":
+        if namespace == "FHIR":
+            return False
+        if namespace == "System":
+            return False
+        return False
     elif type_name == "Quantity":
         return isinstance(item, (Quantity, dict)) and (not isinstance(item, dict) or "value" in item)
 
-    # Handle FHIR string-based element types (subtypes of String)
-    # These are all represented as strings in JSON but have FHIR-specific type names
-    if type_name in ("code", "id", "uri", "url", "canonical", "oid", "uuid", "markdown", "xhtml", "base64Binary"):
+    # Handle FHIR primitive types (lowercase)
+    if type_name == "boolean":
+        if namespace == "System":
+            return False  # System.boolean is not valid
+        return isinstance(item, bool)
+    elif type_name == "integer":
+        if namespace == "System":
+            return False
+        return isinstance(item, int) and not isinstance(item, bool)
+    elif type_name == "decimal":
+        if namespace == "System":
+            return False
+        return isinstance(item, (float, PyDecimal)) and not isinstance(item, bool)
+    elif type_name == "string":
+        if namespace == "System":
+            return False
         return isinstance(item, str)
+
+    # Handle FHIR string-based element types (subtypes of string)
+    if type_name in ("code", "id", "uri", "url", "canonical", "oid", "uuid", "markdown", "xhtml", "base64Binary"):
+        # These are NOT equivalent to each other - a code is not an id
+        # Without type metadata, we can't distinguish them from plain strings
+        # Return False for specific subtypes to avoid false positives
+        return False
 
     # Handle FHIR numeric element types (subtypes of Integer)
     if type_name == "positiveInt":
@@ -92,7 +143,6 @@ def _is_type(item: Any, type_name: str) -> bool:
 
     # Handle "Element" - base type for all FHIR elements
     if type_name == "Element":
-        # Everything in FHIR is an Element
         return True
 
     # Handle "Resource" - base type for all resources
@@ -123,31 +173,49 @@ def _is_type(item: Any, type_name: str) -> bool:
     return False
 
 
-def _get_type_name(item: Any) -> str:
-    """Get the FHIRPath type name of an item."""
+def _get_type_info(item: Any) -> tuple[str, str]:
+    """Get the FHIRPath type info (namespace, name) for an item.
+
+    Returns a tuple of (namespace, type_name).
+    For FHIR elements, returns FHIR namespace with lowercase type names.
+    For FHIRPath system types, returns System namespace with PascalCase names.
+    """
     from decimal import Decimal as PyDecimal
 
     from ...types import FHIRDate, FHIRDateTime, FHIRTime, Quantity
 
     if isinstance(item, FHIRDateTime):
-        return "DateTime"
+        return ("System", "DateTime")
     elif isinstance(item, FHIRDate):
-        return "Date"
+        return ("System", "Date")
     elif isinstance(item, FHIRTime):
-        return "Time"
+        return ("System", "Time")
     elif isinstance(item, bool):
-        return "Boolean"
+        # FHIR boolean elements - use FHIR namespace
+        return ("FHIR", "boolean")
     elif isinstance(item, int):
-        return "Integer"
+        # FHIR integer elements - use FHIR namespace
+        return ("FHIR", "integer")
     elif isinstance(item, (float, PyDecimal)):
-        return "Decimal"
+        # FHIR decimal elements - use FHIR namespace
+        return ("FHIR", "decimal")
     elif isinstance(item, str):
-        return "String"
+        # FHIR string elements - use FHIR namespace
+        return ("FHIR", "string")
     elif isinstance(item, Quantity):
-        return "Quantity"
+        return ("System", "Quantity")
     elif isinstance(item, dict):
-        return item.get("resourceType", "Element")
-    return "Unknown"
+        resource_type = item.get("resourceType")
+        if resource_type:
+            return ("FHIR", resource_type)
+        return ("FHIR", "Element")
+    return ("System", "Any")
+
+
+def _get_type_name(item: Any) -> str:
+    """Get the FHIRPath type name of an item (for backwards compatibility)."""
+    _, name = _get_type_info(item)
+    return name
 
 
 @FunctionRegistry.register("type")
@@ -160,9 +228,9 @@ def fn_type(ctx: EvaluationContext, collection: list[Any]) -> list[dict[str, str
     if not collection:
         return []
     item = collection[0]
-    type_name = _get_type_name(item)
+    namespace, type_name = _get_type_info(item)
     # Return as a type specifier structure
-    return [{"namespace": "System", "name": type_name}]
+    return [{"namespace": namespace, "name": type_name}]
 
 
 @FunctionRegistry.register("is")

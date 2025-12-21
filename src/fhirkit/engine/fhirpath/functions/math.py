@@ -134,46 +134,63 @@ def _get_decimal_precision(value: Decimal) -> int:
 
 def _decimal_low_boundary(value: Decimal, input_precision: int, output_precision: int | None = None) -> Decimal | None:
     """Calculate the low boundary for a decimal value."""
+    from decimal import ROUND_FLOOR, InvalidOperation
+
     # Default output precision is 8 per FHIRPath spec
     if output_precision is None:
         output_precision = 8
     elif output_precision < 0:
         return None  # Negative precision returns empty
 
-    # The uncertainty is half the smallest increment at the input precision
-    increment = Decimal(10) ** (-input_precision)
-    half_increment = increment / 2
+    # If precision is too high for the system, return None (empty)
+    # Python's Decimal has default precision of 28 digits
+    if output_precision > 28:
+        return None
 
-    # Low boundary is value minus half increment
-    low = value - half_increment
+    try:
+        # The uncertainty is half the smallest increment at the input precision
+        increment = Decimal(10) ** (-input_precision)
+        half_increment = increment / 2
 
-    # Format to output precision - use ROUND_FLOOR for low boundary (towards -infinity)
-    from decimal import ROUND_FLOOR
+        # Low boundary is value minus half increment
+        low = value - half_increment
 
-    quantizer = Decimal(10) ** (-output_precision)
-    return low.quantize(quantizer, rounding=ROUND_FLOOR)
+        # Format to output precision - use ROUND_FLOOR for low boundary (towards -infinity)
+        quantizer = Decimal(10) ** (-output_precision)
+        return low.quantize(quantizer, rounding=ROUND_FLOOR)
+    except InvalidOperation:
+        # Precision overflow - return empty
+        return None
 
 
 def _decimal_high_boundary(value: Decimal, input_precision: int, output_precision: int | None = None) -> Decimal | None:
     """Calculate the high boundary for a decimal value."""
+    from decimal import ROUND_CEILING, InvalidOperation
+
     # Default output precision is 8 per FHIRPath spec
     if output_precision is None:
         output_precision = 8
     elif output_precision < 0:
         return None  # Negative precision returns empty
 
-    # The uncertainty is half the smallest increment at the input precision
-    increment = Decimal(10) ** (-input_precision)
-    half_increment = increment / 2
+    # If precision is too high for the system, return None (empty)
+    if output_precision > 28:
+        return None
 
-    # High boundary is value plus half increment
-    high = value + half_increment
+    try:
+        # The uncertainty is half the smallest increment at the input precision
+        increment = Decimal(10) ** (-input_precision)
+        half_increment = increment / 2
 
-    # Round up to output precision - use ROUND_CEILING for high boundary (towards +infinity)
-    from decimal import ROUND_CEILING
+        # High boundary is value plus half increment
+        high = value + half_increment
 
-    quantizer = Decimal(10) ** (-output_precision)
-    return high.quantize(quantizer, rounding=ROUND_CEILING)
+        # Round up to output precision - use ROUND_CEILING for high boundary (towards +infinity)
+        quantizer = Decimal(10) ** (-output_precision)
+        return high.quantize(quantizer, rounding=ROUND_CEILING)
+    except InvalidOperation:
+        # Precision overflow - return empty
+        return None
 
 
 @FunctionRegistry.register("lowBoundary")

@@ -1,5 +1,6 @@
 """Boolean and logic functions."""
 
+from decimal import Decimal
 from typing import Any
 
 from ...context import EvaluationContext
@@ -152,28 +153,34 @@ def fn_converts_to_integer(ctx: EvaluationContext, collection: list[Any]) -> lis
 
 
 @FunctionRegistry.register("toDecimal")
-def fn_to_decimal(ctx: EvaluationContext, collection: list[Any]) -> list[float]:
-    """Converts the input to a decimal."""
-    from decimal import Decimal
+def fn_to_decimal(ctx: EvaluationContext, collection: list[Any]) -> list[Decimal]:
+    """Converts the input to a decimal.
 
+    Returns Decimal to preserve precision for lowBoundary/highBoundary.
+    """
     if not collection:
         return []
 
     value = collection[0]
 
     if isinstance(value, bool):
-        return [1.0 if value else 0.0]
+        return [Decimal(1 if value else 0)]
 
     if isinstance(value, Decimal):
-        return [float(value)]
+        return [value]
 
-    if isinstance(value, (int, float)):
-        return [float(value)]
+    if isinstance(value, int):
+        # Preserve integer precision (no decimal places)
+        return [Decimal(value)]
+
+    if isinstance(value, float):
+        # Convert float, keeping its precision
+        return [Decimal(str(value))]
 
     if isinstance(value, str):
         try:
-            return [float(value)]
-        except ValueError:
+            return [Decimal(value)]
+        except (ValueError, ArithmeticError):
             return []
 
     return []

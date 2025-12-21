@@ -82,6 +82,14 @@ def fn_any_false(ctx: EvaluationContext, collection: list[Any]) -> list[bool]:
 @FunctionRegistry.register("hasValue")
 def fn_has_value(ctx: EvaluationContext, collection: list[Any]) -> list[bool]:
     """Returns true if the input has a value (is not empty and not null)."""
+    # Import here to avoid circular imports
+    from ..visitor import _PrimitiveWithExtension
+
     if not collection:
         return [False]
-    return [collection[0] is not None]
+
+    item = collection[0]
+    # Handle primitives with extensions - check the underlying value
+    if isinstance(item, _PrimitiveWithExtension):
+        return [item.value is not None]
+    return [item is not None]

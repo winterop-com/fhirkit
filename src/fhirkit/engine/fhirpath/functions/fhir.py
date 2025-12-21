@@ -42,10 +42,30 @@ def fn_extension(ctx: EvaluationContext, collection: list[Any], url: str) -> lis
 
     Looks for extensions in the 'extension' property of each element
     and filters by the 'url' property.
+
+    For primitives with extensions (wrapped in _PrimitiveWithExtension),
+    looks in the extension_data.
     """
+    # Import here to avoid circular imports
+    from ..visitor import _PrimitiveWithExtension
+
     result = []
     for item in collection:
-        if isinstance(item, dict):
+        # Handle primitives with extensions
+        if isinstance(item, _PrimitiveWithExtension):
+            ext_data = item.extension_data
+            if isinstance(ext_data, dict):
+                extensions = ext_data.get("extension", [])
+                if isinstance(extensions, dict):
+                    # Single extension object
+                    if extensions.get("url") == url or extensions.get("_url") == url:
+                        result.append(extensions)
+                elif isinstance(extensions, list):
+                    for ext in extensions:
+                        if isinstance(ext, dict):
+                            if ext.get("url") == url or ext.get("_url") == url:
+                                result.append(ext)
+        elif isinstance(item, dict):
             extensions = item.get("extension", [])
             if isinstance(extensions, list):
                 for ext in extensions:

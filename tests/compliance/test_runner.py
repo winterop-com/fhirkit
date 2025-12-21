@@ -470,6 +470,29 @@ def load_fhir_input_file(data_dir: Path, filename: str) -> dict[str, Any] | None
     return None
 
 
+def _convert_fhir_value(value: str, tag: str = "") -> Any:
+    """Convert a FHIR string value to the appropriate Python type."""
+    # Boolean conversion
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+
+    # Check if it looks like a number (but not if it's an id or code-like value)
+    # Only convert obvious decimal values, not ids that happen to be numeric
+    if tag not in ("id", "code", "system", "url", "reference", "version"):
+        try:
+            # Try integer first
+            if "." not in value and "e" not in value.lower():
+                return int(value)
+            # Try decimal
+            return float(value)
+        except ValueError:
+            pass
+
+    return value
+
+
 def _parse_fhir_xml(xml_path: Path) -> dict[str, Any]:
     """Parse FHIR XML to a simplified dict structure."""
     # This is a simplified parser - for full compliance would need proper FHIR XML parsing
@@ -479,21 +502,23 @@ def _parse_fhir_xml(xml_path: Path) -> dict[str, Any]:
     # Remove namespace prefix for simpler handling
     ns = root.tag.split("}")[0] + "}" if "}" in root.tag else ""
 
-    def parse_element(elem: ET.Element) -> Any:
+    def parse_element(elem: ET.Element, tag_name: str = "") -> Any:
         """Recursively parse an XML element."""
         result: dict[str, Any] = {}
+        primitive_value = None
 
         # Get attributes (value, id, etc.)
         for attr, value in elem.attrib.items():
             if attr == "value":
-                return value  # Simple value element
-            result[f"_{attr}"] = value
+                primitive_value = _convert_fhir_value(value, tag_name)
+            else:
+                result[f"_{attr}"] = value
 
         # Get child elements
         children: dict[str, list[Any]] = {}
         for child in elem:
             tag = child.tag.replace(ns, "")
-            parsed = parse_element(child)
+            parsed = parse_element(child, tag)
             if tag in children:
                 children[tag].append(parsed)
             else:
@@ -513,13 +538,56 @@ def _parse_fhir_xml(xml_path: Path) -> dict[str, Any]:
             else:
                 return elem.text.strip()
 
+        # If we have a primitive value and no children, return just the value
+        if primitive_value is not None and not children:
+            return primitive_value
+
+        # If we have a primitive value AND children (like extension), create proper structure
+        if primitive_value is not None and children:
+            # The value goes in the parent, extensions go in _elementName
+            result["_value"] = primitive_value
+            return result
+
         return result if result else None
 
     resource_type = root.tag.replace(ns, "")
-    result = parse_element(root)
+    result = parse_element(root, resource_type)
     if isinstance(result, dict):
         result["resourceType"] = resource_type
+
+        # Post-process to handle primitive extensions
+        # Elements with _value need to be restructured
+        _restructure_primitive_extensions(result)
+
     return result or {"resourceType": resource_type}
+
+
+def _restructure_primitive_extensions(obj: dict[str, Any]) -> None:
+    """Restructure primitive extensions from XML format to JSON format.
+
+    In XML: <birthDate value="1974-12-25"><extension>...</extension></birthDate>
+    In JSON: {"birthDate": "1974-12-25", "_birthDate": {"extension": [...]}}
+    """
+    keys_to_process = list(obj.keys())
+    for key in keys_to_process:
+        if key.startswith("_"):
+            continue
+        value = obj[key]
+        if isinstance(value, dict):
+            if "_value" in value:
+                # This is a primitive with extensions
+                primitive_val = value.pop("_value")
+                # Keep any other attributes (extension, id, etc.) in _key
+                if value:  # If there are remaining properties
+                    obj[f"_{key}"] = value
+                obj[key] = primitive_val
+            else:
+                # Recurse into nested objects
+                _restructure_primitive_extensions(value)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    _restructure_primitive_extensions(item)
 
 
 def get_test_statistics(suites: list[TestSuite]) -> dict[str, Any]:
