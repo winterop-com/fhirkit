@@ -533,6 +533,8 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         """Visit type expression (is, as)."""
         left = self.visit(ctx.expression())
         type_spec = ctx.typeSpecifier().getText()
+        # Strip backticks from delimited identifiers (e.g., FHIR.`Patient` -> FHIR.Patient)
+        type_spec = type_spec.replace("`", "")
 
         op = ctx.getChild(1).getText()
 
@@ -799,6 +801,8 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         if func_name in self._TYPE_ARG_FUNCTIONS and args:
             # Extract the type name as a string instead of evaluating it
             type_name = args[0].getText()
+            # Strip backticks from delimited identifiers
+            type_name = type_name.replace("`", "")
             return FunctionRegistry.call(func_name, self.ctx, input_collection, type_name)
 
         # Check if function needs full collection arguments
