@@ -346,21 +346,31 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         self, date_val: FHIRDate | FHIRDateTime, quantity: Quantity, op: str
     ) -> FHIRDate | FHIRDateTime | None:
         """Add or subtract a duration from a date/datetime."""
-        unit = quantity.unit.lower().rstrip("s")  # Normalize: years -> year
+        unit = quantity.unit.lower()
         amount = int(quantity.value)
         if op == "-":
             amount = -amount
 
-        # Map common duration units
+        # Map common duration units (both UCUM codes and calendar duration names)
         unit_map = {
+            # Calendar duration names (singular and plural)
             "year": "year",
+            "years": "year",
             "month": "month",
+            "months": "month",
             "day": "day",
+            "days": "day",
             "week": "week",
+            "weeks": "week",
             "hour": "hour",
+            "hours": "hour",
             "minute": "minute",
+            "minutes": "minute",
             "second": "second",
+            "seconds": "second",
             "millisecond": "millisecond",
+            "milliseconds": "millisecond",
+            # UCUM codes
             "a": "year",
             "mo": "month",
             "d": "day",

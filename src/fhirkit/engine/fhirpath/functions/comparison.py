@@ -205,12 +205,37 @@ def equivalent(left: Any, right: Any) -> bool:
     Empty collections are equivalent to empty collections.
     Comparison is case-insensitive for strings.
     For quantities, uses precision-based comparison after unit conversion.
+    For collections, order does not matter (set-based comparison).
     """
-    # Handle lists
+    # Handle lists - compare as sets (order doesn't matter)
+    if isinstance(left, list) and isinstance(right, list):
+        if len(left) != len(right):
+            return False
+        if not left and not right:
+            return True  # Both empty
+        # For each element in left, find a matching element in right
+        # This is O(n^2) but collections are typically small
+        right_matched = [False] * len(right)
+        for l_item in left:
+            found = False
+            for i, r_item in enumerate(right):
+                if not right_matched[i] and equivalent(l_item, r_item):
+                    right_matched[i] = True
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+
+    # Unwrap single-element lists
     if isinstance(left, list):
         left = left[0] if len(left) == 1 else (None if not left else left)
     if isinstance(right, list):
         right = right[0] if len(right) == 1 else (None if not right else right)
+
+    # If one is still a list (multi-element) and other is not, they're not equivalent
+    if isinstance(left, list) or isinstance(right, list):
+        return False
 
     # Both empty/null are equivalent
     if left is None and right is None:
@@ -218,15 +243,84 @@ def equivalent(left: Any, right: Any) -> bool:
     if left is None or right is None:
         return False
 
+    # Normalize values (convert FHIR quantity dicts to Quantity objects)
+    left = _normalize_for_comparison(left)
+    right = _normalize_for_comparison(right)
+
     # String comparison is case-insensitive
     if isinstance(left, str) and isinstance(right, str):
         return left.lower() == right.lower()
+
+    # Decimal equivalence with precision-based comparison
+    if isinstance(left, (int, float, Decimal)) and isinstance(right, (int, float, Decimal)):
+        return _decimal_equivalent(left, right)
 
     # Quantity equivalence with precision-based comparison
     if isinstance(left, Quantity) and isinstance(right, Quantity):
         return _quantity_equivalent(left, right)
 
+    # DateTime equivalence with timezone and precision handling
+    if isinstance(left, FHIRDateTime) and isinstance(right, FHIRDateTime):
+        return _datetime_equivalent(left, right)
+
+    # Time equivalence with precision handling
+    if isinstance(left, FHIRTime) and isinstance(right, FHIRTime):
+        return _time_equivalent(left, right)
+
     return left == right
+
+
+def _decimal_equivalent(left: int | float | Decimal, right: int | float | Decimal) -> bool:
+    """Check if two decimal values are equivalent using precision-based comparison."""
+    left_dec = Decimal(str(left))
+    right_dec = Decimal(str(right))
+
+    # Get precision of both values
+    left_precision = _get_quantity_precision(left_dec)
+    right_precision = _get_quantity_precision(right_dec)
+
+    # Use the minimum precision (least precise value determines tolerance)
+    min_precision = min(left_precision, right_precision)
+
+    # Calculate tolerance based on precision
+    tolerance = Decimal("0.5") * (Decimal(10) ** (-min_precision))
+
+    return abs(left_dec - right_dec) <= tolerance
+
+
+def _datetime_equivalent(left: FHIRDateTime, right: FHIRDateTime) -> bool:
+    """Check if two FHIRDateTime values are equivalent."""
+    left_has_tz = left.tz_offset is not None
+    right_has_tz = right.tz_offset is not None
+
+    # Mixed timezone awareness - not equivalent
+    if left_has_tz != right_has_tz:
+        return False
+
+    # Both have timezones - compare in UTC
+    if left_has_tz and right_has_tz:
+        return left._to_utc_tuple() == right._to_utc_tuple()
+
+    # Neither has timezone - compare with millisecond normalization
+    return (
+        left.year == right.year
+        and left.month == right.month
+        and left.day == right.day
+        and left.hour == right.hour
+        and left.minute == right.minute
+        and left.second == right.second
+        and (left.millisecond or 0) == (right.millisecond or 0)
+    )
+
+
+def _time_equivalent(left: FHIRTime, right: FHIRTime) -> bool:
+    """Check if two FHIRTime values are equivalent."""
+    return (
+        left.hour == right.hour
+        and (left.minute or 0) == (right.minute or 0)
+        and (left.second or 0) == (right.second or 0)
+        and (left.millisecond or 0) == (right.millisecond or 0)
+    )
 
 
 def _quantity_equivalent(left: Quantity, right: Quantity) -> bool:
