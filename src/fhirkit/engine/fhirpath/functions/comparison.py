@@ -126,11 +126,67 @@ def _equals_single(left: Any, right: Any) -> bool | None:
             return float(left) == float(right)
         return False
 
-    # Special handling for FHIRDateTime with timezone - compare in UTC
+    # Special handling for FHIRDateTime precision and timezone
     if isinstance(left, FHIRDateTime) and isinstance(right, FHIRDateTime):
+        # Check timezone compatibility - one has tz, other doesn't = incomparable
+        left_has_tz = left.tz_offset is not None
+        right_has_tz = right.tz_offset is not None
+        if left_has_tz != right_has_tz:
+            return None  # Incomparable
+
         # If both have timezones, compare normalized UTC tuples
-        if left.tz_offset is not None and right.tz_offset is not None:
+        if left_has_tz and right_has_tz:
             return left._to_utc_tuple() == right._to_utc_tuple()
+
+        # Check time precision compatibility
+        # second=None vs second=explicit is incomparable (different precision)
+        # But millisecond=None vs millisecond=0 is comparable (same moment)
+        left_has_second = left.second is not None
+        right_has_second = right.second is not None
+        if left_has_second != right_has_second:
+            return None  # Incomparable - different time precision
+
+        # Compare with millisecond normalization (None == 0 for semantic equivalence)
+        return (
+            left.year == right.year
+            and left.month == right.month
+            and left.day == right.day
+            and left.hour == right.hour
+            and left.minute == right.minute
+            and left.second == right.second
+            and (left.millisecond or 0) == (right.millisecond or 0)
+        )
+
+    # Special handling for FHIRTime precision
+    if isinstance(left, FHIRTime) and isinstance(right, FHIRTime):
+        # Check time precision compatibility
+        # second=None vs second=explicit is incomparable
+        # But millisecond=None vs millisecond=0 is comparable
+        left_has_second = left.second is not None
+        right_has_second = right.second is not None
+        if left_has_second != right_has_second:
+            return None  # Incomparable - different time precision
+
+        # Compare with millisecond normalization (None == 0 for semantic equivalence)
+        return (
+            left.hour == right.hour
+            and (left.minute or 0) == (right.minute or 0)
+            and left.second == right.second
+            and (left.millisecond or 0) == (right.millisecond or 0)
+        )
+
+    # Special handling for FHIRDate precision
+    if isinstance(left, FHIRDate) and isinstance(right, FHIRDate):
+        # Different precision levels are incomparable
+        left_has_month = left.month is not None
+        right_has_month = right.month is not None
+        left_has_day = left.day is not None
+        right_has_day = right.day is not None
+
+        if left_has_month != right_has_month or left_has_day != right_has_day:
+            return None  # Incomparable precision
+
+        return left == right
 
     # Special handling for Quantity - incompatible units return None (incomparable)
     if isinstance(left, Quantity) and isinstance(right, Quantity):
@@ -242,32 +298,87 @@ def compare(left: Any, right: Any) -> int | None:
 
     # Handle FHIRDateTime precision differences
     if isinstance(left, FHIRDateTime) and isinstance(right, FHIRDateTime):
-        # Check if precisions differ
+        # Check timezone compatibility first
+        left_has_tz = left.tz_offset is not None
+        right_has_tz = right.tz_offset is not None
+        if left_has_tz != right_has_tz:
+            return None  # Incomparable - mixed timezone awareness
+
         left_precision = _get_datetime_precision(left)
         right_precision = _get_datetime_precision(right)
 
-        if left_precision != right_precision:
-            # Compare up to the less precise level
-            # The more precise value is truncated to match the less precise one
-            min_precision = min(left_precision, right_precision)
+        # If date precision differs (missing month or day), that's incomparable
+        left_date_precision = min(left_precision, 3)  # Cap at day level
+        right_date_precision = min(right_precision, 3)
+        if left_date_precision != right_date_precision:
+            # Different date precision - compare what we can
+            min_precision = min(left_date_precision, right_date_precision)
             cmp_result = _compare_datetime_to_precision(left, right, min_precision)
             if cmp_result == 0:
-                # Equal up to less precise level - incomparable for ordering
-                return None
+                return None  # Equal at common date precision = incomparable
             return cmp_result
+
+        # Check time precision compatibility
+        # second=None vs second=explicit is incomparable (different precision)
+        # But millisecond=None vs millisecond=0 is comparable (same moment)
+        left_has_second = left.second is not None
+        right_has_second = right.second is not None
+        if left_has_second != right_has_second:
+            # Different time precision at second level
+            # Compare up to minute level
+            cmp_result = _compare_datetime_to_precision(left, right, 5)  # minute level
+            if cmp_result == 0:
+                return None  # Equal at minute level = incomparable
+            return cmp_result
+
+        # Same time precision (both have or both lack seconds)
+        # If both have timezones, use FHIRDateTime's built-in comparison which normalizes to UTC
+        if left_has_tz and right_has_tz:
+            if left < right:
+                return -1
+            elif left > right:
+                return 1
+            else:
+                return 0
+
+        # No timezones - compare raw values with millisecond normalization (None == 0)
+        return _compare_datetime_to_precision(left, right, 7)
 
     # Handle FHIRTime precision differences
     if isinstance(left, FHIRTime) and isinstance(right, FHIRTime):
-        left_precision = _get_time_precision(left)
-        right_precision = _get_time_precision(right)
-
-        if left_precision != right_precision:
-            min_precision = min(left_precision, right_precision)
-            cmp_result = _compare_time_to_precision(left, right, min_precision)
+        # Check time precision compatibility
+        # second=None vs second=explicit is incomparable
+        # But millisecond=None vs millisecond=0 is comparable
+        left_has_second = left.second is not None
+        right_has_second = right.second is not None
+        if left_has_second != right_has_second:
+            # Different precision at second level
+            # Compare up to minute level
+            cmp_result = _compare_time_to_precision(left, right, 2)  # minute level
             if cmp_result == 0:
-                # Equal up to less precise level - incomparable for ordering
-                return None
+                return None  # Equal at minute level = incomparable
             return cmp_result
+
+        # Same precision - compare with millisecond normalization
+        return _compare_time_to_precision(left, right, 4)
+
+    # Handle FHIRDate precision differences
+    if isinstance(left, FHIRDate) and isinstance(right, FHIRDate):
+        left_has_month = left.month is not None
+        right_has_month = right.month is not None
+        left_has_day = left.day is not None
+        right_has_day = right.day is not None
+
+        # Different precision levels - compare at common precision
+        if left_has_month != right_has_month or left_has_day != right_has_day:
+            # Compare year first
+            if left.year != right.year:
+                return -1 if left.year < right.year else 1
+            # Compare month if both have it
+            if left_has_month and right_has_month and left.month != right.month:
+                return -1 if left.month < right.month else 1
+            # Equal at common precision = incomparable
+            return None
 
     # After handling cross-type comparisons, remaining comparisons should be same-type
     try:
