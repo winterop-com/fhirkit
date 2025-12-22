@@ -3435,9 +3435,25 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return None
 
         if unit_lower in ("week", "weeks"):
+            # For weeks, use full datetime to get accurate calculation
+            # Use local time for comparison per CQL semantics
+            start_dt = self._to_datetime_with_defaults(start, preserve_local=True)
+            end_dt = self._to_datetime_with_defaults(end, preserve_local=True)
+            if start_dt is not None and end_dt is not None:
+                delta = end_dt - start_dt
+                return int(delta.total_seconds() // (7 * 24 * 3600))
+            # Fallback to date-only calculation
             delta = end_date - start_date
             return delta.days // 7
         elif unit_lower in ("day", "days"):
+            # For days, use full datetime to get accurate calculation
+            # Use local time for comparison per CQL semantics
+            start_dt = self._to_datetime_with_defaults(start, preserve_local=True)
+            end_dt = self._to_datetime_with_defaults(end, preserve_local=True)
+            if start_dt is not None and end_dt is not None:
+                delta = end_dt - start_dt
+                return int(delta.total_seconds() // (24 * 3600))
+            # Fallback to date-only calculation
             delta = end_date - start_date
             return delta.days
         return None
@@ -3466,12 +3482,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return value.day
         return None
 
-    def _to_datetime_with_defaults(self, value: Any) -> datetime | None:
+    def _to_datetime_with_defaults(self, value: Any, preserve_local: bool = False) -> datetime | None:
         """Convert to datetime using defaults for missing precision.
 
-        For timezone-aware datetimes, converts to UTC for comparison.
+        Args:
+            value: The value to convert
+            preserve_local: If True, preserve local time without UTC conversion
         """
         if isinstance(value, datetime):
+            if preserve_local:
+                return value.replace(tzinfo=None)
             return value
         if isinstance(value, date):
             return datetime.combine(value, time())
@@ -3485,8 +3505,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 value.second or 0,
                 (value.millisecond or 0) * 1000,
             )
-            # Apply timezone offset to normalize to UTC
-            if value.tz_offset:
+            # Apply timezone offset to normalize to UTC (unless preserving local time)
+            if not preserve_local and value.tz_offset:
                 offset_minutes = self._parse_tz_offset(value.tz_offset)
                 if offset_minutes is not None:
                     # Subtract offset to convert to UTC

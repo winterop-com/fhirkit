@@ -332,11 +332,19 @@ class FHIRDateTime(BaseModel):
         if self.tz_offset:
             if self.tz_offset == "Z":
                 tz = timezone.utc
-            else:
+            elif ":" in self.tz_offset:
+                # Format: +HH:MM or -HH:MM
                 sign = 1 if self.tz_offset[0] == "+" else -1
                 hours = int(self.tz_offset[1:3])
                 mins = int(self.tz_offset[4:6])
                 tz = timezone(timedelta(hours=sign * hours, minutes=sign * mins))
+            else:
+                # Numeric offset in hours (e.g., "-7.0" or "5.5")
+                try:
+                    offset_hours = float(self.tz_offset)
+                    tz = timezone(timedelta(hours=offset_hours))
+                except ValueError:
+                    pass  # Invalid offset, leave tz as None
 
         return datetime(
             self.year,
