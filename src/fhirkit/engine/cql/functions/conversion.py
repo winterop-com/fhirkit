@@ -545,15 +545,31 @@ def _high_boundary(args: list[Any]) -> Any:
     val = args[0]
     precision = args[1]
 
-    # For Decimal - add 0.5 at the next precision level
+    # For Decimal - calculate the high boundary based on input precision
     if isinstance(val, (Decimal, float, int)):
         decimal_val = Decimal(str(val))
         if precision is not None and precision >= 0:
-            # High boundary is value + (10^-precision - smallest_unit)
-            increment = Decimal(10) ** (-int(precision))
-            # Round up to next precision boundary minus smallest representable
-            quantize_str = "1." + "0" * int(precision) if precision > 0 else "1"
-            return (decimal_val + increment - Decimal("0.00000001")).quantize(Decimal(quantize_str))
+            # Find the precision of the input value
+            val_str = str(decimal_val)
+            if "." in val_str:
+                input_precision = len(val_str.split(".")[1])
+            else:
+                input_precision = 0
+
+            # High boundary = value + (10^-input_precision - 10^-target_precision)
+            # This gives the maximum value that still rounds to the input at input_precision
+            target_precision = int(precision)
+            if target_precision > input_precision:
+                # Add the difference to get the high boundary
+                increment = Decimal(10) ** (-input_precision) - Decimal(10) ** (-target_precision)
+                result = decimal_val + increment
+                # Quantize to target precision
+                quantize_str = "1." + "0" * target_precision if target_precision > 0 else "1"
+                return result.quantize(Decimal(quantize_str))
+            else:
+                # If target precision <= input precision, just quantize
+                quantize_str = "1." + "0" * target_precision if target_precision > 0 else "1"
+                return decimal_val.quantize(Decimal(quantize_str))
         return decimal_val
 
     # For FHIRDate - fill in highest possible values for missing components

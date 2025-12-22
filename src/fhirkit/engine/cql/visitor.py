@@ -3577,7 +3577,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 # Add 1 millisecond
                 total_ms = (t.hour * 3600 + t.minute * 60 + t.second) * 1000 + t.microsecond // 1000 + 1
                 if total_ms >= 24 * 3600 * 1000:
-                    total_ms = 0  # Wrap around
+                    # Overflow - no valid successor for maximum time
+                    raise CQLError("successor of maximum time value would overflow")
                 h = (total_ms // 3600000) % 24
                 m = (total_ms // 60000) % 60
                 s = (total_ms // 1000) % 60
@@ -3660,7 +3661,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
             if t:
                 total_ms = (t.hour * 3600 + t.minute * 60 + t.second) * 1000 + t.microsecond // 1000 - 1
                 if total_ms < 0:
-                    total_ms = 24 * 3600 * 1000 - 1  # Wrap around
+                    # Underflow - no valid predecessor for minimum time
+                    raise CQLError("predecessor of minimum time value would underflow")
                 h = (total_ms // 3600000) % 24
                 m = (total_ms // 60000) % 60
                 s = (total_ms // 1000) % 60
