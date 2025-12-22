@@ -5,6 +5,32 @@ from typing import Any
 from ...context import EvaluationContext
 from ...functions import FunctionRegistry
 
+# Minimal FHIR element type mapping for common elements
+# Maps (ResourceType, ElementName) -> FHIRPath type
+# This enables is()/as()/ofType() to work with FHIR types like code, uri, etc.
+_FHIR_ELEMENT_TYPES: dict[tuple[str | None, str], str] = {
+    # Patient elements
+    ("Patient", "gender"): "code",
+    ("Patient", "language"): "code",
+    ("Patient", "birthDate"): "date",
+    ("Patient", "active"): "boolean",
+    # Questionnaire elements
+    ("Questionnaire", "url"): "uri",
+    ("Questionnaire", "version"): "string",
+    ("Questionnaire", "name"): "string",
+    ("Questionnaire", "status"): "code",
+    # Observation elements
+    ("Observation", "status"): "code",
+    ("Observation", "effectiveDateTime"): "dateTime",
+    # ValueSet elements
+    ("ValueSet", "url"): "uri",
+    ("ValueSet", "version"): "string",
+    ("ValueSet", "name"): "string",
+    ("ValueSet", "status"): "code",
+    # Common reference element
+    (None, "reference"): "string",  # Reference.reference is a string
+}
+
 # Note: where() is handled specially in the visitor because it needs
 # to evaluate the criteria expression for each item with $this bound.
 # We register a placeholder here for documentation purposes.
@@ -45,7 +71,7 @@ def fn_repeat(ctx: EvaluationContext, collection: list[Any], *args: Any) -> list
     raise NotImplementedError("repeat() is handled by the visitor")
 
 
-def _is_type(item: Any, type_name: str) -> bool:
+def _is_type(item: Any, type_name: str, allow_subtype: bool = True) -> bool:
     """Check if an item is of the specified FHIRPath type.
 
     FHIRPath distinguishes between FHIR types and System types:
@@ -54,6 +80,13 @@ def _is_type(item: Any, type_name: str) -> bool:
 
     Literals are System types, FHIR resource values are FHIR types.
     We use _PrimitiveWithExtension wrapper to identify FHIR values.
+
+    Args:
+        item: The value to check
+        type_name: The FHIRPath type name to check against
+        allow_subtype: If True (default), subtype matching is allowed
+            (e.g., code.is(string) = true). If False, exact type match
+            is required (e.g., code.as(string) = empty).
     """
     from decimal import Decimal as PyDecimal
 
@@ -62,7 +95,11 @@ def _is_type(item: Any, type_name: str) -> bool:
 
     # Check if this is a FHIR value (wrapped primitive or from resource)
     is_fhir_value = isinstance(item, _PrimitiveWithExtension)
+    element_name = None
+    resource_type = None
     if is_fhir_value:
+        element_name = item.element_name
+        resource_type = item.resource_type
         item = item.value  # Unwrap for type checking
 
     # Parse namespace prefix
@@ -126,14 +163,53 @@ def _is_type(item: Any, type_name: str) -> bool:
     elif type_name == "string":
         if namespace == "System":
             return False
+        # Check if we have FHIR element metadata that says this is a string subtype
+        if is_fhir_value and element_name and not allow_subtype:
+            # Look up the element type from our mapping
+            element_type = _FHIR_ELEMENT_TYPES.get((resource_type, element_name))
+            if element_type and element_type != "string":
+                # This is a string subtype (code, uri, etc.), not a plain string
+                # For exact type matching (as/ofType), return False
+                return False
+        # For is() with allow_subtype=True, string subtypes ARE strings
         return isinstance(item, str)
 
     # Handle FHIR string-based element types (subtypes of string)
     if type_name in ("code", "id", "uri", "url", "canonical", "oid", "uuid", "markdown", "xhtml", "base64Binary"):
-        # Without FHIR schema metadata, we cannot definitively determine which
-        # specific string subtype a value is. These types are all subtypes of
-        # string, but we cannot distinguish between them at runtime.
-        # Return False - tests requiring this need schema integration.
+        if namespace == "System":
+            return False  # These are FHIR types, not System types
+        # Check if we have FHIR element metadata
+        if is_fhir_value and element_name and isinstance(item, str):
+            # First try to look up the element type from our mapping (for regular fields)
+            actual_type = _FHIR_ELEMENT_TYPES.get((resource_type, element_name))
+            if not actual_type:
+                actual_type = _FHIR_ELEMENT_TYPES.get((None, element_name))
+
+            # If not in mapping, check if element_name is a choice type suffix (e.g., "uuid" from valueUuid)
+            if not actual_type and element_name in (
+                "code",
+                "id",
+                "uri",
+                "url",
+                "canonical",
+                "oid",
+                "uuid",
+                "markdown",
+                "xhtml",
+                "base64Binary",
+                "string",
+            ):
+                actual_type = element_name
+
+            if actual_type:
+                # Direct match
+                if actual_type == type_name:
+                    return True
+                # Check subtype relationships when allow_subtype is True
+                if allow_subtype:
+                    # uuid, url, canonical, oid are subtypes of uri
+                    if type_name == "uri" and actual_type in ("uuid", "url", "canonical", "oid"):
+                        return True
         return False
 
     # Handle FHIR numeric element types (subtypes of Integer)
@@ -153,9 +229,28 @@ def _is_type(item: Any, type_name: str) -> bool:
         return isinstance(item, dict) and "resourceType" in item
 
     if isinstance(item, dict):
+        # Check _fhir_type metadata from polymorphic (choice) types
+        fhir_type = item.get("_fhir_type")
+        if fhir_type:
+            # Direct match with the polymorphic type suffix
+            if fhir_type == type_name:
+                return True
+            # Check for subtype matching when allow_subtype is True
+            if allow_subtype:
+                # Age and Duration are subtypes of Quantity
+                if type_name == "Quantity" and fhir_type in ("Age", "Duration", "SimpleQuantity", "MoneyQuantity"):
+                    return True
+            # If looking for a different specific type, return False
+            if type_name in ("Age", "Duration", "SimpleQuantity", "MoneyQuantity", "Quantity"):
+                return fhir_type == type_name
+
         # Check resourceType for FHIR resources
-        if item.get("resourceType") == type_name:
-            return True
+        resource_type = item.get("resourceType")
+        if resource_type:
+            # System types don't apply to FHIR resources
+            if namespace == "System":
+                return False
+            return resource_type == type_name
         # Check for complex types by their characteristic fields
         if type_name == "Coding" and "code" in item:
             return True
@@ -274,12 +369,13 @@ def fn_as(ctx: EvaluationContext, collection: list[Any], type_name: str) -> list
     Casts a value to the specified type (or returns empty if not castable).
 
     Note: This is a simplified implementation that just checks if the value
-    is already of the target type.
+    is already of the target type. Uses exact type matching (no subtype).
     """
     if not collection:
         return []
     item = collection[0]
-    if _is_type(item, type_name):
+    # as() requires exact type match, not subtype matching
+    if _is_type(item, type_name, allow_subtype=False):
         return [item]
     return []
 
@@ -292,4 +388,5 @@ def fn_of_type(ctx: EvaluationContext, collection: list[Any], type_name: str) ->
     Args:
         type_name: The FHIR type name to filter by
     """
-    return [item for item in collection if _is_type(item, type_name)]
+    # ofType() requires exact type match, not subtype matching
+    return [item for item in collection if _is_type(item, type_name, allow_subtype=False)]

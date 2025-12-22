@@ -101,12 +101,21 @@ def fn_log(ctx: EvaluationContext, collection: list[Any], base: float) -> list[f
 
 @FunctionRegistry.register("power")
 def fn_power(ctx: EvaluationContext, collection: list[Any], exponent: float) -> list[float]:
-    """Returns value raised to the exponent."""
+    """Returns value raised to the exponent.
+
+    Per FHIRPath spec: returns empty if the result would be a complex number
+    (e.g., square root of a negative number).
+    """
     if not collection:
         return []
     value = collection[0]
     if isinstance(value, (int, float, Decimal)):
-        return [math.pow(float(value), float(exponent))]
+        try:
+            result = math.pow(float(value), float(exponent))
+            return [result]
+        except ValueError:
+            # Math domain error (e.g., sqrt of negative number) returns empty
+            return []
     return []
 
 
@@ -285,7 +294,18 @@ def fn_low_boundary(ctx: EvaluationContext, collection: list[Any], precision: in
         elif precision <= 14:
             return [FHIRDateTime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)]
         else:
-            return [FHIRDateTime(year=year, month=month, day=day, hour=hour, minute=minute, second=second, millisecond=millisecond, tz_offset=tz)]
+            return [
+                FHIRDateTime(
+                    year=year,
+                    month=month,
+                    day=day,
+                    hour=hour,
+                    minute=minute,
+                    second=second,
+                    millisecond=millisecond,
+                    tz_offset=tz,
+                )
+            ]
 
     if isinstance(value, FHIRTime):
         # For lowBoundary time, fill in minimum values for unspecified components
@@ -387,7 +407,18 @@ def fn_high_boundary(
         elif precision <= 14:
             return [FHIRDateTime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)]
         else:
-            return [FHIRDateTime(year=year, month=month, day=day, hour=hour, minute=minute, second=second, millisecond=millisecond, tz_offset=tz)]
+            return [
+                FHIRDateTime(
+                    year=year,
+                    month=month,
+                    day=day,
+                    hour=hour,
+                    minute=minute,
+                    second=second,
+                    millisecond=millisecond,
+                    tz_offset=tz,
+                )
+            ]
 
     if isinstance(value, FHIRTime):
         # For highBoundary time, fill in maximum values for unspecified components

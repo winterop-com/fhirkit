@@ -831,19 +831,20 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
                                 ext = extension_data[i] if i < len(extension_data) else None
                                 if _is_primitive(v):
                                     # Wrap ALL FHIR primitives to mark them as FHIR values
-                                    result.append(_PrimitiveWithExtension(v, ext or {}))
+                                    result.append(_PrimitiveWithExtension(v, ext or {}, member_name, resource_type))
                                 else:
                                     result.append(v)
                         else:
                             for v in value:
                                 if _is_primitive(v):
-                                    result.append(_PrimitiveWithExtension(v, {}))
+                                    result.append(_PrimitiveWithExtension(v, {}, member_name, resource_type))
                                 else:
                                     result.append(v)
                     else:
                         if _is_primitive(value):
                             # Wrap ALL FHIR primitives to mark them as FHIR values
-                            result.append(_PrimitiveWithExtension(value, extension_data or {}))
+                            wrapped = _PrimitiveWithExtension(value, extension_data or {}, member_name, resource_type)
+                            result.append(wrapped)
                         else:
                             result.append(value)
                 else:
@@ -855,7 +856,17 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
                             suffix = key[len(member_name) :]
                             if suffix[0].isupper():
                                 poly_value = item[key]
-                                if isinstance(poly_value, list):
+                                # Mark the value with its FHIR type from the choice
+                                if isinstance(poly_value, dict):
+                                    poly_value["_fhir_type"] = suffix
+                                    result.append(poly_value)
+                                elif _is_primitive(poly_value):
+                                    # Wrap primitive choice values with type info
+                                    # Map suffix to lowercase FHIR type name
+                                    fhir_type = suffix[0].lower() + suffix[1:]
+                                    wrapped = _PrimitiveWithExtension(poly_value, {}, fhir_type, resource_type)
+                                    result.append(wrapped)
+                                elif isinstance(poly_value, list):
                                     result.extend(poly_value)
                                 else:
                                     result.append(poly_value)
@@ -1227,33 +1238,13 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         return True
 
     def _is_type(self, value: Any, type_name: str) -> bool:
-        """Check if a value is of the specified type."""
-        # Strip System. or FHIR. prefix if present
-        if type_name.startswith("System."):
-            type_name = type_name[7:]
-        elif type_name.startswith("FHIR."):
-            type_name = type_name[5:]
+        """Check if a value is of the specified type.
 
-        if isinstance(value, dict):
-            if "resourceType" in value:
-                return value["resourceType"] == type_name
-            # For elements, check type info if available
-            return True  # Relaxed check for elements
+        Delegates to the filtering module's _is_type for proper FHIR type checking.
+        """
+        from .functions.filtering import _is_type as filtering_is_type
 
-        type_map: dict[str, type | tuple[type, ...]] = {
-            "Boolean": bool,
-            "String": str,
-            "Integer": int,
-            "Decimal": (float, Decimal),
-            "Quantity": Quantity,
-        }
-
-        if type_name in type_map:
-            if type_name == "Integer":
-                return isinstance(value, int) and not isinstance(value, bool)
-            return isinstance(value, type_map[type_name])
-
-        return False
+        return filtering_is_type(value, type_name)
 
     def _unescape_string(self, s: str) -> str:
         """Unescape a FHIRPath string literal."""

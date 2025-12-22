@@ -89,7 +89,9 @@ def fn_matches_full(ctx: EvaluationContext, collection: list[Any], pattern: str 
 
 
 @FunctionRegistry.register("replace")
-def fn_replace(ctx: EvaluationContext, collection: list[Any], pattern: str | None, substitution: str | None) -> list[str]:
+def fn_replace(
+    ctx: EvaluationContext, collection: list[Any], pattern: str | None, substitution: str | None
+) -> list[str]:
     """Replaces all occurrences of pattern with substitution (simple string replacement).
 
     Per FHIRPath spec: if pattern or substitution is empty, returns empty.

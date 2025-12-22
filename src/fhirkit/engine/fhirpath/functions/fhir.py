@@ -67,10 +67,15 @@ def fn_extension(ctx: EvaluationContext, collection: list[Any], url: str) -> lis
                                 result.append(ext)
         elif isinstance(item, dict):
             extensions = item.get("extension", [])
-            if isinstance(extensions, list):
+            if isinstance(extensions, dict):
+                # Single extension object (from XML conversion)
+                if extensions.get("url") == url or extensions.get("_url") == url:
+                    result.append(extensions)
+            elif isinstance(extensions, list):
                 for ext in extensions:
-                    if isinstance(ext, dict) and ext.get("url") == url:
-                        result.append(ext)
+                    if isinstance(ext, dict):
+                        if ext.get("url") == url or ext.get("_url") == url:
+                            result.append(ext)
     return result
 
 
