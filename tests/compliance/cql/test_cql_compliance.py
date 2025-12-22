@@ -49,6 +49,28 @@ def evaluate_cql_expression(expression: str) -> Any:
 
     evaluator = CQLEvaluator()
 
+    # Check if expression is already a definition
+    expr_stripped = expression.strip()
+    if expr_stripped.startswith("define "):
+        # Extract definition name and compile directly
+        # Pattern: define "Name": or define Name:
+        import re
+
+        match = re.match(r'define\s+["\']?(\w+)["\']?\s*:', expr_stripped)
+        if match:
+            def_name = match.group(1)
+            library_code = f"""
+library ComplianceTest version '1.0.0'
+
+{expression}
+"""
+            try:
+                evaluator.compile(library_code)
+                result = evaluator.evaluate_definition(def_name)
+                return result
+            except Exception:
+                raise
+
     # Wrap expression in a library definition
     library_code = f"""
 library ComplianceTest version '1.0.0'
@@ -625,6 +647,9 @@ def test_cql_compliance(test_case: TestCase) -> None:
 
     if len(test_case.outputs) == 1:
         expected = test_case.outputs[0].parse_value()
+        # Skip tests with TODO placeholder outputs
+        if expected == "TODO":
+            pytest.skip("Test has TODO placeholder output")
         assert compare_results(result, expected), (
             f"Result mismatch:\n"
             f"  Expression: {test_case.expression}\n"
