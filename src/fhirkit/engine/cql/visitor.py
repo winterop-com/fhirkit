@@ -2653,11 +2653,17 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return result
         return left / right
 
-    def _truncated_divide(self, left: Any, right: Any) -> int | None:
+    def _truncated_divide(self, left: Any, right: Any) -> Any:
         """Truncated division (div).
 
         Per CQL spec: Performs integer division truncated toward zero.
         """
+        from fhirkit.engine.types import Quantity
+
+        # Handle Quantity division
+        if isinstance(left, Quantity) and isinstance(right, Quantity):
+            return left // right
+
         if right == 0:
             return None
         # Use int() which truncates toward zero (not floor which rounds toward -inf)

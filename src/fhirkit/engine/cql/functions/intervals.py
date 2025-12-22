@@ -209,6 +209,8 @@ def interval_point_timing(interval: "CQLInterval[Any]", point: Any, op: str) -> 
     elif "after" in op:
         return interval.low is not None and interval.low > point
     elif "contains" in op or "includes" in op:
+        if "properly" in op:
+            return interval.properly_contains(point)
         return interval.contains(point)
     return None
 
@@ -229,6 +231,8 @@ def point_interval_timing(point: Any, interval: "CQLInterval[Any]", op: str) -> 
     elif "after" in op:
         return interval.high is not None and point > interval.high
     elif "during" in op or "in" in op or "included in" in op:
+        if "properly" in op:
+            return interval.properly_contains(point)
         return interval.contains(point)
     return None
 

@@ -137,6 +137,21 @@ class CQLInterval(BaseModel, Generic[T]):
         """CQL contains operator."""
         return value in self
 
+    def properly_contains(self, value: Any) -> bool:
+        """CQL properly contains operator - value is strictly inside (not on boundary).
+
+        Per CQL spec: A properly contains B means A contains B and B is not at
+        either boundary of A.
+        """
+        if not self.contains(value):
+            return False
+        # Check if value is on a boundary
+        if self.low is not None and value == self.low:
+            return False
+        if self.high is not None and value == self.high:
+            return False
+        return True
+
     def includes(self, other: "CQLInterval[Any]") -> bool:
         """CQL includes operator - this interval includes other interval."""
         if other.low is not None:

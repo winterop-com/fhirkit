@@ -97,6 +97,72 @@ class Quantity(BaseModel):
     def __hash__(self) -> int:
         return hash((self.value, self.unit))
 
+    def __mul__(self, other: "Quantity") -> "Quantity":
+        """Multiply two quantities.
+
+        Per CQL spec: Units are combined (e.g., cm * cm = cm2).
+        """
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        # Combine units - if same unit, use exponential notation (cm * cm = cm2)
+        if other.unit == "1":
+            new_unit = self.unit
+        elif self.unit == "1":
+            new_unit = other.unit
+        elif self.unit == other.unit:
+            # Same unit - use exponential form (e.g., cm * cm = cm2)
+            new_unit = f"{self.unit}2"
+        else:
+            # Different units - combine with dot
+            new_unit = f"{self.unit}.{other.unit}"
+        return Quantity(value=self.value * other.value, unit=new_unit)
+
+    def __truediv__(self, other: "Quantity") -> "Quantity":
+        """Divide two quantities.
+
+        Per CQL spec: Units are combined (e.g., g/cm3 / g/cm3 = 1).
+        """
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        if other.value == 0:
+            raise ZeroDivisionError("Cannot divide by zero quantity")
+        # If units are the same, result is dimensionless
+        if self.unit == other.unit:
+            return Quantity(value=self.value / other.value, unit="1")
+        # Otherwise combine units
+        new_unit = f"{self.unit}/{other.unit}"
+        return Quantity(value=self.value / other.value, unit=new_unit)
+
+    def __mod__(self, other: "Quantity") -> "Quantity":
+        """Modulo of two quantities.
+
+        Per CQL spec: Units must be the same.
+        """
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        if self.unit != other.unit:
+            raise TypeError(f"Cannot compute modulo of quantities with different units: {self.unit} and {other.unit}")
+        if other.value == 0:
+            raise ZeroDivisionError("Cannot modulo by zero quantity")
+        return Quantity(value=self.value % other.value, unit=self.unit)
+
+    def __floordiv__(self, other: "Quantity") -> "Quantity":
+        """Truncated division of two quantities.
+
+        Per CQL spec: Units must be the same, result is same unit.
+        Result is a Decimal with .0 to indicate integer-like value.
+        """
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        if self.unit != other.unit:
+            raise TypeError(f"Cannot divide quantities with different units: {self.unit} and {other.unit}")
+        if other.value == 0:
+            raise ZeroDivisionError("Cannot divide by zero quantity")
+        # Use truncation toward zero (like int()) instead of floor
+        result = int(self.value / other.value)
+        # Return as Decimal with .0 to indicate it's a truncated value
+        return Quantity(value=Decimal(str(float(result))), unit=self.unit)
+
     def __str__(self) -> str:
         return f"{self.value} '{self.unit}'"
 
