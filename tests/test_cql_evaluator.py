@@ -3096,12 +3096,14 @@ class TestTypeExtentExpression:
     def test_minimum_decimal(self) -> None:
         """Test minimum Decimal."""
         result = evaluate("minimum Decimal")
-        assert result == Decimal("-99999999999999999999.99999999")
+        # CQL Decimal: -(10^28 - 10^-8)
+        assert result == Decimal("-9999999999999999999999999999.99999999")
 
     def test_maximum_decimal(self) -> None:
         """Test maximum Decimal."""
         result = evaluate("maximum Decimal")
-        assert result == Decimal("99999999999999999999.99999999")
+        # CQL Decimal: (10^28 - 10^-8)
+        assert result == Decimal("9999999999999999999999999999.99999999")
 
 
 class TestWithWithoutClauses:

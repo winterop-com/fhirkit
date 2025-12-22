@@ -3998,32 +3998,38 @@ class CQLEvaluatorVisitor(cqlVisitor):
         """Get the minimum value for a type."""
         if type_name == "integer":
             return -(2**31)  # CQL Integer is 32-bit
+        elif type_name == "long":
+            return -(2**63)  # CQL Long is 64-bit
         elif type_name == "decimal":
-            return Decimal("-99999999999999999999.99999999")
+            # CQL Decimal: -(10^28 - 10^-8) = -9999999999999999999999999999.99999999
+            return Decimal("-9999999999999999999999999999.99999999")
         elif type_name == "date":
             return FHIRDate(year=1, month=1, day=1)
         elif type_name == "datetime":
-            return FHIRDateTime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+            return FHIRDateTime(year=1, month=1, day=1, hour=0, minute=0, second=0, millisecond=0)
         elif type_name == "time":
             return FHIRTime(hour=0, minute=0, second=0, millisecond=0)
         elif type_name == "quantity":
-            return Quantity(value=Decimal("-99999999999999999999.99999999"), unit="1")
+            return Quantity(value=Decimal("-9999999999999999999999999999.99999999"), unit="1")
         return None
 
     def _get_type_maximum(self, type_name: str) -> Any:
         """Get the maximum value for a type."""
         if type_name == "integer":
             return 2**31 - 1  # CQL Integer is 32-bit
+        elif type_name == "long":
+            return 2**63 - 1  # CQL Long is 64-bit
         elif type_name == "decimal":
-            return Decimal("99999999999999999999.99999999")
+            # CQL Decimal: (10^28 - 10^-8) = 9999999999999999999999999999.99999999
+            return Decimal("9999999999999999999999999999.99999999")
         elif type_name == "date":
             return FHIRDate(year=9999, month=12, day=31)
         elif type_name == "datetime":
-            return FHIRDateTime(year=9999, month=12, day=31, hour=23, minute=59, second=59)
+            return FHIRDateTime(year=9999, month=12, day=31, hour=23, minute=59, second=59, millisecond=999)
         elif type_name == "time":
             return FHIRTime(hour=23, minute=59, second=59, millisecond=999)
         elif type_name == "quantity":
-            return Quantity(value=Decimal("99999999999999999999.99999999"), unit="1")
+            return Quantity(value=Decimal("9999999999999999999999999999.99999999"), unit="1")
         return None
 
     def _expand_interval(self, interval: CQLInterval[Any], per: Any = None) -> list[Any]:
