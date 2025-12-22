@@ -55,35 +55,73 @@ def _date_constructor(args: list[Any]) -> FHIRDate | None:
 
 def _datetime_constructor(args: list[Any]) -> FHIRDateTime | None:
     """Construct a DateTime from components."""
+    from ...exceptions import CQLError
+
     if not args:
         return None
     year = args[0]
     if year is None:
         return None
+    year_int = int(year)
+    # Validate year range: 1-9999
+    if year_int < 1 or year_int > 9999:
+        raise CQLError(f"DateTime year {year_int} out of range (1-9999)")
+    month = int(args[1]) if len(args) > 1 and args[1] is not None else None
+    if month is not None and (month < 1 or month > 12):
+        raise CQLError(f"DateTime month {month} out of range (1-12)")
+    day = int(args[2]) if len(args) > 2 and args[2] is not None else None
+    if day is not None and (day < 1 or day > 31):
+        raise CQLError(f"DateTime day {day} out of range (1-31)")
+    hour = int(args[3]) if len(args) > 3 and args[3] is not None else None
+    if hour is not None and (hour < 0 or hour > 23):
+        raise CQLError(f"DateTime hour {hour} out of range (0-23)")
+    minute = int(args[4]) if len(args) > 4 and args[4] is not None else None
+    if minute is not None and (minute < 0 or minute > 59):
+        raise CQLError(f"DateTime minute {minute} out of range (0-59)")
+    second = int(args[5]) if len(args) > 5 and args[5] is not None else None
+    if second is not None and (second < 0 or second > 59):
+        raise CQLError(f"DateTime second {second} out of range (0-59)")
+    millisecond = int(args[6]) if len(args) > 6 and args[6] is not None else None
+    if millisecond is not None and (millisecond < 0 or millisecond > 999):
+        raise CQLError(f"DateTime millisecond {millisecond} out of range (0-999)")
     return FHIRDateTime(
-        year=int(year),
-        month=int(args[1]) if len(args) > 1 and args[1] is not None else None,
-        day=int(args[2]) if len(args) > 2 and args[2] is not None else None,
-        hour=int(args[3]) if len(args) > 3 and args[3] is not None else None,
-        minute=int(args[4]) if len(args) > 4 and args[4] is not None else None,
-        second=int(args[5]) if len(args) > 5 and args[5] is not None else None,
-        millisecond=int(args[6]) if len(args) > 6 and args[6] is not None else None,
+        year=year_int,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=minute,
+        second=second,
+        millisecond=millisecond,
         tz_offset=str(args[7]) if len(args) > 7 and args[7] is not None else None,
     )
 
 
 def _time_constructor(args: list[Any]) -> FHIRTime | None:
     """Construct a Time from components."""
+    from ...exceptions import CQLError
+
     if not args:
         return None
     hour = args[0]
     if hour is None:
         return None
+    hour_int = int(hour)
+    if hour_int < 0 or hour_int > 23:
+        raise CQLError(f"Time hour {hour_int} out of range (0-23)")
+    minute = int(args[1]) if len(args) > 1 and args[1] is not None else None
+    if minute is not None and (minute < 0 or minute > 59):
+        raise CQLError(f"Time minute {minute} out of range (0-59)")
+    second = int(args[2]) if len(args) > 2 and args[2] is not None else None
+    if second is not None and (second < 0 or second > 59):
+        raise CQLError(f"Time second {second} out of range (0-59)")
+    millisecond = int(args[3]) if len(args) > 3 and args[3] is not None else None
+    if millisecond is not None and (millisecond < 0 or millisecond > 999):
+        raise CQLError(f"Time millisecond {millisecond} out of range (0-999)")
     return FHIRTime(
-        hour=int(hour),
-        minute=int(args[1]) if len(args) > 1 and args[1] is not None else None,
-        second=int(args[2]) if len(args) > 2 and args[2] is not None else None,
-        millisecond=int(args[3]) if len(args) > 3 and args[3] is not None else None,
+        hour=hour_int,
+        minute=minute,
+        second=second,
+        millisecond=millisecond,
     )
 
 

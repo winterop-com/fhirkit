@@ -2801,7 +2801,7 @@ class TestMathFunctions:
         assert evaluate("Power(2, 3)") == 8.0
 
     def test_ln(self) -> None:
-        result = evaluate("Ln(2.718281828)")
+        result = evaluate("Ln(2.71828183)")  # Max 8 decimal places per CQL spec
         assert abs(result - 1.0) < 0.001
 
     def test_exp(self) -> None:

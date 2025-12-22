@@ -60,6 +60,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
         """
         self.context = context or CQLContext()
         self._library: CQLLibrary | None = None
+        self._in_negation: bool = False  # Flag for handling -2147483648
 
     @property
     def library(self) -> CQLLibrary | None:
@@ -323,15 +324,46 @@ class CQLEvaluatorVisitor(cqlVisitor):
         """Visit a simple number literal (used in starting clause)."""
         text = ctx.getText()
         if "." in text:
-            return Decimal(text)
-        return int(text)
+            value = Decimal(text)
+            # CQL decimal range: -(10^28-1) to (10^28-1), 10^28 is out of range
+            max_decimal = Decimal("1" + "0" * 28)
+            if value >= max_decimal or value <= -max_decimal:
+                raise CQLError(f"Decimal value {value} out of range")
+            # CQL decimals have max 8 decimal places precision
+            decimal_part = text.split(".")[1]
+            if len(decimal_part) > 8:
+                raise CQLError(f"Decimal value {value} exceeds maximum precision of 8 decimal places")
+            return value
+        value = int(text)
+        # CQL integer range: -2^31 to 2^31-1 (-2147483648 to 2147483647)
+        # Allow 2147483648 only if we're inside a negation (for -2147483648)
+        max_allowed = 2147483648 if self._in_negation else 2147483647
+        if value > max_allowed or value < -2147483648:
+            raise CQLError(f"Integer value {value} out of range (-2147483648 to 2147483647)")
+        return value
 
     def visitNumberLiteral(self, ctx: cqlParser.NumberLiteralContext) -> int | Decimal:
         """Visit a number literal."""
         text = ctx.getText()
         if "." in text:
-            return Decimal(text)
-        return int(text)
+            value = Decimal(text)
+            # CQL decimal range: -(10^28-1) to (10^28-1), 10^28 is out of range
+            max_decimal = Decimal("1" + "0" * 28)
+            if value >= max_decimal or value <= -max_decimal:
+                raise CQLError(f"Decimal value {value} out of range")
+            # CQL decimals have max 8 decimal places precision
+            if "." in text:
+                decimal_part = text.split(".")[1]
+                if len(decimal_part) > 8:
+                    raise CQLError(f"Decimal value {value} exceeds maximum precision of 8 decimal places")
+            return value
+        value = int(text)
+        # CQL integer range: -2^31 to 2^31-1 (-2147483648 to 2147483647)
+        # Allow 2147483648 only if we're inside a negation (for -2147483648)
+        max_allowed = 2147483648 if self._in_negation else 2147483647
+        if value > max_allowed or value < -2147483648:
+            raise CQLError(f"Integer value {value} out of range (-2147483648 to 2147483647)")
+        return value
 
     def visitLongNumberLiteral(self, ctx: cqlParser.LongNumberLiteralContext) -> int:
         """Visit a long number literal."""
@@ -416,6 +448,23 @@ class CQLEvaluatorVisitor(cqlVisitor):
         # In CQL, Interval[null, null] evaluates to null
         if low is None and high is None:
             return None
+
+        # Validate interval: ending boundary must be >= starting boundary
+        if low is not None and high is not None:
+            try:
+                if high < low:
+                    raise CQLError(
+                        f"Invalid Interval - the ending boundary ({high}) must be greater than "
+                        f"or equal to the starting boundary ({low})"
+                    )
+                # Also check for empty intervals like Interval[5, 5) or Interval(5, 5]
+                if high == low and (not low_closed or not high_closed):
+                    raise CQLError(
+                        "Invalid Interval - the ending boundary must be greater than "
+                        "or equal to the starting boundary for open intervals"
+                    )
+            except TypeError:
+                pass  # Can't compare types, let it through
 
         return CQLInterval(low=low, high=high, low_closed=low_closed, high_closed=high_closed)
 
@@ -598,8 +647,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
     def visitPolarityExpressionTerm(self, ctx: cqlParser.PolarityExpressionTermContext) -> Any:
         """Visit polarity expression (+x or -x)."""
-        value = self.visit(ctx.expressionTerm())
         op = ctx.getChild(0).getText()
+
+        # Set negation flag before visiting child (allows 2147483648 for -2147483648 case)
+        old_in_negation = self._in_negation
+        if op == "-":
+            self._in_negation = True
+        try:
+            value = self.visit(ctx.expressionTerm())
+        finally:
+            self._in_negation = old_in_negation
 
         if value is None:
             return None
@@ -3286,6 +3343,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
             # Handle partial precision dates directly
             if unit_lower == "year":
                 new_year = dt.year + value
+                # Validate year range (1-9999 per CQL spec)
+                if new_year < 1 or new_year > 9999:
+                    raise CQLError(f"DateTime arithmetic result year {new_year} out of range (1-9999)")
                 day = dt.day
                 # Handle leap year: Feb 29 -> Feb 28 if target year is not a leap year
                 if dt.month == 2 and dt.day == 29:
@@ -3299,6 +3359,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     month = dt.month + value
                     year = dt.year + (month - 1) // 12
                     month = ((month - 1) % 12) + 1
+                    # Validate year range (1-9999 per CQL spec)
+                    if year < 1 or year > 9999:
+                        raise CQLError(f"DateTime arithmetic result year {year} out of range (1-9999)")
                     # Handle day overflow
                     day = dt.day
                     if day is not None:
@@ -3330,6 +3393,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
             if unit_lower == "year":
                 new_year = dt.year + value
+                # Validate year range (1-9999 per CQL spec)
+                if new_year < 1 or new_year > 9999:
+                    raise CQLError(f"DateTime arithmetic result year {new_year} out of range (1-9999)")
                 day = dt.day
                 # Handle leap year: Feb 29 -> Feb 28 if target year is not a leap year
                 if dt.month == 2 and dt.day == 29:
@@ -3352,6 +3418,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 month = (dt.month or 1) + value
                 year = dt.year + (month - 1) // 12
                 month = ((month - 1) % 12) + 1
+                # Validate year range (1-9999 per CQL spec)
+                if year < 1 or year > 9999:
+                    raise CQLError(f"DateTime arithmetic result year {year} out of range (1-9999)")
                 day = dt.day
                 if day is not None:
                     import calendar
@@ -3404,15 +3473,22 @@ class CQLEvaluatorVisitor(cqlVisitor):
     def _add_to_date(self, d: date, value: int, unit: str) -> date | None:
         """Add duration to a date."""
         if unit == "year":
+            new_year = d.year + value
+            # Validate year range (1-9999 per CQL spec)
+            if new_year < 1 or new_year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {new_year} out of range (1-9999)")
             try:
-                return d.replace(year=d.year + value)
+                return d.replace(year=new_year)
             except ValueError:
                 # Handle Feb 29 -> Feb 28 for non-leap years
-                return d.replace(year=d.year + value, day=28)
+                return d.replace(year=new_year, day=28)
         elif unit == "month":
             month = d.month + value
             year = d.year + (month - 1) // 12
             month = ((month - 1) % 12) + 1
+            # Validate year range (1-9999 per CQL spec)
+            if year < 1 or year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {year} out of range (1-9999)")
             try:
                 return d.replace(year=year, month=month)
             except ValueError:
@@ -3422,9 +3498,15 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 max_day = calendar.monthrange(year, month)[1]
                 return d.replace(year=year, month=month, day=min(d.day, max_day))
         elif unit == "week":
-            return d + timedelta(weeks=value)
+            result = d + timedelta(weeks=value)
+            if result.year < 1 or result.year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {result.year} out of range (1-9999)")
+            return result
         elif unit == "day":
-            return d + timedelta(days=value)
+            result = d + timedelta(days=value)
+            if result.year < 1 or result.year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {result.year} out of range (1-9999)")
+            return result
         return None
 
     def _add_to_datetime(self, dt: datetime, value: int, unit: str) -> datetime | None:
@@ -3435,13 +3517,25 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 return datetime.combine(result_date, dt.time())
             return None
         elif unit == "hour":
-            return dt + timedelta(hours=value)
+            result = dt + timedelta(hours=value)
+            if result.year < 1 or result.year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {result.year} out of range (1-9999)")
+            return result
         elif unit == "minute":
-            return dt + timedelta(minutes=value)
+            result = dt + timedelta(minutes=value)
+            if result.year < 1 or result.year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {result.year} out of range (1-9999)")
+            return result
         elif unit == "second":
-            return dt + timedelta(seconds=value)
+            result = dt + timedelta(seconds=value)
+            if result.year < 1 or result.year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {result.year} out of range (1-9999)")
+            return result
         elif unit == "millisecond":
-            return dt + timedelta(milliseconds=value)
+            result = dt + timedelta(milliseconds=value)
+            if result.year < 1 or result.year > 9999:
+                raise CQLError(f"DateTime arithmetic result year {result.year} out of range (1-9999)")
+            return result
         return None
 
     # =========================================================================

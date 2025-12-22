@@ -204,6 +204,23 @@ def normalize_result(result: Any) -> Any:
     if result is None:
         return None
 
+    # Handle expected value expressions (e.g., "+10*1000000000000000000000000000.00000000-0.00000001")
+    if isinstance(result, str) and ("*" in result or (result.startswith(("+", "-")) and len(result) > 1)):
+        # Check if it looks like an arithmetic expression
+        stripped = result.lstrip("+-")
+        if re.match(r"^[\d.]+[*+\-]", stripped):
+            try:
+                # Parse and evaluate as Decimal arithmetic for precision
+                # Handle patterns like: +10*1000...00-0.00000001
+                expr = result
+                # Convert numbers to Decimal strings
+                expr = re.sub(r"(\d+(?:\.\d+)?)", r"Decimal('\1')", expr)
+                expr = expr.replace("^", "**")
+                evaluated = eval(expr, {"__builtins__": {}, "Decimal": Decimal})
+                return evaluated
+            except Exception:
+                pass  # Not an expression, treat as string
+
     # Handle lists
     if isinstance(result, (list, tuple)):
         if len(result) == 0:

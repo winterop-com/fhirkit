@@ -443,6 +443,8 @@ class FHIRTime(BaseModel):
 
         Handles optional timezone offset which is ignored for time values.
         """
+        from fhirkit.engine.exceptions import CQLError
+
         # Remove T prefix if present
         if value.startswith("T"):
             value = value[1:]
@@ -452,14 +454,28 @@ class FHIRTime(BaseModel):
         match = re.match(pattern, value)
         if match:
             groups = match.groups()
+            hour = int(groups[0])
+            minute = int(groups[1]) if groups[1] else None
+            second = int(groups[2]) if groups[2] else None
             ms = None
             if groups[3]:
-                frac = groups[3][:3].ljust(3, "0")
+                frac = groups[3]
+                # Check for invalid milliseconds (> 999)
+                if len(frac) > 3 and int(frac) > 999:
+                    raise CQLError(f"Time millisecond {int(frac)} out of range (0-999)")
+                frac = frac[:3].ljust(3, "0")
                 ms = int(frac)
+            # Validate ranges
+            if hour < 0 or hour > 23:
+                raise CQLError(f"Time hour {hour} out of range (0-23)")
+            if minute is not None and (minute < 0 or minute > 59):
+                raise CQLError(f"Time minute {minute} out of range (0-59)")
+            if second is not None and (second < 0 or second > 59):
+                raise CQLError(f"Time second {second} out of range (0-59)")
             return cls(
-                hour=int(groups[0]),
-                minute=int(groups[1]) if groups[1] else None,
-                second=int(groups[2]) if groups[2] else None,
+                hour=hour,
+                minute=minute,
+                second=second,
                 millisecond=ms,
             )
         return None
