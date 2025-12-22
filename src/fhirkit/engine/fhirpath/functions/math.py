@@ -232,8 +232,8 @@ def fn_low_boundary(ctx: EvaluationContext, collection: list[Any], precision: in
     value = collection[0]
 
     # Unwrap _PrimitiveWithExtension and convert strings to date/time types
-    from ..visitor import _PrimitiveWithExtension
     from ...types import FHIRDate, FHIRDateTime, FHIRTime
+    from ..visitor import _PrimitiveWithExtension
 
     if isinstance(value, _PrimitiveWithExtension):
         value = value.value
@@ -267,7 +267,7 @@ def fn_low_boundary(ctx: EvaluationContext, collection: list[Any], precision: in
         return [Quantity(value=new_value, unit=value.unit)]
 
     # Handle date/time types
-    from ...types import FHIRDate, FHIRDateTime, FHIRTime
+    from ...types import FHIRDate, FHIRDateTime
 
     if isinstance(value, FHIRDate):
         # For lowBoundary, fill in minimum values for unspecified components
@@ -380,8 +380,8 @@ def fn_high_boundary(
     value = collection[0]
 
     # Unwrap _PrimitiveWithExtension and convert strings to date/time types
-    from ..visitor import _PrimitiveWithExtension
     from ...types import FHIRDate, FHIRDateTime, FHIRTime
+    from ..visitor import _PrimitiveWithExtension
 
     if isinstance(value, _PrimitiveWithExtension):
         value = value.value
@@ -415,7 +415,7 @@ def fn_high_boundary(
         return [Quantity(value=new_value, unit=value.unit)]
 
     # Handle date/time types
-    from ...types import FHIRDate, FHIRDateTime, FHIRTime
+    from ...types import FHIRDate, FHIRDateTime
 
     if isinstance(value, FHIRDate):
         import calendar

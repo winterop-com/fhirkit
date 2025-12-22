@@ -20,8 +20,9 @@ def _to_string(args: list[Any]) -> str | None:
     Per CQL spec:
     - Boolean values are converted to lowercase 'true'/'false'
     - Quantity values are formatted as "5.5cm" (no space, no quotes)
+    - DateTime values are formatted without timezone offset
     """
-    from fhirkit.engine.types import Quantity
+    from fhirkit.engine.types import FHIRDateTime, Quantity
 
     if args and args[0] is not None:
         val = args[0]
@@ -31,6 +32,22 @@ def _to_string(args: list[Any]) -> str | None:
         # CQL requires quantity as "value+unit" without space or quotes
         if isinstance(val, Quantity):
             return f"{val.value}{val.unit}"
+        # CQL DateTime ToString excludes timezone
+        if isinstance(val, FHIRDateTime):
+            result = f"{val.year:04d}"
+            if val.month is not None:
+                result += f"-{val.month:02d}"
+            if val.day is not None:
+                result += f"-{val.day:02d}"
+            if val.hour is not None:
+                result += f"T{val.hour:02d}"
+                if val.minute is not None:
+                    result += f":{val.minute:02d}"
+                    if val.second is not None:
+                        result += f":{val.second:02d}"
+                        if val.millisecond is not None:
+                            result += f".{val.millisecond:03d}"
+            return result
         return str(val)
     return None
 
@@ -113,7 +130,7 @@ def _to_datetime(args: list[Any]) -> FHIRDateTime | None:
         if isinstance(val, date):
             return FHIRDateTime(year=val.year, month=val.month, day=val.day)
         if isinstance(val, str):
-            return FHIRDateTime.parse(val)
+            return FHIRDateTime.parse(val, raise_on_malformed=True)
     return None
 
 
@@ -129,16 +146,70 @@ def _to_time(args: list[Any]) -> FHIRTime | None:
 
 
 def _to_quantity(args: list[Any]) -> Quantity | None:
-    """Convert value to Quantity."""
+    """Convert value to Quantity.
+
+    Handles:
+    - Numeric value with optional unit: ToQuantity(5.5) or ToQuantity(5.5, 'cm')
+    - String format: ToQuantity('5.5 cm') or ToQuantity('5.5cm')
+    """
+    import re
+
     if not args:
         return None
     val = args[0]
-    unit = args[1] if len(args) > 1 else "1"
-    if val is not None:
-        try:
-            return Quantity(value=Decimal(str(val)), unit=str(unit))
-        except (ValueError, InvalidOperation):
-            return None
+    unit = args[1] if len(args) > 1 else None
+
+    if val is None:
+        return None
+
+    # If val is a string, try to parse "value unit" format
+    if isinstance(val, str) and unit is None:
+        # Try to parse string quantity format: "5.5 cm" or "5.5cm"
+        match = re.match(r"^\s*(-?\d+(?:\.\d+)?)\s*([a-zA-Z/]+)?\s*$", val)
+        if match:
+            try:
+                value = Decimal(match.group(1))
+                unit = match.group(2) if match.group(2) else "1"
+                return Quantity(value=value, unit=unit)
+            except (ValueError, InvalidOperation):
+                return None
+        return None
+
+    # Numeric value with optional unit argument
+    if unit is None:
+        unit = "1"
+    try:
+        return Quantity(value=Decimal(str(val)), unit=str(unit))
+    except (ValueError, InvalidOperation):
+        return None
+
+
+def _to_concept(args: list[Any]) -> Any:
+    """Convert a Code to a Concept.
+
+    Per CQL spec:
+    - ToConcept(Code) creates a Concept containing that single Code
+    - ToConcept(null) returns null
+    """
+    from ..types import CQLCode, CQLConcept
+
+    if not args or args[0] is None:
+        return None
+
+    val = args[0]
+    if isinstance(val, CQLCode):
+        return CQLConcept(codes=(val,))
+    if isinstance(val, CQLConcept):
+        return val
+    # Handle dict from instance selector (Code { code: '...' })
+    if isinstance(val, dict) and val.get("resourceType") == "Code":
+        code = CQLCode(
+            code=val.get("code", ""),
+            system=val.get("system", ""),
+            display=val.get("display"),
+            version=val.get("version"),
+        )
+        return CQLConcept(codes=(code,))
     return None
 
 
@@ -703,6 +774,7 @@ def register(registry: "FunctionRegistry") -> None:
     registry.register("ToDateTime", _to_datetime, category="conversion", min_args=1, max_args=1)
     registry.register("ToTime", _to_time, category="conversion", min_args=1, max_args=1)
     registry.register("ToQuantity", _to_quantity, category="conversion", min_args=1, max_args=2)
+    registry.register("ToConcept", _to_concept, category="conversion", min_args=1, max_args=1)
     registry.register("Coalesce", _coalesce, category="conversion", min_args=1)
     registry.register("IsNull", _is_null, category="conversion", min_args=1, max_args=1)
     registry.register("IsNotNull", _is_not_null, category="conversion", min_args=1, max_args=1)

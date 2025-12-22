@@ -218,13 +218,15 @@ def interval_point_timing(interval: "CQLInterval[Any]", point: Any, op: str) -> 
 def point_interval_timing(point: Any, interval: "CQLInterval[Any]", op: str) -> bool | None:
     """Handle point-to-interval timing comparisons."""
     # Handle "on or before/after" patterns
+    # "P on or before I" means P is at or before the START of interval (P <= I.low)
+    # "P on or after I" means P is at or after the END of interval (P >= I.high)
     if "on" in op or "same" in op:
         if "orbefore" in op or "or before" in op:
-            # Point on or before interval: point <= interval.high
-            return interval.high is not None and point <= interval.high
+            # Point on or before interval: point <= interval.low
+            return interval.low is not None and point <= interval.low
         elif "orafter" in op or "or after" in op:
-            # Point on or after interval: point >= interval.low
-            return interval.low is not None and point >= interval.low
+            # Point on or after interval: point >= interval.high
+            return interval.high is not None and point >= interval.high
 
     if "before" in op:
         return interval.low is not None and point < interval.low

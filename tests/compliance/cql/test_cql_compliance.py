@@ -270,6 +270,29 @@ def normalize_result(result: Any) -> Any:
                 parts.append(f".{ms:03d}")
         return "@T" + "".join(parts)
 
+    # Handle CQLTuple
+    if hasattr(result, "elements") and isinstance(result.elements, dict):
+        parts = []
+        for k, v in result.elements.items():
+            if isinstance(v, str):
+                parts.append(f"{k}: '{v}'")
+            else:
+                parts.append(f"{k}: {v}")
+        return f"Tuple {{ {', '.join(parts)}}}"
+
+    # Handle CQLConcept
+    if hasattr(result, "codes") and hasattr(result, "display"):
+        # Format as "Concept { codes: Code { code: '...' } }"
+        code_strs = []
+        for code in result.codes:
+            code_strs.append(f"Code {{ code: '{code.code}' }}")
+        codes_str = ", ".join(code_strs) if code_strs else ""
+        return f"Concept {{ codes: {codes_str} }}"
+
+    # Handle CQLCode
+    if hasattr(result, "code") and hasattr(result, "system") and not hasattr(result, "codes"):
+        return f"Code {{ code: '{result.code}' }}"
+
     # Handle Quantity-like objects - format as string for comparison
     if hasattr(result, "value") and hasattr(result, "unit"):
         return f"{result.value} '{result.unit}'"
@@ -615,6 +638,20 @@ def compare_results(actual: Any, expected: Any) -> bool:
             if isinstance(actual, str) and actual.startswith("Interval"):
                 return compare_interval_strings(actual, expected)
             return False
+        # Handle Concept format: Concept { codes: Code { code: '...' } }
+        if expected.strip().startswith("Concept"):
+            # Normalize whitespace for comparison
+            expected_norm = re.sub(r"\s+", " ", expected.strip())
+            actual_str = str(actual)
+            actual_norm = re.sub(r"\s+", " ", actual_str.strip())
+            return actual_norm == expected_norm
+        # Handle Tuple format: Tuple { key: value, ... }
+        if expected.strip().startswith("Tuple"):
+            # Normalize whitespace for comparison
+            expected_norm = re.sub(r"\s+", " ", expected.strip())
+            actual_str = str(actual)
+            actual_norm = re.sub(r"\s+", " ", actual_str.strip())
+            return actual_norm == expected_norm
         actual_str = str(actual)
         # Handle datetime string comparisons with precision awareness
         if expected.startswith("@") and actual_str.startswith("@"):

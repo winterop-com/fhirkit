@@ -6,7 +6,7 @@ It walks the parse tree and evaluates expressions.
 
 import sys
 from datetime import date, datetime, time, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -1691,10 +1691,61 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         # Handle interval timing
         if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
+            # Check for precision-aware interval containment
+            if "included in" in op_text or "during" in op_text:
+                precision = self._extract_precision(op_text)
+                if precision:
+                    # If precision specified, check if left interval has that precision
+                    if not self._has_precision(left.low, precision) or not self._has_precision(left.high, precision):
+                        return None  # Uncertain due to insufficient precision
+                else:
+                    # No explicit precision - check if containing interval has higher precision
+                    container_precision = self._get_max_precision(right.low, right.high)
+                    left_precision = self._get_max_precision(left.low, left.high)
+                    if container_precision and left_precision and container_precision > left_precision:
+                        return None  # Uncertain due to precision mismatch
+            elif "includes" in op_text:
+                precision = self._extract_precision(op_text)
+                if precision:
+                    # If precision specified, check if right interval has that precision
+                    if not self._has_precision(right.low, precision) or not self._has_precision(right.high, precision):
+                        return None  # Uncertain due to insufficient precision
+                else:
+                    # No explicit precision - check if contained interval has lower precision
+                    container_precision = self._get_max_precision(left.low, left.high)
+                    right_precision = self._get_max_precision(right.low, right.high)
+                    if container_precision and right_precision and container_precision > right_precision:
+                        return None  # Uncertain due to precision mismatch
             return interval_timing(left, right, op_text)
         elif isinstance(left, CQLInterval):
+            # Check for precision-aware interval containment (includes, contains)
+            if "includes" in op_text or "contains" in op_text:
+                precision = self._extract_precision(op_text)
+                if precision:
+                    # If precision specified, check if point has that precision
+                    if not self._has_precision(right, precision):
+                        return None  # Uncertain due to insufficient precision
+                else:
+                    # No explicit precision - check if interval has higher precision than point
+                    interval_precision = self._get_max_precision(left.low, left.high)
+                    point_precision = self._get_point_precision(right)
+                    if interval_precision and point_precision and interval_precision > point_precision:
+                        return None  # Uncertain due to precision mismatch
             return interval_point_timing(left, right, op_text)
         elif isinstance(right, CQLInterval):
+            # Check for precision-aware interval containment
+            if "in" in op_text or "included" in op_text or "during" in op_text:
+                precision = self._extract_precision(op_text)
+                if precision:
+                    # If precision specified, check if point has that precision
+                    if not self._has_precision(left, precision):
+                        return None  # Uncertain due to insufficient precision
+                else:
+                    # No explicit precision - check if interval has higher precision than point
+                    interval_precision = self._get_max_precision(right.low, right.high)
+                    point_precision = self._get_point_precision(left)
+                    if interval_precision and point_precision and interval_precision > point_precision:
+                        return None  # Uncertain due to precision mismatch
             return point_interval_timing(left, right, op_text)
 
         # Handle point comparisons with optional precision
@@ -1737,8 +1788,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     # List vs list - can compare even with nulls in lists
                     return self._list_includes(left, right, proper)
                 else:
-                    # Single element - check if list contains element (handles null)
-                    return self._list_contains_element(left, right, proper)
+                    # Single element - check if list contains element
+                    # For "list includes null":
+                    #   - includes -> null (uncertain)
+                    #   - properly includes -> false (list doesn't contain null)
+                    return self._list_contains_element(left, right, proper, check_container_membership=proper)
             return None
 
         if "included in" in op_text or "during" in op_text:
@@ -1748,8 +1802,11 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     # List vs list - can compare even with nulls in lists
                     return self._list_includes(right, left, proper)
                 else:
-                    # Single element - check if list contains element (handles null)
-                    return self._list_contains_element(right, left, proper)
+                    # Single element - check if element is in list
+                    # For "null included in list":
+                    #   - included in -> null (uncertain)
+                    #   - properly included in -> false (null not in list)
+                    return self._list_contains_element(right, left, proper, check_container_membership=proper)
             return None
 
         return None
@@ -1782,25 +1839,60 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return len(container) > len(contained)
         return True
 
-    def _list_contains_element(self, container: list, element: Any, proper: bool) -> bool | None:
+    def _list_contains_element(
+        self, container: list, element: Any, proper: bool, check_container_membership: bool = True
+    ) -> bool | None:
         """Check if container list contains a single element.
 
-        Per CQL three-valued logic:
-        - list includes null -> null (can't determine if unknown is in list)
-        - list includes existing_element -> true
-        - list includes nonexisting_element -> false
+        Args:
+            container: The list to check
+            element: The element to find
+            proper: If True, container must have at least one additional element
+            check_container_membership: If True, checking "does list have null?" (returns false)
+                                        If False, checking "is null in list?" (returns null)
+
+        Per CQL spec:
+        - list includes null -> false (we know the list's contents)
+        - null included in list -> null (unknown value, can't determine)
         """
         if element is None:
-            # Per CQL spec: checking if list includes null returns null
-            # because we can't definitively say if an unknown value is in the list
-            # Exception: if the list explicitly contains null, return true
+            # Check if list contains null explicitly
             if any(x is None for x in container):
                 if proper:
                     return len(container) > 1
                 return True
-            return None  # Unknown - can't determine if null is in list
+            # List doesn't contain null
+            if check_container_membership:
+                # "list includes null" - we know the list, null is not in it
+                return False
+            else:
+                # "null included in list" - unknown value, can't determine
+                return None
 
-        found = element in container
+        # Handle precision-aware comparison for FHIRTime and FHIRDateTime
+        found = False
+        uncertain = False
+
+        for item in container:
+            if item is None:
+                continue  # Skip nulls in list
+
+            # Use precision-aware comparison if available
+            if hasattr(element, "equals_with_uncertainty") and type(element) is type(item):
+                result = element.equals_with_uncertainty(item)
+                if result is True:
+                    found = True
+                    break
+                elif result is None:
+                    uncertain = True  # Precision mismatch makes result uncertain
+            elif element == item:
+                found = True
+                break
+
+        if uncertain and not found:
+            # Could potentially match but uncertain due to precision
+            return None
+
         if proper:
             # For proper contains, list must have more than just this element
             return found and len(container) > 1
@@ -1853,6 +1945,71 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 return None
 
         return truncated
+
+    def _get_point_precision(self, value: Any) -> int | None:
+        """Get the precision level of a datetime/time value.
+
+        Returns an integer where:
+        0=year, 1=month, 2=day, 3=hour, 4=minute, 5=second, 6=millisecond
+        """
+        components = self._datetime_components(value, normalize_timezone=False)
+        if components is None:
+            return None
+
+        # For Time values, first 3 components are None, so start at hour (3)
+        start_index = 0
+        if components[0] is None and components[1] is None and components[2] is None:
+            start_index = 3
+
+        # Find the highest precision that has a value
+        highest = None
+        for i in range(start_index, len(components)):
+            if components[i] is not None:
+                highest = i
+        return highest
+
+    def _get_max_precision(self, val1: Any, val2: Any) -> int | None:
+        """Get the maximum precision between two datetime/time values."""
+        p1 = self._get_point_precision(val1)
+        p2 = self._get_point_precision(val2)
+        if p1 is None and p2 is None:
+            return None
+        if p1 is None:
+            return p2
+        if p2 is None:
+            return p1
+        return max(p1, p2)
+
+    def _has_precision(self, value: Any, precision: str) -> bool:
+        """Check if a datetime/time value has the specified precision.
+
+        For example, @T12:00:00 has second precision but not millisecond precision.
+        """
+        precision_map = {
+            "year": 0,
+            "month": 1,
+            "day": 2,
+            "hour": 3,
+            "minute": 4,
+            "second": 5,
+            "millisecond": 6,
+        }
+        required_index = precision_map.get(precision, 6)
+
+        components = self._datetime_components(value, normalize_timezone=False)
+        if components is None:
+            return False
+
+        # For Time values, first 3 components (year, month, day) are None, so adjust
+        start_index = 0
+        if components[0] is None and components[1] is None and components[2] is None:
+            start_index = 3  # Skip date components for Time
+
+        # Check if all components up to required_index are present
+        for i in range(start_index, required_index + 1):
+            if i >= len(components) or components[i] is None:
+                return False
+        return True
 
     def _same_as(self, left: Any, right: Any, op_text: str) -> bool | None:
         """Handle 'same X as' precision-aware comparison."""
@@ -2003,9 +2160,26 @@ class CQLEvaluatorVisitor(cqlVisitor):
         # All components are equal up to precision - "same X"
         return True
 
-    def _datetime_components(self, value: Any) -> list[int | None] | None:
-        """Get datetime/time components as a list [year, month, day, hour, minute, second, ms]."""
+    def _datetime_components(self, value: Any, normalize_timezone: bool = True) -> list[int | None] | None:
+        """Get datetime/time components as a list [year, month, day, hour, minute, second, ms].
+
+        Args:
+            value: FHIRDateTime, FHIRDate, or FHIRTime
+            normalize_timezone: If True, convert timezone-aware datetimes to UTC
+        """
         if hasattr(value, "year"):  # FHIRDateTime or FHIRDate
+            # For timezone-aware FHIRDateTime, normalize to UTC
+            if normalize_timezone and hasattr(value, "tz_offset") and value.tz_offset and value.hour is not None:
+                utc_tuple = value._to_utc_tuple()
+                return [
+                    utc_tuple[0],  # year
+                    utc_tuple[1],  # month
+                    utc_tuple[2],  # day
+                    utc_tuple[3],  # hour
+                    utc_tuple[4],  # minute
+                    utc_tuple[5],  # second
+                    utc_tuple[6],  # millisecond
+                ]
             return [
                 getattr(value, "year", None),
                 getattr(value, "month", None),
@@ -2167,6 +2341,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
             if expressions:
                 value = self.visit(expressions[0])
                 if isinstance(value, list):
+                    # If any element is null (from Interval(null, null)), return null
+                    if any(i is None for i in value):
+                        return None
                     intervals = [i for i in value if isinstance(i, CQLInterval)]
                     return collapse_intervals(intervals, CQLInterval)
             return []
@@ -2249,6 +2426,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if len(text) >= 2:
             if (text.startswith("'") and text.endswith("'")) or (text.startswith('"') and text.endswith('"')):
                 text = text[1:-1]
+
                 # Handle Unicode escapes first (before other escapes consume backslashes)
                 # Pattern: \uXXXX where X is a hex digit
                 def replace_unicode(match: re.Match) -> str:
@@ -2486,6 +2664,9 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         if name_lower == "collapse":
             if args and isinstance(args[0], list):
+                # If any element is null (from Interval(null, null)), return null
+                if any(i is None for i in args[0]):
+                    return None
                 intervals = [i for i in args[0] if isinstance(i, CQLInterval)]
                 return collapse_intervals(intervals, CQLInterval)
             return []
@@ -2502,11 +2683,24 @@ class CQLEvaluatorVisitor(cqlVisitor):
             if args and args[0] is not None:
                 val = args[0]
                 if isinstance(val, FHIRDateTime) and val.tz_offset is not None:
-                    return val.tz_offset
+                    offset = val.tz_offset
+                    if offset == "Z":
+                        return Decimal("0")
+                    # Handle numeric offset from DateTime() constructor
+                    try:
+                        return Decimal(str(offset))
+                    except Exception:
+                        pass
+                    # Handle string offset format like "+01:00"
+                    if offset.startswith(("+", "-")):
+                        sign = 1 if offset[0] == "+" else -1
+                        hours = int(offset[1:3])
+                        minutes = int(offset[4:6]) if len(offset) > 4 else 0
+                        return Decimal(str(sign * (hours + minutes / 60)))
                 if isinstance(val, datetime) and val.tzinfo is not None:
                     offset = val.utcoffset()
                     if offset is not None:
-                        return offset.total_seconds() / 3600
+                        return Decimal(str(offset.total_seconds() / 3600))
             return None
 
         if name_lower == "datediff":
@@ -2955,7 +3149,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return left == right
 
-    def _equivalent(self, left: Any, right: Any) -> bool:
+    def _equivalent(self, left: Any, right: Any) -> bool | None:
         """Check equivalence with CQL semantics (null ~ null = true)."""
         # null ~ null = true, null ~ x = false
         if left is None and right is None:
@@ -2965,8 +3159,12 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         # Handle lists - compare element-wise with equivalence semantics
         if isinstance(left, list) and isinstance(right, list):
+            # If lists have different lengths and either has nulls, result is null
             if len(left) != len(right):
+                if any(item is None for item in left) or any(item is None for item in right):
+                    return None
                 return False
+            # Compare element-wise - null ~ null = true
             return all(self._equivalent(left_item, right_item) for left_item, right_item in zip(left, right))
 
         # Handle Quantity with unit conversion
@@ -3799,7 +3997,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
         return value
 
     def _convert_to_type(self, value: Any, type_name: str) -> Any:
-        """Convert a value to the specified type."""
+        """Convert a value to the specified type.
+
+        Note: CQL 'convert' raises errors for invalid conversions,
+        unlike ToX functions which return null.
+        """
+        from fhirkit.engine.exceptions import CQLError
+
         type_lower = type_name.lower()
 
         if type_lower == "string":
@@ -3807,35 +4011,56 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         if type_lower == "integer":
             try:
+                if isinstance(value, str):
+                    # Check if string is a valid integer format
+                    if not value.strip().lstrip("-").isdigit():
+                        raise CQLError(f"Cannot convert '{value}' to Integer")
                 return int(value)
-            except (ValueError, TypeError):
-                return None
+            except (ValueError, TypeError) as e:
+                raise CQLError(f"Cannot convert '{value}' to Integer") from e
 
         if type_lower == "decimal":
             try:
                 return Decimal(str(value))
-            except (ValueError, TypeError):
-                return None
+            except (ValueError, TypeError, InvalidOperation) as e:
+                raise CQLError(f"Cannot convert '{value}' to Decimal") from e
 
         if type_lower == "boolean":
             if isinstance(value, bool):
                 return value
             if isinstance(value, str):
-                return value.lower() in ("true", "t", "yes", "y", "1")
-            return None
+                lower = value.lower()
+                if lower in ("true", "t", "yes", "y", "1"):
+                    return True
+                if lower in ("false", "f", "no", "n", "0"):
+                    return False
+                raise CQLError(f"Cannot convert '{value}' to Boolean")
+            raise CQLError("Cannot convert value to Boolean")
 
         if type_lower == "date":
-            return self._to_fhir_date(value)
+            result = self._to_fhir_date(value)
+            if result is None and value is not None:
+                raise CQLError(f"Cannot convert '{value}' to Date")
+            return result
 
         if type_lower == "datetime":
-            return self._to_fhir_datetime(value)
+            result = self._to_fhir_datetime(value)
+            if result is None and value is not None:
+                raise CQLError(f"Cannot convert '{value}' to DateTime")
+            return result
+
+        if type_lower == "time":
+            result = self._to_fhir_time(value)
+            if result is None and value is not None:
+                raise CQLError(f"Cannot convert '{value}' to Time")
+            return result
 
         if type_lower == "quantity":
             if isinstance(value, Quantity):
                 return value
             if isinstance(value, (int, float, Decimal)):
                 return Quantity(value=Decimal(str(value)), unit="1")
-            return None
+            raise CQLError(f"Cannot convert '{value}' to Quantity")
 
         return value
 
@@ -3846,11 +4071,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if isinstance(value, date):
             return FHIRDate(year=value.year, month=value.month, day=value.day)
         if isinstance(value, str):
-            try:
-                d = date.fromisoformat(value[:10])
-                return FHIRDate(year=d.year, month=d.month, day=d.day)
-            except ValueError:
-                return None
+            # Use FHIRDate.parse which validates format
+            return FHIRDate.parse(value)
         return None
 
     def _to_fhir_datetime(self, value: Any) -> FHIRDateTime | None:
@@ -3868,19 +4090,24 @@ class CQLEvaluatorVisitor(cqlVisitor):
                 millisecond=value.microsecond // 1000,
             )
         if isinstance(value, str):
-            try:
-                dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-                return FHIRDateTime(
-                    year=dt.year,
-                    month=dt.month,
-                    day=dt.day,
-                    hour=dt.hour,
-                    minute=dt.minute,
-                    second=dt.second,
-                    millisecond=dt.microsecond // 1000,
-                )
-            except ValueError:
-                return None
+            # Use FHIRDateTime.parse which validates format and raises errors for malformed input
+            return FHIRDateTime.parse(value)
+        return None
+
+    def _to_fhir_time(self, value: Any) -> FHIRTime | None:
+        """Convert value to FHIRTime."""
+        if isinstance(value, FHIRTime):
+            return value
+        if isinstance(value, time):
+            return FHIRTime(
+                hour=value.hour,
+                minute=value.minute,
+                second=value.second,
+                millisecond=value.microsecond // 1000,
+            )
+        if isinstance(value, str):
+            # Use FHIRTime.parse which validates format and raises errors for malformed input
+            return FHIRTime.parse(value)
         return None
 
     def visitDurationExpressionTerm(self, ctx: cqlParser.DurationExpressionTermContext) -> Any:

@@ -75,10 +75,15 @@ class TestOutput:
         if re.match(r"^-?\d+L$", value):
             return int(value[:-1])
 
-        # Quantity (e.g., "1.0'cm'" or "2.0'g/cm3'")
+        # Quantity with quoted unit (e.g., "1.0'cm'" or "2.0'g/cm3'")
         quantity_match = re.match(r"^(-?\d+(?:\.\d+)?)'([^']+)'$", value)
         if quantity_match:
             return {"value": Decimal(quantity_match.group(1)), "unit": quantity_match.group(2)}
+
+        # Quantity with unquoted unit (e.g., "20 days", "36000000 milliseconds")
+        quantity_unquoted = re.match(r"^(-?\d+(?:\.\d+)?)\s+([a-zA-Z]+)$", value)
+        if quantity_unquoted:
+            return {"value": Decimal(quantity_unquoted.group(1)), "unit": quantity_unquoted.group(2)}
 
         # Decimal (simple literal)
         if re.match(r"^-?\d+\.\d+$", value):

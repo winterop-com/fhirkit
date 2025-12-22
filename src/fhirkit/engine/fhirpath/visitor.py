@@ -1144,9 +1144,7 @@ class FHIRPathEvaluatorVisitor(fhirpathVisitor):
         # Sort using functools.cmp_to_key for proper multi-key descending support
         import functools
 
-        def compare_items(
-            a: tuple[Any, list[tuple[Any, bool]]], b: tuple[Any, list[tuple[Any, bool]]]
-        ) -> int:
+        def compare_items(a: tuple[Any, list[tuple[Any, bool]]], b: tuple[Any, list[tuple[Any, bool]]]) -> int:
             """Compare two items by their sort keys."""
             _, keys_a = a
             _, keys_b = b

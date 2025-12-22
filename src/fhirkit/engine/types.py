@@ -97,6 +97,28 @@ class Quantity(BaseModel):
     def __hash__(self) -> int:
         return hash((self.value, self.unit))
 
+    def __add__(self, other: "Quantity") -> "Quantity":
+        """Add two quantities.
+
+        Per CQL spec: Units must be the same for addition.
+        """
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        if self.unit != other.unit:
+            raise TypeError(f"Cannot add quantities with different units: {self.unit} and {other.unit}")
+        return Quantity(value=self.value + other.value, unit=self.unit)
+
+    def __sub__(self, other: "Quantity") -> "Quantity":
+        """Subtract two quantities.
+
+        Per CQL spec: Units must be the same for subtraction.
+        """
+        if not isinstance(other, Quantity):
+            return NotImplemented
+        if self.unit != other.unit:
+            raise TypeError(f"Cannot subtract quantities with different units: {self.unit} and {other.unit}")
+        return Quantity(value=self.value - other.value, unit=self.unit)
+
     def __mul__(self, other: "Quantity") -> "Quantity":
         """Multiply two quantities.
 
@@ -252,11 +274,19 @@ class FHIRDateTime(BaseModel):
     tz_offset: str | None = None  # e.g., "Z", "+05:00", "-08:00"
 
     @classmethod
-    def parse(cls, value: str) -> "FHIRDateTime | None":
+    def parse(cls, value: str, raise_on_malformed: bool = False) -> "FHIRDateTime | None":
         """Parse a datetime string."""
+        from fhirkit.engine.exceptions import CQLError
+
         # Remove @ prefix if present (from FHIRPath literals)
         if value.startswith("@"):
             value = value[1:]
+
+        # Check for malformed date strings (e.g., slashes instead of dashes)
+        if re.match(r"^\d{4}/", value):
+            if raise_on_malformed:
+                raise CQLError(f"Malformed datetime string: {value} (use dashes as separators, not slashes)")
+            return None
 
         # Handle partial DateTime with T suffix but no time (e.g., "2015T", "2015-01T")
         # This indicates DateTime type (vs Date) even without time components
@@ -426,6 +456,42 @@ class FHIRDateTime(BaseModel):
             return NotImplemented
         return self._to_utc_tuple() >= other._to_utc_tuple()
 
+    def __sub__(self, other: "FHIRDateTime") -> "Quantity":
+        """Subtract two datetimes to get a duration Quantity.
+
+        Returns the difference in the most appropriate unit based on precision:
+        - Day precision: returns days
+        - Full precision: returns milliseconds
+        """
+        if not isinstance(other, FHIRDateTime):
+            return NotImplemented
+
+        # Convert both to datetime objects for calculation
+        self_dt = self.to_datetime()
+        other_dt = other.to_datetime()
+
+        if self_dt is None or other_dt is None:
+            # For partial dates, calculate at the available precision
+            if self.hour is None and other.hour is None:
+                # Day precision - calculate in days
+                from datetime import date as python_date
+
+                self_date = python_date(self.year, self.month or 1, self.day or 1)
+                other_date = python_date(other.year, other.month or 1, other.day or 1)
+                diff_days = (self_date - other_date).days
+                return Quantity(value=Decimal(str(diff_days)), unit="days")
+            return Quantity(value=Decimal("0"), unit="ms")
+
+        # Full precision - calculate in milliseconds
+        delta = self_dt - other_dt
+        if self.hour is None:
+            # Day precision - return days
+            return Quantity(value=Decimal(str(delta.days)), unit="days")
+        else:
+            # Full precision - return milliseconds
+            total_ms = int(delta.total_seconds() * 1000)
+            return Quantity(value=Decimal(str(total_ms)), unit="ms")
+
 
 class FHIRTime(BaseModel):
     """FHIRPath Time type."""
@@ -448,6 +514,11 @@ class FHIRTime(BaseModel):
         # Remove T prefix if present
         if value.startswith("T"):
             value = value[1:]
+
+        # Check for malformed time strings (e.g., dashes instead of colons)
+        # Malformed pattern: digits separated by dashes that looks like a time
+        if re.match(r"^\d{2}-\d{2}", value):
+            raise CQLError(f"Malformed time string: {value} (use colons as separators, not dashes)")
 
         # Pattern includes optional timezone offset (Z or +/-hh:mm)
         pattern = r"^(\d{2})(?::(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?(?:Z|[+-]\d{2}:\d{2})?$"
@@ -501,6 +572,7 @@ class FHIRTime(BaseModel):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, FHIRTime):
+            # Exact equality only if all components match (including precision)
             return (
                 self.hour == other.hour
                 and self.minute == other.minute
@@ -508,6 +580,41 @@ class FHIRTime(BaseModel):
                 and self.millisecond == other.millisecond
             )
         return False
+
+    def equals_with_uncertainty(self, other: "FHIRTime") -> bool | None:
+        """Compare times with CQL precision semantics.
+
+        Returns:
+            True if definitely equal
+            False if definitely not equal
+            None if uncertain (precision mismatch)
+        """
+        if not isinstance(other, FHIRTime):
+            return False
+
+        # Compare at the precision level of the less precise value
+        if self.hour != other.hour:
+            return False
+
+        # Check minute precision
+        if self.minute is None or other.minute is None:
+            return None if (self.minute is None) != (other.minute is None) else True
+        if self.minute != other.minute:
+            return False
+
+        # Check second precision
+        if self.second is None or other.second is None:
+            return None if (self.second is None) != (other.second is None) else True
+        if self.second != other.second:
+            return False
+
+        # Check millisecond precision
+        if self.millisecond is None or other.millisecond is None:
+            return None if (self.millisecond is None) != (other.millisecond is None) else True
+        if self.millisecond != other.millisecond:
+            return False
+
+        return True
 
     def __hash__(self) -> int:
         return hash((self.hour, self.minute, self.second, self.millisecond))
@@ -583,10 +690,10 @@ class FHIRTime(BaseModel):
             )
         return NotImplemented
 
-    def __sub__(self, other: Any) -> "FHIRTime | int":
+    def __sub__(self, other: Any) -> "FHIRTime | Quantity":
         """Subtract a duration (Quantity) or another time from this time."""
         if isinstance(other, FHIRTime):
-            # Return difference in milliseconds
+            # Return difference in milliseconds as a Quantity
             self_ms = (
                 (self.hour * 3600000) + (self.minute or 0) * 60000 + (self.second or 0) * 1000 + (self.millisecond or 0)
             )
@@ -596,7 +703,7 @@ class FHIRTime(BaseModel):
                 + (other.second or 0) * 1000
                 + (other.millisecond or 0)
             )
-            return self_ms - other_ms
+            return Quantity(value=Decimal(str(self_ms - other_ms)), unit="milliseconds")
 
         if hasattr(other, "value") and hasattr(other, "unit"):
             # Negate the duration and add
