@@ -15,9 +15,23 @@ if TYPE_CHECKING:
 
 
 def _to_string(args: list[Any]) -> str | None:
-    """Convert value to string."""
+    """Convert value to string.
+
+    Per CQL spec:
+    - Boolean values are converted to lowercase 'true'/'false'
+    - Quantity values are formatted as "5.5cm" (no space, no quotes)
+    """
+    from fhirkit.engine.types import Quantity
+
     if args and args[0] is not None:
-        return str(args[0])
+        val = args[0]
+        # CQL requires lowercase 'true'/'false' for booleans
+        if isinstance(val, bool):
+            return "true" if val else "false"
+        # CQL requires quantity as "value+unit" without space or quotes
+        if isinstance(val, Quantity):
+            return f"{val.value}{val.unit}"
+        return str(val)
     return None
 
 
@@ -129,15 +143,23 @@ def _to_quantity(args: list[Any]) -> Quantity | None:
 
 
 def _coalesce(args: list[Any]) -> Any:
-    """Return first non-null argument."""
+    """Return first non-null argument.
+
+    Per CQL spec:
+    - If a single list argument is provided, returns first non-null element from that list
+    - If multiple arguments are provided, returns the first non-null argument
+    """
+    # If single list argument, iterate through list elements
+    if len(args) == 1 and isinstance(args[0], list):
+        for elem in args[0]:
+            if elem is not None:
+                return elem
+        return None
+
+    # Multiple arguments - return first non-null
     for arg in args:
         if arg is not None:
-            if isinstance(arg, list):
-                # For lists, return first non-empty list
-                if arg:
-                    return arg
-            else:
-                return arg
+            return arg
     return None
 
 
@@ -312,25 +334,43 @@ def _round(args: list[Any]) -> Decimal | int | None:
 def _ln(args: list[Any]) -> float | None:
     """Natural logarithm.
 
-    Per CQL spec: Ln(0) and Ln of negative numbers raise an error.
+    Per CQL spec:
+    - Ln(0) raises an error (result would be -infinity)
+    - Ln of negative numbers returns null (undefined in real numbers)
+    - Ln of null returns null
     """
     import math
 
     if args and args[0] is not None:
         val = float(args[0])
-        if val <= 0:
-            raise ValueError(f"Ln is undefined for {val}")
+        if val == 0:
+            raise ValueError("Ln(0) is undefined (negative infinity)")
+        if val < 0:
+            return None  # Ln of negative numbers is undefined in real numbers
         return math.log(val)
     return None
 
 
 def _log(args: list[Any]) -> float | None:
-    """Logarithm with specified base."""
+    """Logarithm with specified base.
+
+    Per CQL spec: Log is undefined for non-positive values.
+    Special case: Log(1, 1) = 0.0 (1^0 = 1).
+    """
     import math
 
     if len(args) >= 2 and args[0] is not None and args[1] is not None:
-        if args[0] > 0 and args[1] > 0:
-            return math.log(float(args[0]), float(args[1]))
+        val = float(args[0])
+        base = float(args[1])
+        if val <= 0 or base <= 0:
+            return None
+        # Special case: Log(1, 1) = 0.0
+        if val == 1 and base == 1:
+            return 0.0
+        # Log base 1 of anything other than 1 is undefined
+        if base == 1:
+            return None
+        return math.log(val, base)
     return None
 
 
@@ -343,16 +383,23 @@ def _exp(args: list[Any]) -> float | None:
     return None
 
 
-def _power(args: list[Any]) -> Decimal | None:
+def _power(args: list[Any]) -> Decimal | int | None:
     """Raise to a power.
 
     CQL specifies Decimal type for numeric operations, so we ensure
     both base and exponent are converted to Decimal.
+    Per CQL spec: 0^0 = 1
     """
     if len(args) >= 2 and args[0] is not None and args[1] is not None:
         base = Decimal(str(args[0])) if not isinstance(args[0], Decimal) else args[0]
         exp = Decimal(str(args[1])) if not isinstance(args[1], Decimal) else args[1]
-        return base**exp
+        # Special case: 0^0 = 1 per CQL spec
+        if base == 0 and exp == 0:
+            return 1
+        try:
+            return base**exp
+        except Exception:
+            return None
     return None
 
 

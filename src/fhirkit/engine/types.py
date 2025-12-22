@@ -373,12 +373,16 @@ class FHIRTime(BaseModel):
 
     @classmethod
     def parse(cls, value: str) -> "FHIRTime | None":
-        """Parse a time string (hh:mm:ss.fff)."""
+        """Parse a time string (hh:mm:ss.fff).
+
+        Handles optional timezone offset which is ignored for time values.
+        """
         # Remove T prefix if present
         if value.startswith("T"):
             value = value[1:]
 
-        pattern = r"^(\d{2})(?::(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?$"
+        # Pattern includes optional timezone offset (Z or +/-hh:mm)
+        pattern = r"^(\d{2})(?::(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?(?:Z|[+-]\d{2}:\d{2})?$"
         match = re.match(pattern, value)
         if match:
             groups = match.groups()

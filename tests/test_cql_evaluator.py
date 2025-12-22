@@ -937,7 +937,8 @@ class TestToStringFunction:
         assert result == "3.14"
 
     def test_tostring_boolean(self) -> None:
-        assert evaluate("ToString(true)") == "True"
+        # CQL spec requires lowercase 'true'/'false'
+        assert evaluate("ToString(true)") == "true"
 
     def test_tostring_null(self) -> None:
         assert evaluate("ToString(null)") is None
@@ -2664,7 +2665,8 @@ class TestTypeConversion:
         assert evaluate("ToString(42)") == "42"
 
     def test_tostring_boolean(self) -> None:
-        assert evaluate("ToString(true)") == "True"
+        # CQL spec requires lowercase 'true'/'false'
+        assert evaluate("ToString(true)") == "true"
 
     def test_tointeger_string(self) -> None:
         assert evaluate("ToInteger('42')") == 42

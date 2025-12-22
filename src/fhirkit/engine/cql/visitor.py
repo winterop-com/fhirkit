@@ -1680,9 +1680,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     # List vs list - can compare even with nulls in lists
                     return self._list_includes(left, right, proper)
                 else:
-                    # Single element - if null, result is null
-                    if right is None:
-                        return None
+                    # Single element - check if list contains element (handles null)
                     return self._list_contains_element(left, right, proper)
             return None
 
@@ -1693,9 +1691,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
                     # List vs list - can compare even with nulls in lists
                     return self._list_includes(right, left, proper)
                 else:
-                    # Single element - if null, result is null
-                    if left is None:
-                        return None
+                    # Single element - check if list contains element (handles null)
                     return self._list_contains_element(right, left, proper)
             return None
 
@@ -1730,13 +1726,22 @@ class CQLEvaluatorVisitor(cqlVisitor):
         return True
 
     def _list_contains_element(self, container: list, element: Any, proper: bool) -> bool | None:
-        """Check if container list contains a single element."""
+        """Check if container list contains a single element.
+
+        Per CQL three-valued logic:
+        - list includes null -> null (can't determine if unknown is in list)
+        - list includes existing_element -> true
+        - list includes nonexisting_element -> false
+        """
         if element is None:
-            # Check if container has any null
-            found = any(x is None for x in container)
-            if proper:
-                return found and len(container) > 1
-            return found
+            # Per CQL spec: checking if list includes null returns null
+            # because we can't definitively say if an unknown value is in the list
+            # Exception: if the list explicitly contains null, return true
+            if any(x is None for x in container):
+                if proper:
+                    return len(container) > 1
+                return True
+            return None  # Unknown - can't determine if null is in list
 
         found = element in container
         if proper:
@@ -2182,10 +2187,20 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
     def _unquote_string(self, text: str) -> str:
         """Remove quotes from a string literal."""
+        import re
+
         if len(text) >= 2:
             if (text.startswith("'") and text.endswith("'")) or (text.startswith('"') and text.endswith('"')):
                 text = text[1:-1]
-                # Handle escape sequences
+                # Handle Unicode escapes first (before other escapes consume backslashes)
+                # Pattern: \uXXXX where X is a hex digit
+                def replace_unicode(match: re.Match) -> str:
+                    hex_code = match.group(1)
+                    return chr(int(hex_code, 16))
+
+                text = re.sub(r"\\u([0-9a-fA-F]{4})", replace_unicode, text)
+
+                # Handle standard escape sequences
                 text = text.replace("\\'", "'")
                 text = text.replace('\\"', '"')
                 text = text.replace("\\\\", "\\")
@@ -2839,7 +2854,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if isinstance(left, list) and isinstance(right, list):
             if len(left) != len(right):
                 return False
-            return all(self._equals(left_item, right_item) for left_item, right_item in zip(left, right))
+            # Compare element by element, track null results
+            has_null = False
+            for left_item, right_item in zip(left, right):
+                result = self._equals(left_item, right_item)
+                if result is False:
+                    return False
+                if result is None:
+                    has_null = True
+            # If any element comparison was null, return null
+            return None if has_null else True
 
         # Handle Quantity with unit conversion
         if isinstance(left, Quantity) and isinstance(right, Quantity):

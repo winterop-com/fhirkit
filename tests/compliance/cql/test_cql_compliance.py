@@ -7,6 +7,7 @@ Tests are parametrized from the XML test files.
 
 from __future__ import annotations
 
+import decimal
 import re
 from decimal import Decimal
 from pathlib import Path
@@ -529,8 +530,16 @@ def compare_results(actual: Any, expected: Any) -> bool:
             exp_str = str(expected)
             if "." in exp_str:
                 precision = len(exp_str.split(".")[1])
-                # Round actual to same precision and compare
-                return round(actual_dec, precision) == expected
+                try:
+                    # Round actual to same precision and compare
+                    return round(actual_dec, precision) == expected
+                except decimal.InvalidOperation:
+                    # For very high precision values, use relative comparison
+                    # Allow up to 15 significant digits of precision (float64 limit)
+                    if expected != 0:
+                        rel_diff = abs((actual_dec - expected) / expected)
+                        return rel_diff < Decimal("1e-15")
+                    return abs(actual_dec - expected) < Decimal("1e-15")
             return False
         return False
 
@@ -549,6 +558,12 @@ def compare_results(actual: Any, expected: Any) -> bool:
         # Handle quoted string literals from CQL tests (e.g., 'abc' should match abc)
         if expected.startswith("'") and expected.endswith("'"):
             expected_unquoted = expected[1:-1]
+            # Decode Unicode escapes (e.g., \u0027 -> ')
+            expected_unquoted = re.sub(
+                r"\\u([0-9a-fA-F]{4})",
+                lambda m: chr(int(m.group(1), 16)),
+                expected_unquoted,
+            )
             return str(actual) == expected_unquoted
         # Handle interval list format: {Interval [...], Interval [...]}
         if expected.startswith("{") and "Interval" in expected:
