@@ -242,14 +242,14 @@ def fn_low_boundary(ctx: EvaluationContext, collection: list[Any], precision: in
     if isinstance(value, str):
         # Try parsing as datetime first (contains 'T')
         if "T" in value:
-            parsed = FHIRDateTime.parse(value)
-            if parsed:
-                value = parsed
+            parsed_dt = FHIRDateTime.parse(value)
+            if parsed_dt:
+                value = parsed_dt
         else:
             # Try as date
-            parsed = FHIRDate.parse(value)
-            if parsed:
-                value = parsed
+            parsed_date = FHIRDate.parse(value)
+            if parsed_date:
+                value = parsed_date
 
     if isinstance(value, (int, float, Decimal)):
         decimal_value = Decimal(str(value))
@@ -390,14 +390,14 @@ def fn_high_boundary(
     if isinstance(value, str):
         # Try parsing as datetime first (contains 'T')
         if "T" in value:
-            parsed = FHIRDateTime.parse(value)
-            if parsed:
-                value = parsed
+            parsed_dt = FHIRDateTime.parse(value)
+            if parsed_dt:
+                value = parsed_dt
         else:
             # Try as date
-            parsed = FHIRDate.parse(value)
-            if parsed:
-                value = parsed
+            parsed_date = FHIRDate.parse(value)
+            if parsed_date:
+                value = parsed_date
 
     if isinstance(value, (int, float, Decimal)):
         decimal_value = Decimal(str(value))

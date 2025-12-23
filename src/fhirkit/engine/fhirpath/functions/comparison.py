@@ -518,8 +518,11 @@ def compare(left: Any, right: Any) -> int | None:
             if left.year != right.year:
                 return -1 if left.year < right.year else 1
             # Compare month if both have it
-            if left_has_month and right_has_month and left.month != right.month:
-                return -1 if left.month < right.month else 1
+            if left_has_month and right_has_month:
+                left_month = left.month
+                right_month = right.month
+                if left_month is not None and right_month is not None and left_month != right_month:
+                    return -1 if left_month < right_month else 1
             # Equal at common precision = incomparable
             return None
 

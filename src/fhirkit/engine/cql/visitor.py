@@ -340,46 +340,45 @@ class CQLEvaluatorVisitor(cqlVisitor):
         """Visit a simple number literal (used in starting clause)."""
         text = ctx.getText()
         if "." in text:
-            value = Decimal(text)
+            dec_value = Decimal(text)
             # CQL decimal range: -(10^28-1) to (10^28-1), 10^28 is out of range
             max_decimal = Decimal("1" + "0" * 28)
-            if value >= max_decimal or value <= -max_decimal:
-                raise CQLError(f"Decimal value {value} out of range")
+            if dec_value >= max_decimal or dec_value <= -max_decimal:
+                raise CQLError(f"Decimal value {dec_value} out of range")
             # CQL decimals have max 8 decimal places precision
             decimal_part = text.split(".")[1]
             if len(decimal_part) > 8:
-                raise CQLError(f"Decimal value {value} exceeds maximum precision of 8 decimal places")
-            return value
-        value = int(text)
+                raise CQLError(f"Decimal value {dec_value} exceeds maximum precision of 8 decimal places")
+            return dec_value
+        int_value = int(text)
         # CQL integer range: -2^31 to 2^31-1 (-2147483648 to 2147483647)
         # Allow 2147483648 only if we're inside a negation (for -2147483648)
         max_allowed = 2147483648 if self._in_negation else 2147483647
-        if value > max_allowed or value < -2147483648:
-            raise CQLError(f"Integer value {value} out of range (-2147483648 to 2147483647)")
-        return value
+        if int_value > max_allowed or int_value < -2147483648:
+            raise CQLError(f"Integer value {int_value} out of range (-2147483648 to 2147483647)")
+        return int_value
 
     def visitNumberLiteral(self, ctx: cqlParser.NumberLiteralContext) -> int | Decimal:
         """Visit a number literal."""
         text = ctx.getText()
         if "." in text:
-            value = Decimal(text)
+            dec_value = Decimal(text)
             # CQL decimal range: -(10^28-1) to (10^28-1), 10^28 is out of range
             max_decimal = Decimal("1" + "0" * 28)
-            if value >= max_decimal or value <= -max_decimal:
-                raise CQLError(f"Decimal value {value} out of range")
+            if dec_value >= max_decimal or dec_value <= -max_decimal:
+                raise CQLError(f"Decimal value {dec_value} out of range")
             # CQL decimals have max 8 decimal places precision
-            if "." in text:
-                decimal_part = text.split(".")[1]
-                if len(decimal_part) > 8:
-                    raise CQLError(f"Decimal value {value} exceeds maximum precision of 8 decimal places")
-            return value
-        value = int(text)
+            decimal_part = text.split(".")[1]
+            if len(decimal_part) > 8:
+                raise CQLError(f"Decimal value {dec_value} exceeds maximum precision of 8 decimal places")
+            return dec_value
+        int_value = int(text)
         # CQL integer range: -2^31 to 2^31-1 (-2147483648 to 2147483647)
         # Allow 2147483648 only if we're inside a negation (for -2147483648)
         max_allowed = 2147483648 if self._in_negation else 2147483647
-        if value > max_allowed or value < -2147483648:
-            raise CQLError(f"Integer value {value} out of range (-2147483648 to 2147483647)")
-        return value
+        if int_value > max_allowed or int_value < -2147483648:
+            raise CQLError(f"Integer value {int_value} out of range (-2147483648 to 2147483647)")
+        return int_value
 
     def visitLongNumberLiteral(self, ctx: cqlParser.LongNumberLiteralContext) -> int:
         """Visit a long number literal."""
@@ -2322,7 +2321,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
             "second": 5,
             "millisecond": 6,
         }
-        precision_index = precision_map.get(precision, 2)  # Default to day
+        precision_index = precision_map.get(precision, 2) if precision else 2  # Default to day
 
         # First check: temporal relationship at precision
         # For "on or after", left must be >= right at precision
@@ -3025,24 +3024,24 @@ class CQLEvaluatorVisitor(cqlVisitor):
             if args and args[0] is not None:
                 val = args[0]
                 if isinstance(val, FHIRDateTime) and val.tz_offset is not None:
-                    offset = val.tz_offset
-                    if offset == "Z":
+                    tz_str = val.tz_offset
+                    if tz_str == "Z":
                         return Decimal("0")
                     # Handle numeric offset from DateTime() constructor
                     try:
-                        return Decimal(str(offset))
+                        return Decimal(str(tz_str))
                     except Exception:
                         pass
                     # Handle string offset format like "+01:00"
-                    if offset.startswith(("+", "-")):
-                        sign = 1 if offset[0] == "+" else -1
-                        hours = int(offset[1:3])
-                        minutes = int(offset[4:6]) if len(offset) > 4 else 0
+                    if tz_str.startswith(("+", "-")):
+                        sign = 1 if tz_str[0] == "+" else -1
+                        hours = int(tz_str[1:3])
+                        minutes = int(tz_str[4:6]) if len(tz_str) > 4 else 0
                         return Decimal(str(sign * (hours + minutes / 60)))
                 if isinstance(val, datetime) and val.tzinfo is not None:
-                    offset = val.utcoffset()
-                    if offset is not None:
-                        return Decimal(str(offset.total_seconds() / 3600))
+                    utc_offset = val.utcoffset()
+                    if utc_offset is not None:
+                        return Decimal(str(utc_offset.total_seconds() / 3600))
             return None
 
         if name_lower == "datediff":
@@ -4626,22 +4625,22 @@ class CQLEvaluatorVisitor(cqlVisitor):
             raise CQLError("Cannot convert value to Boolean")
 
         if type_lower == "date":
-            result = self._to_fhir_date(value)
-            if result is None and value is not None:
+            date_result = self._to_fhir_date(value)
+            if date_result is None and value is not None:
                 raise CQLError(f"Cannot convert '{value}' to Date")
-            return result
+            return date_result
 
         if type_lower == "datetime":
-            result = self._to_fhir_datetime(value)
-            if result is None and value is not None:
+            datetime_result = self._to_fhir_datetime(value)
+            if datetime_result is None and value is not None:
                 raise CQLError(f"Cannot convert '{value}' to DateTime")
-            return result
+            return datetime_result
 
         if type_lower == "time":
-            result = self._to_fhir_time(value)
-            if result is None and value is not None:
+            time_result = self._to_fhir_time(value)
+            if time_result is None and value is not None:
                 raise CQLError(f"Cannot convert '{value}' to Time")
-            return result
+            return time_result
 
         if type_lower == "quantity":
             if isinstance(value, Quantity):
