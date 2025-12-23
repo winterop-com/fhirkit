@@ -568,11 +568,7 @@ def compare_results(actual: Any, expected: Any) -> bool:
     # Tests like TimeOfDay() evaluate expected value at a slightly different time,
     # so we allow a small tolerance for millisecond differences.
     if isinstance(actual, FHIRTime) and isinstance(expected, FHIRTime):
-        if (
-            actual.hour == expected.hour
-            and actual.minute == expected.minute
-            and actual.second == expected.second
-        ):
+        if actual.hour == expected.hour and actual.minute == expected.minute and actual.second == expected.second:
             # Same time up to second, allow millisecond difference
             ms_diff = abs((actual.millisecond or 0) - (expected.millisecond or 0))
             # Allow up to 100ms difference for evaluation timing

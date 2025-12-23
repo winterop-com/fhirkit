@@ -956,8 +956,36 @@ DATETIME
     : '@' DATEFORMAT 'T' TIMEFORMAT? TIMEZONEOFFSETFORMAT?
     ;
 
+DATE
+    : '@' DATEFORMAT
+    ;
+
+TIME
+    : '@' 'T' TIMEFORMAT TIMEZONEOFFSETFORMAT?
+    ;
+
 LONGNUMBER
     : [0-9]+'L'
+    ;
+
+fragment DATEFORMAT
+    : [0-9][0-9][0-9][0-9] ('-'[0-9][0-9] ('-'[0-9][0-9])?)?
+    ;
+
+fragment TIMEFORMAT
+    : [0-9][0-9] (':'[0-9][0-9] (':'[0-9][0-9] ('.'[0-9]+)?)?)?
+    ;
+
+fragment TIMEZONEOFFSETFORMAT
+    : ('Z' | ('+' | '-') [0-9][0-9]':'[0-9][0-9])
+    ;
+
+fragment UNICODE
+    : 'u' HEX HEX HEX HEX
+    ;
+
+fragment HEX
+    : [0-9a-fA-F]
     ;
 
 fragment ESC

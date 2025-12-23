@@ -779,6 +779,15 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if left is None or right is None:
             return None
 
+        # Handle interval comparisons with scalars (uncertainty intervals)
+        # E.g., Interval[7, 18] > 5 -> True (all values > 5)
+        if isinstance(left, CQLInterval) and not isinstance(right, CQLInterval):
+            return self._compare_interval_to_scalar(left, right, op)
+        if isinstance(right, CQLInterval) and not isinstance(left, CQLInterval):
+            # Flip the comparison: x > Interval is Interval < x
+            flipped_op = {"<": ">", "<=": ">=", ">": "<", ">=": "<="}.get(op, op)
+            return self._compare_interval_to_scalar(right, left, flipped_op)
+
         # Check for datetime uncertainty - if different precision, result is null
         uncertainty = self._check_datetime_uncertainty(left, right)
         if uncertainty is True:
@@ -792,6 +801,49 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return left > right
         elif op == ">=":
             return left >= right
+
+        return None
+
+    def _compare_interval_to_scalar(self, interval: CQLInterval, scalar: Any, op: str) -> bool | None:
+        """Compare an uncertainty interval to a scalar value.
+
+        Returns:
+            True if all values in the interval satisfy the comparison
+            False if no values in the interval satisfy the comparison
+            None if some values satisfy and some don't (uncertain)
+        """
+        low = interval.low
+        high = interval.high
+
+        if low is None or high is None:
+            return None
+
+        if op == ">":
+            # Interval > scalar: True if low > scalar (all values greater)
+            if low > scalar:
+                return True
+            # False if high <= scalar (no values greater)
+            if high <= scalar:
+                return False
+            return None
+        elif op == ">=":
+            if low >= scalar:
+                return True
+            if high < scalar:
+                return False
+            return None
+        elif op == "<":
+            if high < scalar:
+                return True
+            if low >= scalar:
+                return False
+            return None
+        elif op == "<=":
+            if high <= scalar:
+                return True
+            if low > scalar:
+                return False
+            return None
 
         return None
 
@@ -2198,9 +2250,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
         # All components are equal up to precision - "same X"
         return True
 
-    def _timing_with_quantity_offset(
-        self, left_point: Any, right_point: Any, op_text: str, ctx: Any
-    ) -> bool | None:
+    def _timing_with_quantity_offset(self, left_point: Any, right_point: Any, op_text: str, ctx: Any) -> bool | None:
         """Handle timing expressions with quantity offset like '1 day or less on or after day of'.
 
         Args:
@@ -2358,9 +2408,7 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
         return None
 
-    def _compare_datetime_uncertain_precision(
-        self, left: Any, right: Any, precision: str, op_text: str
-    ) -> bool | None:
+    def _compare_datetime_uncertain_precision(self, left: Any, right: Any, precision: str, op_text: str) -> bool | None:
         """Compare datetimes when one doesn't have the requested precision.
 
         This handles cases like "DateTime(2005, 10, 10) after day of DateTime(2005, 9)"
@@ -2473,8 +2521,14 @@ class CQLEvaluatorVisitor(cqlVisitor):
     # Duration and Difference Expressions
     # =========================================================================
 
-    def visitDurationBetweenExpression(self, ctx: cqlParser.DurationBetweenExpressionContext) -> int | None:
-        """Visit duration between expression (years/months/days between X and Y)."""
+    def visitDurationBetweenExpression(
+        self, ctx: cqlParser.DurationBetweenExpressionContext
+    ) -> int | CQLInterval | None:
+        """Visit duration between expression (years/months/days between X and Y).
+
+        Returns an integer for exact results, or a CQLInterval when there's
+        precision uncertainty in the operands.
+        """
         # Get the precision (years, months, days, etc.)
         precision_ctx = ctx.pluralDateTimePrecision()
         precision = precision_ctx.getText().lower() if precision_ctx else "days"
@@ -2490,10 +2544,22 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if start is None or end is None:
             return None
 
-        return self._date_diff(start, end, precision)
+        # Check if there's precision uncertainty
+        uncertain = self._has_precision_uncertainty(start, end, precision)
+        if uncertain:
+            return self._date_diff_uncertain(start, end, precision)
 
-    def visitDifferenceBetweenExpression(self, ctx: cqlParser.DifferenceBetweenExpressionContext) -> int | None:
-        """Visit difference between expression (difference in years between X and Y)."""
+        # Duration uses elapsed time calculation
+        return self._date_diff(start, end, precision, is_duration=True)
+
+    def visitDifferenceBetweenExpression(
+        self, ctx: cqlParser.DifferenceBetweenExpressionContext
+    ) -> int | CQLInterval | None:
+        """Visit difference between expression (difference in years between X and Y).
+
+        Returns an integer for exact results, or a CQLInterval when there's
+        precision uncertainty in the operands.
+        """
         # Get the precision (years, months, days, etc.)
         precision_ctx = ctx.pluralDateTimePrecision()
         precision = precision_ctx.getText().lower() if precision_ctx else "days"
@@ -2509,7 +2575,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
         if start is None or end is None:
             return None
 
-        return self._date_diff(start, end, precision)
+        # Check if there's precision uncertainty
+        uncertain = self._has_precision_uncertainty(start, end, precision)
+        if uncertain:
+            return self._date_diff_uncertain(start, end, precision)
+
+        # Difference uses calendar boundary calculation
+        return self._date_diff(start, end, precision, is_duration=False)
 
     def visitTimeUnitExpressionTerm(self, ctx: cqlParser.TimeUnitExpressionTermContext) -> Any:
         """Visit time unit expression (year from X, month from X, date from X, time from X, etc.)."""
@@ -3107,6 +3179,18 @@ class CQLEvaluatorVisitor(cqlVisitor):
     # Arithmetic helpers
     def _add(self, left: Any, right: Any) -> Any:
         """Add two values."""
+        # Uncertainty interval arithmetic: Interval[a, b] + Interval[c, d] = Interval[a+c, b+d]
+        if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
+            if left.low is not None and left.high is not None and right.low is not None and right.high is not None:
+                return CQLInterval(low=left.low + right.low, high=left.high + right.high)
+        # Interval[a, b] + x = Interval[a + x, b + x]
+        if isinstance(left, CQLInterval) and isinstance(right, (int, Decimal)):
+            if left.low is not None and left.high is not None:
+                return CQLInterval(low=left.low + right, high=left.high + right)
+        if isinstance(right, CQLInterval) and isinstance(left, (int, Decimal)):
+            if right.low is not None and right.high is not None:
+                return CQLInterval(low=left + right.low, high=left + right.high)
+
         # Quantity + Quantity
         if isinstance(left, Quantity) and isinstance(right, Quantity):
             if left.unit == right.unit:
@@ -3125,6 +3209,19 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
     def _subtract(self, left: Any, right: Any) -> Any:
         """Subtract two values."""
+        # Uncertainty interval arithmetic: Interval[a, b] - Interval[c, d] = Interval[a-d, b-c]
+        if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
+            if left.low is not None and left.high is not None and right.low is not None and right.high is not None:
+                return CQLInterval(low=left.low - right.high, high=left.high - right.low)
+        # Interval[a, b] - x = Interval[a - x, b - x]
+        if isinstance(left, CQLInterval) and isinstance(right, (int, Decimal)):
+            if left.low is not None and left.high is not None:
+                return CQLInterval(low=left.low - right, high=left.high - right)
+        # x - Interval[a, b] = Interval[x - b, x - a] (reversed order)
+        if isinstance(right, CQLInterval) and isinstance(left, (int, Decimal)):
+            if right.low is not None and right.high is not None:
+                return CQLInterval(low=left - right.high, high=left - right.low)
+
         # Quantity - Quantity
         if isinstance(left, Quantity) and isinstance(right, Quantity):
             if left.unit == right.unit:
@@ -3149,6 +3246,25 @@ class CQLEvaluatorVisitor(cqlVisitor):
 
     def _multiply(self, left: Any, right: Any) -> Any:
         """Multiply two values."""
+        # Uncertainty interval arithmetic: Interval[a,b] * Interval[c,d] = Interval[min(ac,ad,bc,bd), max(...)]
+        if isinstance(left, CQLInterval) and isinstance(right, CQLInterval):
+            if left.low is not None and left.high is not None and right.low is not None and right.high is not None:
+                products = [
+                    left.low * right.low,
+                    left.low * right.high,
+                    left.high * right.low,
+                    left.high * right.high,
+                ]
+                return CQLInterval(low=min(products), high=max(products))
+        if isinstance(left, CQLInterval) and isinstance(right, (int, Decimal)):
+            if left.low is not None and left.high is not None:
+                products = [left.low * right, left.high * right]
+                return CQLInterval(low=min(products), high=max(products))
+        if isinstance(right, CQLInterval) and isinstance(left, (int, Decimal)):
+            if right.low is not None and right.high is not None:
+                products = [left * right.low, left * right.high]
+                return CQLInterval(low=min(products), high=max(products))
+
         if isinstance(left, Quantity) and isinstance(right, (int, float, Decimal)):
             return Quantity(value=left.value * Decimal(str(right)), unit=left.unit)
         if isinstance(right, Quantity) and isinstance(left, (int, float, Decimal)):
@@ -3626,8 +3742,16 @@ class CQLEvaluatorVisitor(cqlVisitor):
         delta = ref - birth
         return delta.days
 
-    def _date_diff(self, start: Any, end: Any, unit: str) -> int | None:
-        """Calculate difference between two dates in the given unit."""
+    def _date_diff(self, start: Any, end: Any, unit: str, is_duration: bool = False) -> int | None:
+        """Calculate difference between two dates in the given unit.
+
+        Args:
+            start: Start date/datetime
+            end: End date/datetime
+            unit: Time unit (year, month, day, etc.)
+            is_duration: If True, use elapsed time calculation (for 'duration between').
+                        If False, use calendar boundary calculation (for 'difference in').
+        """
         unit_lower = unit.lower()
 
         # For year/month differences, account for whether anniversary has passed
@@ -3716,11 +3840,24 @@ class CQLEvaluatorVisitor(cqlVisitor):
             delta = end_date - start_date
             return delta.days // 7
         elif unit_lower in ("day", "days"):
-            # For "difference in days", count calendar day boundaries crossed
-            # This is the integer difference in day values, not elapsed time
-            # CQL spec: "difference in days between DateTime(2000, 10, 15) and DateTime(2000, 10, 25) is 10"
-            delta = end_date - start_date
-            return delta.days
+            if is_duration:
+                # For "duration in days", count complete 24-hour periods elapsed
+                # When timezone info is present, normalize to UTC and use elapsed time
+                start_dt = self._to_datetime_with_defaults(start)
+                end_dt = self._to_datetime_with_defaults(end)
+                if start_dt is not None and end_dt is not None:
+                    delta = end_dt - start_dt
+                    # Use truncation toward zero (not floor division) for complete periods
+                    return int(delta.total_seconds() / 86400)
+                # Fallback to calendar days
+                delta = end_date - start_date
+                return delta.days
+            else:
+                # For "difference in days", count calendar day boundaries crossed
+                # This is the integer difference in day values, not elapsed time
+                # CQL spec: "difference in days between DateTime(2000, 10, 15) and DateTime(2000, 10, 25) is 10"
+                delta = end_date - start_date
+                return delta.days
         return None
 
     def _get_year(self, value: Any) -> int | None:
@@ -3745,6 +3882,172 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return value.day
         if isinstance(value, (date, datetime)):
             return value.day
+        return None
+
+    def _has_precision_uncertainty(self, start: Any, end: Any, precision: str) -> bool:
+        """Check if there's precision uncertainty for the given calculation.
+
+        Returns True if either operand lacks the precision required for an
+        exact calculation at the specified precision level.
+        """
+        precision_lower = precision.lower().rstrip("s")  # Normalize: "days" -> "day"
+
+        # Map precision to required attribute
+        precision_attrs = {
+            "year": [],  # year is always present
+            "month": ["month"],
+            "day": ["month", "day"],
+            "hour": ["month", "day", "hour"],
+            "minute": ["month", "day", "hour", "minute"],
+            "second": ["month", "day", "hour", "minute", "second"],
+            "millisecond": ["month", "day", "hour", "minute", "second", "millisecond"],
+        }
+
+        required_attrs = precision_attrs.get(precision_lower, [])
+        if not required_attrs:
+            return False
+
+        for value in [start, end]:
+            if isinstance(value, (FHIRDate, FHIRDateTime)):
+                for attr in required_attrs:
+                    if getattr(value, attr, None) is None:
+                        return True
+            # Python date/datetime always have full precision
+        return False
+
+    def _date_diff_uncertain(self, start: Any, end: Any, precision: str) -> CQLInterval | None:
+        """Calculate duration with uncertainty, returning an interval.
+
+        When operands have imprecise components, calculates the minimum and
+        maximum possible values and returns them as an interval.
+        """
+
+        precision_lower = precision.lower().rstrip("s")
+
+        # Get the min/max datetime for each operand
+        start_min, start_max = self._get_datetime_bounds(start)
+        end_min, end_max = self._get_datetime_bounds(end)
+
+        if start_min is None or start_max is None or end_min is None or end_max is None:
+            return None
+
+        # Calculate min and max differences
+        # For "X days between A and B":
+        # - Minimum: calculate with start at its max and end at its min
+        # - Maximum: calculate with start at its min and end at its max
+        min_diff = self._calculate_diff_between_datetimes(start_max, end_min, precision_lower)
+        max_diff = self._calculate_diff_between_datetimes(start_min, end_max, precision_lower)
+
+        if min_diff is None or max_diff is None:
+            return None
+
+        # Ensure min <= max
+        if min_diff > max_diff:
+            min_diff, max_diff = max_diff, min_diff
+
+        return CQLInterval(low=min_diff, high=max_diff)
+
+    def _get_datetime_bounds(self, value: Any) -> tuple[datetime | None, datetime | None]:
+        """Get the minimum and maximum possible datetime for a value with uncertain components."""
+        import calendar
+
+        if isinstance(value, datetime):
+            return (value, value)
+        if isinstance(value, date):
+            dt = datetime.combine(value, time())
+            return (dt, dt)
+
+        if isinstance(value, FHIRDateTime):
+            year = value.year
+            month = value.month
+            day = value.day
+            hour = value.hour
+            minute = value.minute
+            second = value.second
+            ms = value.millisecond
+
+            # Calculate min datetime (use earliest possible values for None)
+            min_month = month if month is not None else 1
+            min_day = day if day is not None else 1
+            min_hour = hour if hour is not None else 0
+            min_minute = minute if minute is not None else 0
+            min_second = second if second is not None else 0
+            min_ms = ms if ms is not None else 0
+
+            min_dt = datetime(year, min_month, min_day, min_hour, min_minute, min_second, min_ms * 1000)
+
+            # Calculate max datetime (use latest possible values for None)
+            max_month = month if month is not None else 12
+            if day is not None:
+                max_day = day
+            else:
+                # Last day of the month
+                _, last_day = calendar.monthrange(year, max_month)
+                max_day = last_day
+            max_hour = hour if hour is not None else 23
+            max_minute = minute if minute is not None else 59
+            max_second = second if second is not None else 59
+            max_ms = ms if ms is not None else 999
+
+            max_dt = datetime(year, max_month, max_day, max_hour, max_minute, max_second, max_ms * 1000)
+
+            return (min_dt, max_dt)
+
+        if isinstance(value, FHIRDate):
+            year = value.year
+            month = value.month
+            day = value.day
+
+            min_month = month if month is not None else 1
+            min_day = day if day is not None else 1
+            min_dt = datetime(year, min_month, min_day)
+
+            max_month = month if month is not None else 12
+            if day is not None:
+                max_day = day
+            else:
+                _, last_day = calendar.monthrange(year, max_month)
+                max_day = last_day
+            max_dt = datetime(year, max_month, max_day, 23, 59, 59, 999000)
+
+            return (min_dt, max_dt)
+
+        return (None, None)
+
+    def _calculate_diff_between_datetimes(self, start: datetime, end: datetime, precision: str) -> int | None:
+        """Calculate the difference between two exact datetimes at the given precision.
+
+        For uncertainty calculations, this counts calendar boundaries rather than
+        complete periods. For example, "months between Dec and May" = 5 months.
+        """
+        if precision == "year":
+            # Count calendar year boundaries
+            return end.year - start.year
+
+        if precision == "month":
+            # Count calendar month boundaries
+            return (end.year - start.year) * 12 + (end.month - start.month)
+
+        if precision == "day":
+            delta = end.date() - start.date()
+            return delta.days
+
+        if precision == "hour":
+            delta = end - start
+            return int(delta.total_seconds() // 3600)
+
+        if precision == "minute":
+            delta = end - start
+            return int(delta.total_seconds() // 60)
+
+        if precision == "second":
+            delta = end - start
+            return int(delta.total_seconds())
+
+        if precision == "millisecond":
+            delta = end - start
+            return int(delta.total_seconds() * 1000)
+
         return None
 
     def _to_datetime_with_defaults(self, value: Any, preserve_local: bool = False) -> datetime | None:

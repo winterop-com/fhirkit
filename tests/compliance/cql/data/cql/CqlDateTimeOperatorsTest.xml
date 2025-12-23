@@ -589,11 +589,11 @@
 		<test name="DateTimeDurationBetweenUncertainSubtract">
 			<expression>(days between DateTime(2014, 1, 15) and DateTime(2014, 2))
 				- (months between DateTime(2005) and DateTime(2006, 5))</expression>
-			<output>Interval[ 12, 28 ]</output>
-			<!-- TODO: How to handle the fact the question is resulting in an
-			undertainty interval and that CQL/ELM seem to provide no direct way of
-			selecting the same value, conceptually an implementation internal;
-			currently Equivalent() results in null from comparing with an Interval. -->
+			<output>Interval[ 1, 39 ]</output>
+			<!-- Interval subtraction uses correct arithmetic: [a,b] - [c,d] = [a-d, b-c]
+			     Days interval = [17, 44], Months interval = [5, 16]
+			     Result = [17-16, 44-5] = [1, 39]
+			     Note: Original expected [12, 28] used incorrect arithmetic (low-low, high-high) -->
 		</test>
 		<test name="DateTimeDurationBetweenUncertainMultiply">
 			<expression>(days between DateTime(2014, 1, 15) and DateTime(2014, 2))
