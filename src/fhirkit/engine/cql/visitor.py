@@ -784,7 +784,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return self._compare_interval_to_scalar(left, right, op)
         if isinstance(right, CQLInterval) and not isinstance(left, CQLInterval):
             # Flip the comparison: x > Interval is Interval < x
-            flipped_op = {"<": ">", "<=": ">=", ">": "<", ">=": "<="}.get(op, op)
+            flip_map: dict[str, str] = {"<": ">", "<=": ">=", ">": "<", ">=": "<="}
+            flipped_op: str = flip_map.get(op) or op
             return self._compare_interval_to_scalar(right, left, flipped_op)
 
         # Check for datetime uncertainty - if different precision, result is null
@@ -793,13 +794,13 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return None
 
         if op == "<":
-            return left < right
+            return left < right  # type: ignore[operator]
         elif op == "<=":
-            return left <= right
+            return left <= right  # type: ignore[operator]
         elif op == ">":
-            return left > right
+            return left > right  # type: ignore[operator]
         elif op == ">=":
-            return left >= right
+            return left >= right  # type: ignore[operator]
 
         return None
 
@@ -3304,7 +3305,8 @@ class CQLEvaluatorVisitor(cqlVisitor):
             return None
         # Use int() which truncates toward zero (not floor which rounds toward -inf)
         # -10 div 3 = -3 (truncate), not -4 (floor)
-        return int(float(left) / float(right))
+        # At this point left/right are numeric (Quantity handled above)
+        return int(float(left) / float(right))  # type: ignore[arg-type]
 
     def _modulo(self, left: Any, right: Any) -> Any:
         """Modulo operation."""

@@ -18,7 +18,6 @@ from fhirkit.server.api.app import create_app
 from fhirkit.server.config.settings import FHIRServerSettings
 from fhirkit.server.storage.fhir_store import FHIRStore
 
-
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent / "data" / "fixtures"
 
@@ -88,9 +87,7 @@ def client_with_data(store: FHIRStore) -> TestClient:
             "resourceType": "Observation",
             "id": "test-obs-1",
             "status": "final",
-            "code": {
-                "coding": [{"system": "http://loinc.org", "code": "8867-4", "display": "Heart rate"}]
-            },
+            "code": {"coding": [{"system": "http://loinc.org", "code": "8867-4", "display": "Heart rate"}]},
             "subject": {"reference": "Patient/test-patient-1"},
             "effectiveDateTime": "2024-01-15T10:30:00Z",
             "valueQuantity": {"value": 72, "unit": "/min"},
@@ -101,9 +98,7 @@ def client_with_data(store: FHIRStore) -> TestClient:
             "resourceType": "Observation",
             "id": "test-obs-2",
             "status": "final",
-            "code": {
-                "coding": [{"system": "http://loinc.org", "code": "8310-5", "display": "Body temperature"}]
-            },
+            "code": {"coding": [{"system": "http://loinc.org", "code": "8310-5", "display": "Body temperature"}]},
             "subject": {"reference": "Patient/test-patient-1"},
             "effectiveDateTime": "2024-01-15T10:30:00Z",
             "valueQuantity": {"value": 37.0, "unit": "Cel"},
@@ -536,38 +531,24 @@ class TestHeadersCompliance:
 
     def test_accept_fhir_json(self, client_with_data: TestClient) -> None:
         """Server should accept application/fhir+json."""
-        response = client_with_data.get(
-            "/Patient/test-patient-1",
-            headers={"Accept": "application/fhir+json"}
-        )
+        response = client_with_data.get("/Patient/test-patient-1", headers={"Accept": "application/fhir+json"})
         assert response.status_code == 200
 
     def test_accept_json(self, client_with_data: TestClient) -> None:
         """Server should accept application/json."""
-        response = client_with_data.get(
-            "/Patient/test-patient-1",
-            headers={"Accept": "application/json"}
-        )
+        response = client_with_data.get("/Patient/test-patient-1", headers={"Accept": "application/json"})
         assert response.status_code == 200
 
     def test_content_type_fhir_json_on_create(self, client: TestClient) -> None:
         """POST with application/fhir+json should be accepted."""
         patient = load_fixture("patient-minimal.json")
-        response = client.post(
-            "/Patient",
-            json=patient,
-            headers={"Content-Type": "application/fhir+json"}
-        )
+        response = client.post("/Patient", json=patient, headers={"Content-Type": "application/fhir+json"})
         assert response.status_code == 201
 
     def test_prefer_return_representation(self, client: TestClient) -> None:
         """Prefer: return=representation should return full resource."""
         patient = load_fixture("patient-minimal.json")
-        response = client.post(
-            "/Patient",
-            json=patient,
-            headers={"Prefer": "return=representation"}
-        )
+        response = client.post("/Patient", json=patient, headers={"Prefer": "return=representation"})
         assert response.status_code == 201
         data = response.json()
         assert data["resourceType"] == "Patient"
@@ -691,11 +672,7 @@ class TestErrorCompliance:
 
     def test_invalid_json_returns_400(self, client: TestClient) -> None:
         """POST with invalid JSON should return 400."""
-        response = client.post(
-            "/Patient",
-            content="not valid json",
-            headers={"Content-Type": "application/json"}
-        )
+        response = client.post("/Patient", content="not valid json", headers={"Content-Type": "application/json"})
         assert response.status_code in [400, 422]
 
     def test_missing_resource_type_returns_error(self, client: TestClient) -> None:
@@ -706,8 +683,7 @@ class TestErrorCompliance:
     def test_wrong_resource_type_returns_error(self, client: TestClient) -> None:
         """POST with wrong resourceType should return error."""
         response = client.post(
-            "/Patient",
-            json={"resourceType": "Observation", "status": "final", "code": {"text": "test"}}
+            "/Patient", json={"resourceType": "Observation", "status": "final", "code": {"text": "test"}}
         )
         assert response.status_code == 400
 
